@@ -1,0 +1,11 @@
+name,email,company,tags
+Alice Chen,alice@techcorp.com,TechCorp,enterprise,hot-lead
+Bob Smith,bob.smith@startup.io,StartupIO,smb
+Carol White,carol@invalid,Freelance,
+David Lee,david.lee@enterprise.com,EnterpriseCo,enterprise,qualified
+Eve Brown,eve@,Unknown,
+Frank Lopez,frank.lopez@agency.net,DigitalAgency,agency,warm
+Grace Kim,grace.kim@fintech.com,FinTech Inc,fintech,hot-lead
+Henry Zhang,invalid-email-format,Consulting,
+Isabella Patel,isabella@healthcare.org,HealthCare Plus,healthcare
+Jack Wilson,jack.wilson@ecommerce.store,E-Commerce Co,ecommerce,warm
