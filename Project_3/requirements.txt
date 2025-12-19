@@ -1,0 +1,14 @@
+# Project 3: Marketing Ops Automation
+# OpenAI Agents SDK + Notion CRM Integration
+
+# Core dependencies
+openai>=1.50.0
+python-dotenv>=1.0.0
+pydantic>=2.5.0
+notion-client>=2.0.0
+
+# Testing
+pytest>=8.0.0
+
+# Optional: Zapier MCP integration
+# httpx>=0.27.0

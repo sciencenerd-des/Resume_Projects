@@ -40,7 +40,7 @@ export function SpendRevenueChart({ data, height = 300 }: SpendRevenueChartProps
     <ChartContainer config={chartConfig} className="w-full" style={{ height }}>
       <BarChart
         data={data}
-        margin={{ top: 20, right: 20, left: 20, bottom: 50 }}
+        margin={{ top: 20, right: 20, left: 20, bottom: 20 }}
       >
         <CartesianGrid 
           strokeDasharray="0" 
@@ -57,7 +57,6 @@ export function SpendRevenueChart({ data, height = 300 }: SpendRevenueChartProps
           fontSize={11}
           fontWeight={700}
           tick={{ fill: '#1a1a1a' }}
-          label={{ value: 'Marketing Channels', position: 'bottom', offset: 15, fontSize: 12, fontWeight: 700, fill: '#1a1a1a' }}
         />
         <YAxis
           tickLine={false}
