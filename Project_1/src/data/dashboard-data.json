@@ -1,0 +1,2657 @@
+{
+  "summaryByRange": {
+    "3m": {
+      "sessions": 6294,
+      "uniqueCustomers": 4517,
+      "addToCart": 4037,
+      "purchases": 1377,
+      "cartAbandons": 2660,
+      "revenue": 2434001.46,
+      "addToCartRate": 0.6414,
+      "purchaseRate": 0.2188,
+      "cartToPurchaseRate": 0.3411,
+      "aov": 1767.61,
+      "revenuePerCustomer": 538.85,
+      "newCustomers": 567,
+      "syntheticSpend": 67205.0,
+      "cac": 118.53,
+      "ltv": 538.85,
+      "ltvToCac": 4.55
+    },
+    "6m": {
+      "sessions": 12602,
+      "uniqueCustomers": 6756,
+      "addToCart": 8171,
+      "purchases": 2818,
+      "cartAbandons": 5353,
+      "revenue": 5053098.24,
+      "addToCartRate": 0.6484,
+      "purchaseRate": 0.2236,
+      "cartToPurchaseRate": 0.3449,
+      "aov": 1793.15,
+      "revenuePerCustomer": 747.94,
+      "newCustomers": 1726,
+      "syntheticSpend": 202690.0,
+      "cac": 117.43,
+      "ltv": 747.94,
+      "ltvToCac": 6.37
+    },
+    "12m": {
+      "sessions": 25000,
+      "uniqueCustomers": 8442,
+      "addToCart": 16117,
+      "purchases": 5616,
+      "cartAbandons": 10501,
+      "revenue": 10116169.06,
+      "addToCartRate": 0.6447,
+      "purchaseRate": 0.2246,
+      "cartToPurchaseRate": 0.3485,
+      "aov": 1801.31,
+      "revenuePerCustomer": 1198.31,
+      "newCustomers": 8442,
+      "syntheticSpend": 991830.0,
+      "cac": 117.49,
+      "ltv": 1198.31,
+      "ltvToCac": 10.2
+    }
+  },
+  "monthlySeries": [
+    {
+      "month": "2024-01",
+      "label": "Jan 2024",
+      "sessions": 2133,
+      "addToCart": 1354,
+      "purchases": 491,
+      "cartAbandons": 863,
+      "revenue": 904596.15,
+      "newCustomers": 1914
+    },
+    {
+      "month": "2024-02",
+      "label": "Feb 2024",
+      "sessions": 2012,
+      "addToCart": 1324,
+      "purchases": 458,
+      "cartAbandons": 866,
+      "revenue": 802854.34,
+      "newCustomers": 1408
+    },
+    {
+      "month": "2024-03",
+      "label": "Mar 2024",
+      "sessions": 2116,
+      "addToCart": 1362,
+      "purchases": 486,
+      "cartAbandons": 876,
+      "revenue": 888857.02,
+      "newCustomers": 1173
+    },
+    {
+      "month": "2024-04",
+      "label": "Apr 2024",
+      "sessions": 2057,
+      "addToCart": 1309,
+      "purchases": 461,
+      "cartAbandons": 848,
+      "revenue": 820449.67,
+      "newCustomers": 924
+    },
+    {
+      "month": "2024-05",
+      "label": "May 2024",
+      "sessions": 2074,
+      "addToCart": 1295,
+      "purchases": 437,
+      "cartAbandons": 858,
+      "revenue": 824853.58,
+      "newCustomers": 726
+    },
+    {
+      "month": "2024-06",
+      "label": "Jun 2024",
+      "sessions": 2006,
+      "addToCart": 1302,
+      "purchases": 465,
+      "cartAbandons": 837,
+      "revenue": 821460.06,
+      "newCustomers": 571
+    },
+    {
+      "month": "2024-07",
+      "label": "Jul 2024",
+      "sessions": 2096,
+      "addToCart": 1391,
+      "purchases": 460,
+      "cartAbandons": 931,
+      "revenue": 797223.97,
+      "newCustomers": 476
+    },
+    {
+      "month": "2024-08",
+      "label": "Aug 2024",
+      "sessions": 2167,
+      "addToCart": 1410,
+      "purchases": 502,
+      "cartAbandons": 908,
+      "revenue": 917972.7,
+      "newCustomers": 391
+    },
+    {
+      "month": "2024-09",
+      "label": "Sep 2024",
+      "sessions": 2045,
+      "addToCart": 1333,
+      "purchases": 479,
+      "cartAbandons": 854,
+      "revenue": 903900.11,
+      "newCustomers": 292
+    },
+    {
+      "month": "2024-10",
+      "label": "Oct 2024",
+      "sessions": 2153,
+      "addToCart": 1368,
+      "purchases": 455,
+      "cartAbandons": 913,
+      "revenue": 802942.09,
+      "newCustomers": 248
+    },
+    {
+      "month": "2024-11",
+      "label": "Nov 2024",
+      "sessions": 2011,
+      "addToCart": 1286,
+      "purchases": 428,
+      "cartAbandons": 858,
+      "revenue": 771484.47,
+      "newCustomers": 154
+    },
+    {
+      "month": "2024-12",
+      "label": "Dec 2024",
+      "sessions": 2130,
+      "addToCart": 1383,
+      "purchases": 494,
+      "cartAbandons": 889,
+      "revenue": 859574.9,
+      "newCustomers": 165
+    }
+  ],
+  "funnel": {
+    "sessions": 25000,
+    "uniqueCustomers": 8442,
+    "addToCart": 16117,
+    "purchases": 5616,
+    "cartAbandons": 10501,
+    "revenue": 10116169.06,
+    "addToCartRate": 0.6447,
+    "purchaseRate": 0.2246,
+    "cartToPurchaseRate": 0.3485,
+    "aov": 1801.31,
+    "revenuePerCustomer": 1198.31,
+    "newCustomers": 8442,
+    "syntheticSpend": 991830.0,
+    "cac": 117.49,
+    "ltv": 1198.31,
+    "ltvToCac": 10.2,
+    "durationBuckets": [
+      {
+        "bucket": "Long",
+        "label": "Long",
+        "sessions": 6254,
+        "purchaseRate": 0.2362
+      },
+      {
+        "bucket": "Short",
+        "label": "Short",
+        "sessions": 6236,
+        "purchaseRate": 0.2279
+      },
+      {
+        "bucket": "Very Long",
+        "label": "Very Long",
+        "sessions": 6240,
+        "purchaseRate": 0.2322
+      },
+      {
+        "bucket": "Very Short",
+        "label": "Very Short",
+        "sessions": 6270,
+        "purchaseRate": 0.2024
+      }
+    ]
+  },
+  "channels": [
+    {
+      "channelId": 0,
+      "label": "Channel 0",
+      "sessions": 4041,
+      "purchases": 918,
+      "addToCart": 2649,
+      "cartAbandons": 1731,
+      "revenue": 1661328.76,
+      "customers": 3266,
+      "newCustomers": 1354,
+      "syntheticSpend": 162480.0,
+      "cac": 120.0,
+      "ltv": 508.67,
+      "ltvToCac": 4.24,
+      "purchaseRate": 0.2272,
+      "share": 0.1616
+    },
+    {
+      "channelId": 1,
+      "label": "Channel 1",
+      "sessions": 4190,
+      "purchases": 927,
+      "addToCart": 2691,
+      "cartAbandons": 1764,
+      "revenue": 1646768.68,
+      "customers": 3353,
+      "newCustomers": 1468,
+      "syntheticSpend": 234880.0,
+      "cac": 160.0,
+      "ltv": 491.13,
+      "ltvToCac": 3.07,
+      "purchaseRate": 0.2212,
+      "share": 0.1676
+    },
+    {
+      "channelId": 2,
+      "label": "Channel 2",
+      "sessions": 4281,
+      "purchases": 943,
+      "addToCart": 2767,
+      "cartAbandons": 1824,
+      "revenue": 1711962.69,
+      "customers": 3379,
+      "newCustomers": 1417,
+      "syntheticSpend": 155870.0,
+      "cac": 110.0,
+      "ltv": 506.65,
+      "ltvToCac": 4.61,
+      "purchaseRate": 0.2203,
+      "share": 0.1712
+    },
+    {
+      "channelId": 3,
+      "label": "Channel 3",
+      "sessions": 4116,
+      "purchases": 932,
+      "addToCart": 2657,
+      "cartAbandons": 1725,
+      "revenue": 1675463.47,
+      "customers": 3310,
+      "newCustomers": 1380,
+      "syntheticSpend": 131100.0,
+      "cac": 95.0,
+      "ltv": 506.18,
+      "ltvToCac": 5.33,
+      "purchaseRate": 0.2264,
+      "share": 0.1646
+    },
+    {
+      "channelId": 4,
+      "label": "Channel 4",
+      "sessions": 4109,
+      "purchases": 890,
+      "addToCart": 2610,
+      "cartAbandons": 1720,
+      "revenue": 1599821.67,
+      "customers": 3281,
+      "newCustomers": 1361,
+      "syntheticSpend": 190540.0,
+      "cac": 140.0,
+      "ltv": 487.6,
+      "ltvToCac": 3.48,
+      "purchaseRate": 0.2166,
+      "share": 0.1644
+    },
+    {
+      "channelId": 5,
+      "label": "Channel 5",
+      "sessions": 4263,
+      "purchases": 1006,
+      "addToCart": 2743,
+      "cartAbandons": 1737,
+      "revenue": 1820823.79,
+      "customers": 3351,
+      "newCustomers": 1462,
+      "syntheticSpend": 116960.0,
+      "cac": 80.0,
+      "ltv": 543.37,
+      "ltvToCac": 6.79,
+      "purchaseRate": 0.236,
+      "share": 0.1705
+    }
+  ],
+  "devices": [
+    {
+      "deviceId": 0,
+      "label": "Desktop",
+      "sessions": 9887,
+      "addToCartRate": 0.6447,
+      "purchaseRate": 0.2246,
+      "cartToPurchaseRate": 0.3484,
+      "avgPages": 12.5,
+      "revenue": 4077146.03
+    },
+    {
+      "deviceId": 1,
+      "label": "Mobile",
+      "sessions": 12600,
+      "addToCartRate": 0.6439,
+      "purchaseRate": 0.2232,
+      "cartToPurchaseRate": 0.3466,
+      "avgPages": 12.5,
+      "revenue": 5006533.74
+    },
+    {
+      "deviceId": 2,
+      "label": "Tablet",
+      "sessions": 2513,
+      "addToCartRate": 0.6486,
+      "purchaseRate": 0.232,
+      "cartToPurchaseRate": 0.3577,
+      "avgPages": 12.6,
+      "revenue": 1032489.29
+    }
+  ],
+  "retention": {
+    "matrix": [
+      {
+        "cohortMonth": "2024-01",
+        "monthOffset": 0,
+        "retainedCustomers": 1914,
+        "retentionRate": 1.0,
+        "cohortSize": 1914,
+        "revenue": 904596.15
+      },
+      {
+        "cohortMonth": "2024-01",
+        "monthOffset": 1,
+        "retainedCustomers": 387,
+        "retentionRate": 0.2022,
+        "cohortSize": 1914,
+        "revenue": 168333.57
+      },
+      {
+        "cohortMonth": "2024-01",
+        "monthOffset": 2,
+        "retainedCustomers": 380,
+        "retentionRate": 0.1985,
+        "cohortSize": 1914,
+        "revenue": 144074.66
+      },
+      {
+        "cohortMonth": "2024-01",
+        "monthOffset": 3,
+        "retainedCustomers": 398,
+        "retentionRate": 0.2079,
+        "cohortSize": 1914,
+        "revenue": 206664.16
+      },
+      {
+        "cohortMonth": "2024-01",
+        "monthOffset": 4,
+        "retainedCustomers": 403,
+        "retentionRate": 0.2106,
+        "cohortSize": 1914,
+        "revenue": 190351.18
+      },
+      {
+        "cohortMonth": "2024-01",
+        "monthOffset": 5,
+        "retainedCustomers": 356,
+        "retentionRate": 0.186,
+        "cohortSize": 1914,
+        "revenue": 163620.79
+      },
+      {
+        "cohortMonth": "2024-01",
+        "monthOffset": 6,
+        "retainedCustomers": 398,
+        "retentionRate": 0.2079,
+        "cohortSize": 1914,
+        "revenue": 157894.28
+      },
+      {
+        "cohortMonth": "2024-01",
+        "monthOffset": 7,
+        "retainedCustomers": 392,
+        "retentionRate": 0.2048,
+        "cohortSize": 1914,
+        "revenue": 188935.91
+      },
+      {
+        "cohortMonth": "2024-01",
+        "monthOffset": 8,
+        "retainedCustomers": 392,
+        "retentionRate": 0.2048,
+        "cohortSize": 1914,
+        "revenue": 186855.99
+      },
+      {
+        "cohortMonth": "2024-01",
+        "monthOffset": 9,
+        "retainedCustomers": 431,
+        "retentionRate": 0.2252,
+        "cohortSize": 1914,
+        "revenue": 147185.95
+      },
+      {
+        "cohortMonth": "2024-01",
+        "monthOffset": 10,
+        "retainedCustomers": 370,
+        "retentionRate": 0.1933,
+        "cohortSize": 1914,
+        "revenue": 150421.83
+      },
+      {
+        "cohortMonth": "2024-01",
+        "monthOffset": 11,
+        "retainedCustomers": 396,
+        "retentionRate": 0.2069,
+        "cohortSize": 1914,
+        "revenue": 194620.52
+      },
+      {
+        "cohortMonth": "2024-02",
+        "monthOffset": 0,
+        "retainedCustomers": 1408,
+        "retentionRate": 1.0,
+        "cohortSize": 1408,
+        "revenue": 634520.77
+      },
+      {
+        "cohortMonth": "2024-02",
+        "monthOffset": 1,
+        "retainedCustomers": 312,
+        "retentionRate": 0.2216,
+        "cohortSize": 1408,
+        "revenue": 146847.44
+      },
+      {
+        "cohortMonth": "2024-02",
+        "monthOffset": 2,
+        "retainedCustomers": 289,
+        "retentionRate": 0.2053,
+        "cohortSize": 1408,
+        "revenue": 128449.5
+      },
+      {
+        "cohortMonth": "2024-02",
+        "monthOffset": 3,
+        "retainedCustomers": 282,
+        "retentionRate": 0.2003,
+        "cohortSize": 1408,
+        "revenue": 98818.56
+      },
+      {
+        "cohortMonth": "2024-02",
+        "monthOffset": 4,
+        "retainedCustomers": 293,
+        "retentionRate": 0.2081,
+        "cohortSize": 1408,
+        "revenue": 116522.37
+      },
+      {
+        "cohortMonth": "2024-02",
+        "monthOffset": 5,
+        "retainedCustomers": 296,
+        "retentionRate": 0.2102,
+        "cohortSize": 1408,
+        "revenue": 150423.06
+      },
+      {
+        "cohortMonth": "2024-02",
+        "monthOffset": 6,
+        "retainedCustomers": 285,
+        "retentionRate": 0.2024,
+        "cohortSize": 1408,
+        "revenue": 128661.35
+      },
+      {
+        "cohortMonth": "2024-02",
+        "monthOffset": 7,
+        "retainedCustomers": 286,
+        "retentionRate": 0.2031,
+        "cohortSize": 1408,
+        "revenue": 128404.14
+      },
+      {
+        "cohortMonth": "2024-02",
+        "monthOffset": 8,
+        "retainedCustomers": 291,
+        "retentionRate": 0.2067,
+        "cohortSize": 1408,
+        "revenue": 142290.15
+      },
+      {
+        "cohortMonth": "2024-02",
+        "monthOffset": 9,
+        "retainedCustomers": 283,
+        "retentionRate": 0.201,
+        "cohortSize": 1408,
+        "revenue": 111765.58
+      },
+      {
+        "cohortMonth": "2024-02",
+        "monthOffset": 10,
+        "retainedCustomers": 281,
+        "retentionRate": 0.1996,
+        "cohortSize": 1408,
+        "revenue": 129176.48
+      },
+      {
+        "cohortMonth": "2024-03",
+        "monthOffset": 0,
+        "retainedCustomers": 1173,
+        "retentionRate": 1.0,
+        "cohortSize": 1173,
+        "revenue": 597934.92
+      },
+      {
+        "cohortMonth": "2024-03",
+        "monthOffset": 1,
+        "retainedCustomers": 246,
+        "retentionRate": 0.2097,
+        "cohortSize": 1173,
+        "revenue": 125949.02
+      },
+      {
+        "cohortMonth": "2024-03",
+        "monthOffset": 2,
+        "retainedCustomers": 250,
+        "retentionRate": 0.2131,
+        "cohortSize": 1173,
+        "revenue": 127831.93
+      },
+      {
+        "cohortMonth": "2024-03",
+        "monthOffset": 3,
+        "retainedCustomers": 234,
+        "retentionRate": 0.1995,
+        "cohortSize": 1173,
+        "revenue": 125349.86
+      },
+      {
+        "cohortMonth": "2024-03",
+        "monthOffset": 4,
+        "retainedCustomers": 242,
+        "retentionRate": 0.2063,
+        "cohortSize": 1173,
+        "revenue": 103614.47
+      },
+      {
+        "cohortMonth": "2024-03",
+        "monthOffset": 5,
+        "retainedCustomers": 239,
+        "retentionRate": 0.2038,
+        "cohortSize": 1173,
+        "revenue": 122925.22
+      },
+      {
+        "cohortMonth": "2024-03",
+        "monthOffset": 6,
+        "retainedCustomers": 246,
+        "retentionRate": 0.2097,
+        "cohortSize": 1173,
+        "revenue": 85764.17
+      },
+      {
+        "cohortMonth": "2024-03",
+        "monthOffset": 7,
+        "retainedCustomers": 237,
+        "retentionRate": 0.202,
+        "cohortSize": 1173,
+        "revenue": 103118.36
+      },
+      {
+        "cohortMonth": "2024-03",
+        "monthOffset": 8,
+        "retainedCustomers": 239,
+        "retentionRate": 0.2038,
+        "cohortSize": 1173,
+        "revenue": 116873.94
+      },
+      {
+        "cohortMonth": "2024-03",
+        "monthOffset": 9,
+        "retainedCustomers": 251,
+        "retentionRate": 0.214,
+        "cohortSize": 1173,
+        "revenue": 132864.1
+      },
+      {
+        "cohortMonth": "2024-04",
+        "monthOffset": 0,
+        "retainedCustomers": 924,
+        "retentionRate": 1.0,
+        "cohortSize": 924,
+        "revenue": 359386.99
+      },
+      {
+        "cohortMonth": "2024-04",
+        "monthOffset": 1,
+        "retainedCustomers": 190,
+        "retentionRate": 0.2056,
+        "cohortSize": 924,
+        "revenue": 87476.69
+      },
+      {
+        "cohortMonth": "2024-04",
+        "monthOffset": 2,
+        "retainedCustomers": 197,
+        "retentionRate": 0.2132,
+        "cohortSize": 924,
+        "revenue": 87850.4
+      },
+      {
+        "cohortMonth": "2024-04",
+        "monthOffset": 3,
+        "retainedCustomers": 197,
+        "retentionRate": 0.2132,
+        "cohortSize": 924,
+        "revenue": 99066.02
+      },
+      {
+        "cohortMonth": "2024-04",
+        "monthOffset": 4,
+        "retainedCustomers": 222,
+        "retentionRate": 0.2403,
+        "cohortSize": 924,
+        "revenue": 93820.91
+      },
+      {
+        "cohortMonth": "2024-04",
+        "monthOffset": 5,
+        "retainedCustomers": 185,
+        "retentionRate": 0.2002,
+        "cohortSize": 924,
+        "revenue": 70764.16
+      },
+      {
+        "cohortMonth": "2024-04",
+        "monthOffset": 6,
+        "retainedCustomers": 187,
+        "retentionRate": 0.2024,
+        "cohortSize": 924,
+        "revenue": 81662.09
+      },
+      {
+        "cohortMonth": "2024-04",
+        "monthOffset": 7,
+        "retainedCustomers": 208,
+        "retentionRate": 0.2251,
+        "cohortSize": 924,
+        "revenue": 100758.78
+      },
+      {
+        "cohortMonth": "2024-04",
+        "monthOffset": 8,
+        "retainedCustomers": 180,
+        "retentionRate": 0.1948,
+        "cohortSize": 924,
+        "revenue": 73068.0
+      },
+      {
+        "cohortMonth": "2024-05",
+        "monthOffset": 0,
+        "retainedCustomers": 726,
+        "retentionRate": 1.0,
+        "cohortSize": 726,
+        "revenue": 320375.22
+      },
+      {
+        "cohortMonth": "2024-05",
+        "monthOffset": 1,
+        "retainedCustomers": 154,
+        "retentionRate": 0.2121,
+        "cohortSize": 726,
+        "revenue": 75075.71
+      },
+      {
+        "cohortMonth": "2024-05",
+        "monthOffset": 2,
+        "retainedCustomers": 152,
+        "retentionRate": 0.2094,
+        "cohortSize": 726,
+        "revenue": 51596.72
+      },
+      {
+        "cohortMonth": "2024-05",
+        "monthOffset": 3,
+        "retainedCustomers": 164,
+        "retentionRate": 0.2259,
+        "cohortSize": 726,
+        "revenue": 115829.05
+      },
+      {
+        "cohortMonth": "2024-05",
+        "monthOffset": 4,
+        "retainedCustomers": 163,
+        "retentionRate": 0.2245,
+        "cohortSize": 726,
+        "revenue": 87873.41
+      },
+      {
+        "cohortMonth": "2024-05",
+        "monthOffset": 5,
+        "retainedCustomers": 153,
+        "retentionRate": 0.2107,
+        "cohortSize": 726,
+        "revenue": 62818.11
+      },
+      {
+        "cohortMonth": "2024-05",
+        "monthOffset": 6,
+        "retainedCustomers": 144,
+        "retentionRate": 0.1983,
+        "cohortSize": 726,
+        "revenue": 47891.51
+      },
+      {
+        "cohortMonth": "2024-05",
+        "monthOffset": 7,
+        "retainedCustomers": 141,
+        "retentionRate": 0.1942,
+        "cohortSize": 726,
+        "revenue": 47199.95
+      },
+      {
+        "cohortMonth": "2024-06",
+        "monthOffset": 0,
+        "retainedCustomers": 571,
+        "retentionRate": 1.0,
+        "cohortSize": 571,
+        "revenue": 253040.93
+      },
+      {
+        "cohortMonth": "2024-06",
+        "monthOffset": 1,
+        "retainedCustomers": 119,
+        "retentionRate": 0.2084,
+        "cohortSize": 571,
+        "revenue": 51332.81
+      },
+      {
+        "cohortMonth": "2024-06",
+        "monthOffset": 2,
+        "retainedCustomers": 124,
+        "retentionRate": 0.2172,
+        "cohortSize": 571,
+        "revenue": 41006.19
+      },
+      {
+        "cohortMonth": "2024-06",
+        "monthOffset": 3,
+        "retainedCustomers": 121,
+        "retentionRate": 0.2119,
+        "cohortSize": 571,
+        "revenue": 55888.11
+      },
+      {
+        "cohortMonth": "2024-06",
+        "monthOffset": 4,
+        "retainedCustomers": 123,
+        "retentionRate": 0.2154,
+        "cohortSize": 571,
+        "revenue": 49392.95
+      },
+      {
+        "cohortMonth": "2024-06",
+        "monthOffset": 5,
+        "retainedCustomers": 126,
+        "retentionRate": 0.2207,
+        "cohortSize": 571,
+        "revenue": 60895.67
+      },
+      {
+        "cohortMonth": "2024-06",
+        "monthOffset": 6,
+        "retainedCustomers": 140,
+        "retentionRate": 0.2452,
+        "cohortSize": 571,
+        "revenue": 44763.41
+      },
+      {
+        "cohortMonth": "2024-07",
+        "monthOffset": 0,
+        "retainedCustomers": 476,
+        "retentionRate": 1.0,
+        "cohortSize": 476,
+        "revenue": 183296.61
+      },
+      {
+        "cohortMonth": "2024-07",
+        "monthOffset": 1,
+        "retainedCustomers": 91,
+        "retentionRate": 0.1912,
+        "cohortSize": 476,
+        "revenue": 51658.58
+      },
+      {
+        "cohortMonth": "2024-07",
+        "monthOffset": 2,
+        "retainedCustomers": 96,
+        "retentionRate": 0.2017,
+        "cohortSize": 476,
+        "revenue": 54500.23
+      },
+      {
+        "cohortMonth": "2024-07",
+        "monthOffset": 3,
+        "retainedCustomers": 95,
+        "retentionRate": 0.1996,
+        "cohortSize": 476,
+        "revenue": 45859.32
+      },
+      {
+        "cohortMonth": "2024-07",
+        "monthOffset": 4,
+        "retainedCustomers": 89,
+        "retentionRate": 0.187,
+        "cohortSize": 476,
+        "revenue": 27381.91
+      },
+      {
+        "cohortMonth": "2024-07",
+        "monthOffset": 5,
+        "retainedCustomers": 92,
+        "retentionRate": 0.1933,
+        "cohortSize": 476,
+        "revenue": 54556.46
+      },
+      {
+        "cohortMonth": "2024-08",
+        "monthOffset": 0,
+        "retainedCustomers": 391,
+        "retentionRate": 1.0,
+        "cohortSize": 391,
+        "revenue": 175135.49
+      },
+      {
+        "cohortMonth": "2024-08",
+        "monthOffset": 1,
+        "retainedCustomers": 92,
+        "retentionRate": 0.2353,
+        "cohortSize": 391,
+        "revenue": 46497.07
+      },
+      {
+        "cohortMonth": "2024-08",
+        "monthOffset": 2,
+        "retainedCustomers": 87,
+        "retentionRate": 0.2225,
+        "cohortSize": 391,
+        "revenue": 33304.35
+      },
+      {
+        "cohortMonth": "2024-08",
+        "monthOffset": 3,
+        "retainedCustomers": 80,
+        "retentionRate": 0.2046,
+        "cohortSize": 391,
+        "revenue": 33023.7
+      },
+      {
+        "cohortMonth": "2024-08",
+        "monthOffset": 4,
+        "retainedCustomers": 81,
+        "retentionRate": 0.2072,
+        "cohortSize": 391,
+        "revenue": 31005.4
+      },
+      {
+        "cohortMonth": "2024-09",
+        "monthOffset": 0,
+        "retainedCustomers": 292,
+        "retentionRate": 1.0,
+        "cohortSize": 292,
+        "revenue": 187352.83
+      },
+      {
+        "cohortMonth": "2024-09",
+        "monthOffset": 1,
+        "retainedCustomers": 54,
+        "retentionRate": 0.1849,
+        "cohortSize": 292,
+        "revenue": 29982.98
+      },
+      {
+        "cohortMonth": "2024-09",
+        "monthOffset": 2,
+        "retainedCustomers": 58,
+        "retentionRate": 0.1986,
+        "cohortSize": 292,
+        "revenue": 31843.29
+      },
+      {
+        "cohortMonth": "2024-09",
+        "monthOffset": 3,
+        "retainedCustomers": 72,
+        "retentionRate": 0.2466,
+        "cohortSize": 292,
+        "revenue": 31801.5
+      },
+      {
+        "cohortMonth": "2024-10",
+        "monthOffset": 0,
+        "retainedCustomers": 248,
+        "retentionRate": 1.0,
+        "cohortSize": 248,
+        "revenue": 107327.83
+      },
+      {
+        "cohortMonth": "2024-10",
+        "monthOffset": 1,
+        "retainedCustomers": 44,
+        "retentionRate": 0.1774,
+        "cohortSize": 248,
+        "revenue": 18001.47
+      },
+      {
+        "cohortMonth": "2024-10",
+        "monthOffset": 2,
+        "retainedCustomers": 49,
+        "retentionRate": 0.1976,
+        "cohortSize": 248,
+        "revenue": 17323.97
+      },
+      {
+        "cohortMonth": "2024-11",
+        "monthOffset": 0,
+        "retainedCustomers": 154,
+        "retentionRate": 1.0,
+        "cohortSize": 154,
+        "revenue": 72626.79
+      },
+      {
+        "cohortMonth": "2024-11",
+        "monthOffset": 1,
+        "retainedCustomers": 33,
+        "retentionRate": 0.2143,
+        "cohortSize": 154,
+        "revenue": 21638.9
+      },
+      {
+        "cohortMonth": "2024-12",
+        "monthOffset": 0,
+        "retainedCustomers": 165,
+        "retentionRate": 1.0,
+        "cohortSize": 165,
+        "revenue": 81556.21
+      }
+    ],
+    "cohortTrend": [
+      {
+        "cohortMonth": "2024-01",
+        "cohortSize": 1914
+      },
+      {
+        "cohortMonth": "2024-02",
+        "cohortSize": 1408
+      },
+      {
+        "cohortMonth": "2024-03",
+        "cohortSize": 1173
+      },
+      {
+        "cohortMonth": "2024-04",
+        "cohortSize": 924
+      },
+      {
+        "cohortMonth": "2024-05",
+        "cohortSize": 726
+      },
+      {
+        "cohortMonth": "2024-06",
+        "cohortSize": 571
+      },
+      {
+        "cohortMonth": "2024-07",
+        "cohortSize": 476
+      },
+      {
+        "cohortMonth": "2024-08",
+        "cohortSize": 391
+      },
+      {
+        "cohortMonth": "2024-09",
+        "cohortSize": 292
+      },
+      {
+        "cohortMonth": "2024-10",
+        "cohortSize": 248
+      },
+      {
+        "cohortMonth": "2024-11",
+        "cohortSize": 154
+      },
+      {
+        "cohortMonth": "2024-12",
+        "cohortSize": 165
+      }
+    ]
+  },
+  "phoneUsage": {
+    "byOS": [
+      {
+        "os": "Android",
+        "avgSpend": 5082.22,
+        "avgScreen": 6.6,
+        "share": 0.5005
+      },
+      {
+        "os": "iOS",
+        "avgSpend": 5069.19,
+        "avgScreen": 6.5,
+        "share": 0.4995
+      }
+    ],
+    "byLocation": [
+      {
+        "location": "Pune",
+        "avgSpend": 5192.67,
+        "users": 1815
+      },
+      {
+        "location": "Bangalore",
+        "avgSpend": 5149.49,
+        "users": 1786
+      },
+      {
+        "location": "Jaipur",
+        "avgSpend": 5109.52,
+        "users": 1824
+      },
+      {
+        "location": "Lucknow",
+        "avgSpend": 5089.83,
+        "users": 1700
+      },
+      {
+        "location": "Delhi",
+        "avgSpend": 5079.65,
+        "users": 1775
+      },
+      {
+        "location": "Kolkata",
+        "avgSpend": 5060.18,
+        "users": 1789
+      },
+      {
+        "location": "Mumbai",
+        "avgSpend": 5051.75,
+        "users": 1722
+      },
+      {
+        "location": "Chennai",
+        "avgSpend": 5042.38,
+        "users": 1790
+      },
+      {
+        "location": "Hyderabad",
+        "avgSpend": 5006.03,
+        "users": 1700
+      },
+      {
+        "location": "Ahmedabad",
+        "avgSpend": 4969.48,
+        "users": 1785
+      }
+    ],
+    "byPrimaryUse": [
+      {
+        "primaryUse": "Entertainment",
+        "avgSpend": 5155.78,
+        "users": 3451
+      },
+      {
+        "primaryUse": "Work",
+        "avgSpend": 5086.35,
+        "users": 3557
+      },
+      {
+        "primaryUse": "Gaming",
+        "avgSpend": 5064.81,
+        "users": 3576
+      },
+      {
+        "primaryUse": "Education",
+        "avgSpend": 5055.28,
+        "users": 3601
+      },
+      {
+        "primaryUse": "Social Media",
+        "avgSpend": 5018.11,
+        "users": 3501
+      }
+    ],
+    "screenVsSpend": [
+      {
+        "screenTime": 10.4,
+        "spend": 8676,
+        "os": "Android",
+        "apps": 13
+      },
+      {
+        "screenTime": 8.9,
+        "spend": 7374,
+        "os": "iOS",
+        "apps": 97
+      },
+      {
+        "screenTime": 1.4,
+        "spend": 8474,
+        "os": "Android",
+        "apps": 43
+      },
+      {
+        "screenTime": 2.5,
+        "spend": 5482,
+        "os": "iOS",
+        "apps": 17
+      },
+      {
+        "screenTime": 3.6,
+        "spend": 891,
+        "os": "iOS",
+        "apps": 38
+      },
+      {
+        "screenTime": 9.9,
+        "spend": 4721,
+        "os": "Android",
+        "apps": 50
+      },
+      {
+        "screenTime": 4.9,
+        "spend": 9630,
+        "os": "iOS",
+        "apps": 115
+      },
+      {
+        "screenTime": 2.4,
+        "spend": 5783,
+        "os": "iOS",
+        "apps": 191
+      },
+      {
+        "screenTime": 8.3,
+        "spend": 7413,
+        "os": "Android",
+        "apps": 89
+      },
+      {
+        "screenTime": 4.8,
+        "spend": 4620,
+        "os": "iOS",
+        "apps": 172
+      },
+      {
+        "screenTime": 11.2,
+        "spend": 9517,
+        "os": "iOS",
+        "apps": 191
+      },
+      {
+        "screenTime": 3.8,
+        "spend": 1761,
+        "os": "Android",
+        "apps": 46
+      },
+      {
+        "screenTime": 2.8,
+        "spend": 554,
+        "os": "iOS",
+        "apps": 27
+      },
+      {
+        "screenTime": 9.5,
+        "spend": 2609,
+        "os": "Android",
+        "apps": 143
+      },
+      {
+        "screenTime": 8.3,
+        "spend": 9191,
+        "os": "iOS",
+        "apps": 155
+      },
+      {
+        "screenTime": 3.3,
+        "spend": 2767,
+        "os": "Android",
+        "apps": 89
+      },
+      {
+        "screenTime": 8.3,
+        "spend": 157,
+        "os": "Android",
+        "apps": 134
+      },
+      {
+        "screenTime": 9.2,
+        "spend": 7800,
+        "os": "Android",
+        "apps": 25
+      },
+      {
+        "screenTime": 3.8,
+        "spend": 1899,
+        "os": "Android",
+        "apps": 152
+      },
+      {
+        "screenTime": 9.9,
+        "spend": 3266,
+        "os": "Android",
+        "apps": 167
+      },
+      {
+        "screenTime": 7.0,
+        "spend": 5949,
+        "os": "iOS",
+        "apps": 19
+      },
+      {
+        "screenTime": 4.8,
+        "spend": 2867,
+        "os": "Android",
+        "apps": 29
+      },
+      {
+        "screenTime": 3.6,
+        "spend": 1294,
+        "os": "iOS",
+        "apps": 20
+      },
+      {
+        "screenTime": 7.9,
+        "spend": 6645,
+        "os": "iOS",
+        "apps": 186
+      },
+      {
+        "screenTime": 4.3,
+        "spend": 3626,
+        "os": "iOS",
+        "apps": 197
+      },
+      {
+        "screenTime": 2.8,
+        "spend": 7591,
+        "os": "iOS",
+        "apps": 45
+      },
+      {
+        "screenTime": 6.0,
+        "spend": 6132,
+        "os": "iOS",
+        "apps": 135
+      },
+      {
+        "screenTime": 1.9,
+        "spend": 2939,
+        "os": "Android",
+        "apps": 52
+      },
+      {
+        "screenTime": 7.5,
+        "spend": 7721,
+        "os": "iOS",
+        "apps": 179
+      },
+      {
+        "screenTime": 2.4,
+        "spend": 6519,
+        "os": "Android",
+        "apps": 174
+      },
+      {
+        "screenTime": 1.1,
+        "spend": 697,
+        "os": "Android",
+        "apps": 49
+      },
+      {
+        "screenTime": 10.1,
+        "spend": 3933,
+        "os": "iOS",
+        "apps": 132
+      },
+      {
+        "screenTime": 8.1,
+        "spend": 6242,
+        "os": "Android",
+        "apps": 155
+      },
+      {
+        "screenTime": 1.0,
+        "spend": 6985,
+        "os": "iOS",
+        "apps": 77
+      },
+      {
+        "screenTime": 10.5,
+        "spend": 597,
+        "os": "iOS",
+        "apps": 18
+      },
+      {
+        "screenTime": 9.2,
+        "spend": 8991,
+        "os": "Android",
+        "apps": 22
+      },
+      {
+        "screenTime": 8.5,
+        "spend": 1538,
+        "os": "iOS",
+        "apps": 84
+      },
+      {
+        "screenTime": 2.9,
+        "spend": 4571,
+        "os": "Android",
+        "apps": 169
+      },
+      {
+        "screenTime": 8.7,
+        "spend": 2567,
+        "os": "Android",
+        "apps": 82
+      },
+      {
+        "screenTime": 2.9,
+        "spend": 4053,
+        "os": "Android",
+        "apps": 166
+      },
+      {
+        "screenTime": 5.8,
+        "spend": 8610,
+        "os": "Android",
+        "apps": 38
+      },
+      {
+        "screenTime": 1.9,
+        "spend": 7384,
+        "os": "iOS",
+        "apps": 29
+      },
+      {
+        "screenTime": 10.2,
+        "spend": 9113,
+        "os": "iOS",
+        "apps": 87
+      },
+      {
+        "screenTime": 8.3,
+        "spend": 7094,
+        "os": "iOS",
+        "apps": 45
+      },
+      {
+        "screenTime": 4.2,
+        "spend": 1769,
+        "os": "Android",
+        "apps": 36
+      },
+      {
+        "screenTime": 2.7,
+        "spend": 9359,
+        "os": "Android",
+        "apps": 76
+      },
+      {
+        "screenTime": 3.3,
+        "spend": 5276,
+        "os": "Android",
+        "apps": 65
+      },
+      {
+        "screenTime": 4.0,
+        "spend": 8124,
+        "os": "Android",
+        "apps": 160
+      },
+      {
+        "screenTime": 8.2,
+        "spend": 3911,
+        "os": "Android",
+        "apps": 130
+      },
+      {
+        "screenTime": 1.3,
+        "spend": 9388,
+        "os": "Android",
+        "apps": 56
+      },
+      {
+        "screenTime": 8.8,
+        "spend": 8834,
+        "os": "Android",
+        "apps": 21
+      },
+      {
+        "screenTime": 3.7,
+        "spend": 8779,
+        "os": "iOS",
+        "apps": 80
+      },
+      {
+        "screenTime": 1.6,
+        "spend": 4082,
+        "os": "Android",
+        "apps": 67
+      },
+      {
+        "screenTime": 8.0,
+        "spend": 987,
+        "os": "iOS",
+        "apps": 188
+      },
+      {
+        "screenTime": 3.9,
+        "spend": 5117,
+        "os": "Android",
+        "apps": 25
+      },
+      {
+        "screenTime": 7.0,
+        "spend": 6853,
+        "os": "iOS",
+        "apps": 79
+      },
+      {
+        "screenTime": 1.7,
+        "spend": 203,
+        "os": "iOS",
+        "apps": 166
+      },
+      {
+        "screenTime": 4.4,
+        "spend": 1294,
+        "os": "iOS",
+        "apps": 162
+      },
+      {
+        "screenTime": 11.8,
+        "spend": 4534,
+        "os": "iOS",
+        "apps": 116
+      },
+      {
+        "screenTime": 10.6,
+        "spend": 4719,
+        "os": "iOS",
+        "apps": 111
+      },
+      {
+        "screenTime": 1.6,
+        "spend": 337,
+        "os": "iOS",
+        "apps": 145
+      },
+      {
+        "screenTime": 8.7,
+        "spend": 494,
+        "os": "Android",
+        "apps": 13
+      },
+      {
+        "screenTime": 4.2,
+        "spend": 2741,
+        "os": "Android",
+        "apps": 194
+      },
+      {
+        "screenTime": 5.9,
+        "spend": 9370,
+        "os": "iOS",
+        "apps": 39
+      },
+      {
+        "screenTime": 3.0,
+        "spend": 9494,
+        "os": "iOS",
+        "apps": 18
+      },
+      {
+        "screenTime": 4.7,
+        "spend": 6444,
+        "os": "iOS",
+        "apps": 69
+      },
+      {
+        "screenTime": 7.0,
+        "spend": 2640,
+        "os": "iOS",
+        "apps": 49
+      },
+      {
+        "screenTime": 6.1,
+        "spend": 2759,
+        "os": "Android",
+        "apps": 173
+      },
+      {
+        "screenTime": 3.1,
+        "spend": 8891,
+        "os": "iOS",
+        "apps": 70
+      },
+      {
+        "screenTime": 10.6,
+        "spend": 9132,
+        "os": "iOS",
+        "apps": 168
+      },
+      {
+        "screenTime": 8.9,
+        "spend": 4286,
+        "os": "iOS",
+        "apps": 75
+      },
+      {
+        "screenTime": 6.3,
+        "spend": 5416,
+        "os": "Android",
+        "apps": 151
+      },
+      {
+        "screenTime": 1.7,
+        "spend": 9259,
+        "os": "iOS",
+        "apps": 62
+      },
+      {
+        "screenTime": 8.8,
+        "spend": 5779,
+        "os": "Android",
+        "apps": 190
+      },
+      {
+        "screenTime": 8.4,
+        "spend": 3881,
+        "os": "Android",
+        "apps": 180
+      },
+      {
+        "screenTime": 1.8,
+        "spend": 4871,
+        "os": "Android",
+        "apps": 175
+      },
+      {
+        "screenTime": 11.1,
+        "spend": 8870,
+        "os": "iOS",
+        "apps": 71
+      },
+      {
+        "screenTime": 8.6,
+        "spend": 9695,
+        "os": "iOS",
+        "apps": 74
+      },
+      {
+        "screenTime": 7.0,
+        "spend": 7236,
+        "os": "iOS",
+        "apps": 73
+      },
+      {
+        "screenTime": 8.9,
+        "spend": 8699,
+        "os": "iOS",
+        "apps": 70
+      },
+      {
+        "screenTime": 10.4,
+        "spend": 6153,
+        "os": "Android",
+        "apps": 150
+      },
+      {
+        "screenTime": 10.7,
+        "spend": 8091,
+        "os": "Android",
+        "apps": 193
+      },
+      {
+        "screenTime": 8.5,
+        "spend": 7453,
+        "os": "iOS",
+        "apps": 47
+      },
+      {
+        "screenTime": 11.8,
+        "spend": 6115,
+        "os": "Android",
+        "apps": 172
+      },
+      {
+        "screenTime": 11.9,
+        "spend": 4494,
+        "os": "iOS",
+        "apps": 126
+      },
+      {
+        "screenTime": 2.1,
+        "spend": 8369,
+        "os": "Android",
+        "apps": 100
+      },
+      {
+        "screenTime": 6.8,
+        "spend": 6898,
+        "os": "Android",
+        "apps": 147
+      },
+      {
+        "screenTime": 8.7,
+        "spend": 9126,
+        "os": "iOS",
+        "apps": 108
+      },
+      {
+        "screenTime": 11.4,
+        "spend": 814,
+        "os": "Android",
+        "apps": 172
+      },
+      {
+        "screenTime": 2.2,
+        "spend": 3597,
+        "os": "Android",
+        "apps": 145
+      },
+      {
+        "screenTime": 8.9,
+        "spend": 1796,
+        "os": "iOS",
+        "apps": 81
+      },
+      {
+        "screenTime": 9.0,
+        "spend": 5358,
+        "os": "Android",
+        "apps": 42
+      },
+      {
+        "screenTime": 4.4,
+        "spend": 795,
+        "os": "Android",
+        "apps": 191
+      },
+      {
+        "screenTime": 3.4,
+        "spend": 2469,
+        "os": "Android",
+        "apps": 189
+      },
+      {
+        "screenTime": 7.0,
+        "spend": 3705,
+        "os": "iOS",
+        "apps": 77
+      },
+      {
+        "screenTime": 6.5,
+        "spend": 6696,
+        "os": "Android",
+        "apps": 178
+      },
+      {
+        "screenTime": 6.0,
+        "spend": 4916,
+        "os": "iOS",
+        "apps": 32
+      },
+      {
+        "screenTime": 10.8,
+        "spend": 5975,
+        "os": "Android",
+        "apps": 167
+      },
+      {
+        "screenTime": 7.4,
+        "spend": 9329,
+        "os": "Android",
+        "apps": 89
+      },
+      {
+        "screenTime": 10.9,
+        "spend": 7201,
+        "os": "Android",
+        "apps": 141
+      },
+      {
+        "screenTime": 7.0,
+        "spend": 5604,
+        "os": "iOS",
+        "apps": 111
+      },
+      {
+        "screenTime": 10.7,
+        "spend": 5576,
+        "os": "Android",
+        "apps": 122
+      },
+      {
+        "screenTime": 4.9,
+        "spend": 268,
+        "os": "iOS",
+        "apps": 118
+      },
+      {
+        "screenTime": 2.5,
+        "spend": 6142,
+        "os": "Android",
+        "apps": 119
+      },
+      {
+        "screenTime": 2.2,
+        "spend": 9259,
+        "os": "iOS",
+        "apps": 72
+      },
+      {
+        "screenTime": 6.0,
+        "spend": 6843,
+        "os": "iOS",
+        "apps": 61
+      },
+      {
+        "screenTime": 4.8,
+        "spend": 3267,
+        "os": "iOS",
+        "apps": 142
+      },
+      {
+        "screenTime": 11.7,
+        "spend": 1332,
+        "os": "iOS",
+        "apps": 69
+      },
+      {
+        "screenTime": 10.5,
+        "spend": 343,
+        "os": "iOS",
+        "apps": 166
+      },
+      {
+        "screenTime": 4.7,
+        "spend": 840,
+        "os": "Android",
+        "apps": 81
+      },
+      {
+        "screenTime": 2.0,
+        "spend": 513,
+        "os": "Android",
+        "apps": 109
+      },
+      {
+        "screenTime": 6.1,
+        "spend": 9861,
+        "os": "iOS",
+        "apps": 69
+      },
+      {
+        "screenTime": 6.4,
+        "spend": 5440,
+        "os": "iOS",
+        "apps": 113
+      },
+      {
+        "screenTime": 7.1,
+        "spend": 9116,
+        "os": "Android",
+        "apps": 31
+      },
+      {
+        "screenTime": 8.4,
+        "spend": 9500,
+        "os": "Android",
+        "apps": 172
+      },
+      {
+        "screenTime": 6.4,
+        "spend": 2936,
+        "os": "Android",
+        "apps": 50
+      },
+      {
+        "screenTime": 6.4,
+        "spend": 6814,
+        "os": "Android",
+        "apps": 186
+      },
+      {
+        "screenTime": 1.9,
+        "spend": 4776,
+        "os": "Android",
+        "apps": 16
+      },
+      {
+        "screenTime": 8.2,
+        "spend": 2201,
+        "os": "iOS",
+        "apps": 156
+      },
+      {
+        "screenTime": 11.3,
+        "spend": 9804,
+        "os": "Android",
+        "apps": 171
+      },
+      {
+        "screenTime": 8.1,
+        "spend": 3122,
+        "os": "Android",
+        "apps": 59
+      },
+      {
+        "screenTime": 5.3,
+        "spend": 1424,
+        "os": "Android",
+        "apps": 116
+      },
+      {
+        "screenTime": 3.2,
+        "spend": 8932,
+        "os": "Android",
+        "apps": 150
+      },
+      {
+        "screenTime": 3.9,
+        "spend": 1904,
+        "os": "Android",
+        "apps": 88
+      },
+      {
+        "screenTime": 6.6,
+        "spend": 3047,
+        "os": "Android",
+        "apps": 78
+      },
+      {
+        "screenTime": 2.6,
+        "spend": 6464,
+        "os": "iOS",
+        "apps": 133
+      },
+      {
+        "screenTime": 9.6,
+        "spend": 8074,
+        "os": "iOS",
+        "apps": 138
+      },
+      {
+        "screenTime": 5.6,
+        "spend": 6166,
+        "os": "Android",
+        "apps": 85
+      },
+      {
+        "screenTime": 3.4,
+        "spend": 967,
+        "os": "Android",
+        "apps": 121
+      },
+      {
+        "screenTime": 4.1,
+        "spend": 7700,
+        "os": "Android",
+        "apps": 111
+      },
+      {
+        "screenTime": 10.5,
+        "spend": 6462,
+        "os": "iOS",
+        "apps": 156
+      },
+      {
+        "screenTime": 4.7,
+        "spend": 9597,
+        "os": "iOS",
+        "apps": 89
+      },
+      {
+        "screenTime": 9.9,
+        "spend": 888,
+        "os": "iOS",
+        "apps": 36
+      },
+      {
+        "screenTime": 5.5,
+        "spend": 5252,
+        "os": "iOS",
+        "apps": 79
+      },
+      {
+        "screenTime": 11.4,
+        "spend": 9783,
+        "os": "Android",
+        "apps": 66
+      },
+      {
+        "screenTime": 8.2,
+        "spend": 4901,
+        "os": "iOS",
+        "apps": 183
+      },
+      {
+        "screenTime": 9.1,
+        "spend": 1956,
+        "os": "iOS",
+        "apps": 167
+      },
+      {
+        "screenTime": 2.7,
+        "spend": 3765,
+        "os": "iOS",
+        "apps": 132
+      },
+      {
+        "screenTime": 9.9,
+        "spend": 7502,
+        "os": "Android",
+        "apps": 164
+      },
+      {
+        "screenTime": 10.6,
+        "spend": 3226,
+        "os": "Android",
+        "apps": 177
+      },
+      {
+        "screenTime": 5.6,
+        "spend": 6840,
+        "os": "Android",
+        "apps": 109
+      },
+      {
+        "screenTime": 3.6,
+        "spend": 1949,
+        "os": "Android",
+        "apps": 47
+      },
+      {
+        "screenTime": 6.4,
+        "spend": 7344,
+        "os": "iOS",
+        "apps": 15
+      },
+      {
+        "screenTime": 3.7,
+        "spend": 9444,
+        "os": "iOS",
+        "apps": 77
+      },
+      {
+        "screenTime": 5.6,
+        "spend": 146,
+        "os": "Android",
+        "apps": 63
+      },
+      {
+        "screenTime": 4.1,
+        "spend": 3385,
+        "os": "Android",
+        "apps": 161
+      },
+      {
+        "screenTime": 8.0,
+        "spend": 5553,
+        "os": "iOS",
+        "apps": 10
+      },
+      {
+        "screenTime": 3.6,
+        "spend": 5214,
+        "os": "Android",
+        "apps": 200
+      },
+      {
+        "screenTime": 10.3,
+        "spend": 2946,
+        "os": "Android",
+        "apps": 138
+      },
+      {
+        "screenTime": 2.4,
+        "spend": 1315,
+        "os": "iOS",
+        "apps": 114
+      },
+      {
+        "screenTime": 9.6,
+        "spend": 4659,
+        "os": "Android",
+        "apps": 19
+      },
+      {
+        "screenTime": 3.9,
+        "spend": 7920,
+        "os": "iOS",
+        "apps": 134
+      },
+      {
+        "screenTime": 10.0,
+        "spend": 6572,
+        "os": "iOS",
+        "apps": 187
+      },
+      {
+        "screenTime": 4.6,
+        "spend": 5131,
+        "os": "Android",
+        "apps": 73
+      },
+      {
+        "screenTime": 6.7,
+        "spend": 2541,
+        "os": "Android",
+        "apps": 96
+      },
+      {
+        "screenTime": 6.2,
+        "spend": 7882,
+        "os": "Android",
+        "apps": 148
+      },
+      {
+        "screenTime": 8.5,
+        "spend": 5974,
+        "os": "Android",
+        "apps": 110
+      },
+      {
+        "screenTime": 3.0,
+        "spend": 1507,
+        "os": "iOS",
+        "apps": 170
+      },
+      {
+        "screenTime": 11.2,
+        "spend": 4793,
+        "os": "iOS",
+        "apps": 19
+      },
+      {
+        "screenTime": 2.7,
+        "spend": 5286,
+        "os": "iOS",
+        "apps": 155
+      },
+      {
+        "screenTime": 6.4,
+        "spend": 1489,
+        "os": "iOS",
+        "apps": 177
+      },
+      {
+        "screenTime": 10.2,
+        "spend": 7141,
+        "os": "iOS",
+        "apps": 30
+      },
+      {
+        "screenTime": 1.5,
+        "spend": 2296,
+        "os": "Android",
+        "apps": 141
+      },
+      {
+        "screenTime": 3.3,
+        "spend": 1382,
+        "os": "iOS",
+        "apps": 128
+      },
+      {
+        "screenTime": 5.7,
+        "spend": 6765,
+        "os": "Android",
+        "apps": 55
+      },
+      {
+        "screenTime": 5.1,
+        "spend": 7019,
+        "os": "Android",
+        "apps": 29
+      },
+      {
+        "screenTime": 9.4,
+        "spend": 2786,
+        "os": "iOS",
+        "apps": 22
+      },
+      {
+        "screenTime": 11.5,
+        "spend": 8413,
+        "os": "Android",
+        "apps": 132
+      },
+      {
+        "screenTime": 8.4,
+        "spend": 1111,
+        "os": "Android",
+        "apps": 198
+      },
+      {
+        "screenTime": 8.0,
+        "spend": 2067,
+        "os": "Android",
+        "apps": 109
+      },
+      {
+        "screenTime": 6.2,
+        "spend": 3847,
+        "os": "Android",
+        "apps": 73
+      },
+      {
+        "screenTime": 9.4,
+        "spend": 569,
+        "os": "iOS",
+        "apps": 26
+      },
+      {
+        "screenTime": 6.0,
+        "spend": 5383,
+        "os": "Android",
+        "apps": 60
+      },
+      {
+        "screenTime": 11.3,
+        "spend": 4189,
+        "os": "iOS",
+        "apps": 184
+      },
+      {
+        "screenTime": 8.4,
+        "spend": 2753,
+        "os": "iOS",
+        "apps": 122
+      },
+      {
+        "screenTime": 1.3,
+        "spend": 7065,
+        "os": "Android",
+        "apps": 165
+      },
+      {
+        "screenTime": 1.3,
+        "spend": 9209,
+        "os": "Android",
+        "apps": 120
+      },
+      {
+        "screenTime": 2.5,
+        "spend": 9739,
+        "os": "iOS",
+        "apps": 32
+      },
+      {
+        "screenTime": 9.3,
+        "spend": 5338,
+        "os": "iOS",
+        "apps": 97
+      },
+      {
+        "screenTime": 7.5,
+        "spend": 7816,
+        "os": "iOS",
+        "apps": 188
+      },
+      {
+        "screenTime": 3.4,
+        "spend": 8713,
+        "os": "Android",
+        "apps": 192
+      },
+      {
+        "screenTime": 5.1,
+        "spend": 8343,
+        "os": "iOS",
+        "apps": 23
+      },
+      {
+        "screenTime": 4.5,
+        "spend": 9103,
+        "os": "Android",
+        "apps": 123
+      },
+      {
+        "screenTime": 5.9,
+        "spend": 8118,
+        "os": "Android",
+        "apps": 162
+      },
+      {
+        "screenTime": 6.6,
+        "spend": 4664,
+        "os": "iOS",
+        "apps": 61
+      },
+      {
+        "screenTime": 9.9,
+        "spend": 1364,
+        "os": "Android",
+        "apps": 13
+      },
+      {
+        "screenTime": 7.8,
+        "spend": 4373,
+        "os": "iOS",
+        "apps": 111
+      },
+      {
+        "screenTime": 4.6,
+        "spend": 6875,
+        "os": "Android",
+        "apps": 71
+      },
+      {
+        "screenTime": 5.8,
+        "spend": 1288,
+        "os": "iOS",
+        "apps": 129
+      },
+      {
+        "screenTime": 1.2,
+        "spend": 3430,
+        "os": "Android",
+        "apps": 48
+      },
+      {
+        "screenTime": 9.2,
+        "spend": 6916,
+        "os": "Android",
+        "apps": 62
+      },
+      {
+        "screenTime": 5.2,
+        "spend": 4345,
+        "os": "Android",
+        "apps": 97
+      },
+      {
+        "screenTime": 10.6,
+        "spend": 7064,
+        "os": "Android",
+        "apps": 99
+      },
+      {
+        "screenTime": 2.2,
+        "spend": 3175,
+        "os": "iOS",
+        "apps": 37
+      },
+      {
+        "screenTime": 6.4,
+        "spend": 5010,
+        "os": "Android",
+        "apps": 33
+      },
+      {
+        "screenTime": 4.4,
+        "spend": 4193,
+        "os": "iOS",
+        "apps": 105
+      },
+      {
+        "screenTime": 10.1,
+        "spend": 1275,
+        "os": "iOS",
+        "apps": 65
+      },
+      {
+        "screenTime": 1.8,
+        "spend": 5220,
+        "os": "iOS",
+        "apps": 181
+      },
+      {
+        "screenTime": 9.7,
+        "spend": 5413,
+        "os": "iOS",
+        "apps": 179
+      },
+      {
+        "screenTime": 9.9,
+        "spend": 7983,
+        "os": "Android",
+        "apps": 51
+      },
+      {
+        "screenTime": 1.3,
+        "spend": 1714,
+        "os": "iOS",
+        "apps": 42
+      },
+      {
+        "screenTime": 5.8,
+        "spend": 3307,
+        "os": "Android",
+        "apps": 161
+      },
+      {
+        "screenTime": 5.7,
+        "spend": 1985,
+        "os": "Android",
+        "apps": 90
+      },
+      {
+        "screenTime": 11.1,
+        "spend": 6459,
+        "os": "Android",
+        "apps": 101
+      },
+      {
+        "screenTime": 6.2,
+        "spend": 8078,
+        "os": "iOS",
+        "apps": 86
+      },
+      {
+        "screenTime": 5.3,
+        "spend": 8798,
+        "os": "Android",
+        "apps": 43
+      },
+      {
+        "screenTime": 3.6,
+        "spend": 4919,
+        "os": "Android",
+        "apps": 45
+      },
+      {
+        "screenTime": 6.2,
+        "spend": 3657,
+        "os": "iOS",
+        "apps": 159
+      },
+      {
+        "screenTime": 7.2,
+        "spend": 1326,
+        "os": "iOS",
+        "apps": 89
+      },
+      {
+        "screenTime": 9.6,
+        "spend": 9101,
+        "os": "Android",
+        "apps": 131
+      },
+      {
+        "screenTime": 6.1,
+        "spend": 6253,
+        "os": "iOS",
+        "apps": 19
+      },
+      {
+        "screenTime": 7.2,
+        "spend": 8438,
+        "os": "Android",
+        "apps": 163
+      },
+      {
+        "screenTime": 1.9,
+        "spend": 2768,
+        "os": "Android",
+        "apps": 68
+      },
+      {
+        "screenTime": 5.1,
+        "spend": 5856,
+        "os": "Android",
+        "apps": 55
+      },
+      {
+        "screenTime": 9.9,
+        "spend": 8742,
+        "os": "iOS",
+        "apps": 40
+      },
+      {
+        "screenTime": 6.3,
+        "spend": 9117,
+        "os": "iOS",
+        "apps": 156
+      },
+      {
+        "screenTime": 11.5,
+        "spend": 982,
+        "os": "Android",
+        "apps": 166
+      },
+      {
+        "screenTime": 8.9,
+        "spend": 4866,
+        "os": "Android",
+        "apps": 151
+      },
+      {
+        "screenTime": 2.5,
+        "spend": 7090,
+        "os": "iOS",
+        "apps": 15
+      },
+      {
+        "screenTime": 11.3,
+        "spend": 7958,
+        "os": "iOS",
+        "apps": 10
+      },
+      {
+        "screenTime": 6.1,
+        "spend": 8764,
+        "os": "Android",
+        "apps": 19
+      },
+      {
+        "screenTime": 3.6,
+        "spend": 8043,
+        "os": "iOS",
+        "apps": 151
+      },
+      {
+        "screenTime": 6.8,
+        "spend": 9981,
+        "os": "iOS",
+        "apps": 125
+      },
+      {
+        "screenTime": 2.5,
+        "spend": 4389,
+        "os": "iOS",
+        "apps": 103
+      },
+      {
+        "screenTime": 11.8,
+        "spend": 2805,
+        "os": "iOS",
+        "apps": 170
+      },
+      {
+        "screenTime": 5.4,
+        "spend": 2706,
+        "os": "iOS",
+        "apps": 172
+      },
+      {
+        "screenTime": 8.5,
+        "spend": 1803,
+        "os": "iOS",
+        "apps": 12
+      },
+      {
+        "screenTime": 4.0,
+        "spend": 8661,
+        "os": "iOS",
+        "apps": 102
+      },
+      {
+        "screenTime": 7.9,
+        "spend": 4742,
+        "os": "Android",
+        "apps": 137
+      },
+      {
+        "screenTime": 7.1,
+        "spend": 7504,
+        "os": "iOS",
+        "apps": 181
+      },
+      {
+        "screenTime": 8.6,
+        "spend": 4940,
+        "os": "iOS",
+        "apps": 87
+      },
+      {
+        "screenTime": 6.8,
+        "spend": 3257,
+        "os": "iOS",
+        "apps": 14
+      },
+      {
+        "screenTime": 1.2,
+        "spend": 6603,
+        "os": "iOS",
+        "apps": 13
+      },
+      {
+        "screenTime": 7.0,
+        "spend": 307,
+        "os": "Android",
+        "apps": 200
+      },
+      {
+        "screenTime": 2.8,
+        "spend": 522,
+        "os": "iOS",
+        "apps": 177
+      },
+      {
+        "screenTime": 5.0,
+        "spend": 9060,
+        "os": "Android",
+        "apps": 132
+      },
+      {
+        "screenTime": 10.3,
+        "spend": 552,
+        "os": "Android",
+        "apps": 55
+      },
+      {
+        "screenTime": 8.0,
+        "spend": 2696,
+        "os": "Android",
+        "apps": 69
+      },
+      {
+        "screenTime": 4.4,
+        "spend": 4512,
+        "os": "Android",
+        "apps": 174
+      },
+      {
+        "screenTime": 10.9,
+        "spend": 5995,
+        "os": "Android",
+        "apps": 56
+      },
+      {
+        "screenTime": 10.0,
+        "spend": 2106,
+        "os": "iOS",
+        "apps": 50
+      },
+      {
+        "screenTime": 3.8,
+        "spend": 9543,
+        "os": "iOS",
+        "apps": 94
+      },
+      {
+        "screenTime": 2.0,
+        "spend": 9591,
+        "os": "Android",
+        "apps": 180
+      },
+      {
+        "screenTime": 5.5,
+        "spend": 5630,
+        "os": "Android",
+        "apps": 140
+      },
+      {
+        "screenTime": 7.5,
+        "spend": 8148,
+        "os": "iOS",
+        "apps": 193
+      },
+      {
+        "screenTime": 7.5,
+        "spend": 2185,
+        "os": "Android",
+        "apps": 50
+      },
+      {
+        "screenTime": 10.4,
+        "spend": 8254,
+        "os": "Android",
+        "apps": 61
+      },
+      {
+        "screenTime": 11.5,
+        "spend": 5228,
+        "os": "iOS",
+        "apps": 74
+      },
+      {
+        "screenTime": 5.9,
+        "spend": 7822,
+        "os": "iOS",
+        "apps": 37
+      },
+      {
+        "screenTime": 6.0,
+        "spend": 736,
+        "os": "Android",
+        "apps": 139
+      }
+    ],
+    "dataUsageBuckets": [
+      {
+        "bucket": "0-10",
+        "users": 3266
+      },
+      {
+        "bucket": "10-20",
+        "users": 3661
+      },
+      {
+        "bucket": "20-30",
+        "users": 3618
+      },
+      {
+        "bucket": "30-40",
+        "users": 3574
+      },
+      {
+        "bucket": "40-50",
+        "users": 3567
+      }
+    ]
+  }
+}

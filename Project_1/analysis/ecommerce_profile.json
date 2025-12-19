@@ -1,0 +1,183 @@
+{
+  "customer_id": {
+    "min": 1000.0,
+    "max": 9998.0,
+    "mean": 5479.9306,
+    "unique": 8442
+  },
+  "session_id": {
+    "min": 0.0,
+    "max": 24999.0,
+    "mean": 12499.5,
+    "unique": 25000
+  },
+  "device_type": {
+    "min": 0.0,
+    "max": 2.0,
+    "mean": 0.70504,
+    "unique": 3
+  },
+  "user_type": {
+    "min": 0.0,
+    "max": 1.0,
+    "mean": 0.55128,
+    "unique": 2
+  },
+  "marketing_channel": {
+    "min": 0.0,
+    "max": 5.0,
+    "mean": 2.51404,
+    "unique": 6
+  },
+  "product_id": {
+    "min": 0.0,
+    "max": 898.0,
+    "mean": 449.107,
+    "unique": 899
+  },
+  "product_category": {
+    "min": 0.0,
+    "max": 7.0,
+    "mean": 3.49524,
+    "unique": 8
+  },
+  "unit_price": {
+    "min": 50.05,
+    "max": 1999.83,
+    "mean": 782.3190103999999,
+    "unique": 23136
+  },
+  "quantity": {
+    "min": 1.0,
+    "max": 4.0,
+    "mean": 2.48904,
+    "unique": 4
+  },
+  "discount_percent": {
+    "min": 0.0,
+    "max": 30.0,
+    "mean": 8.9988,
+    "unique": 7
+  },
+  "discount_amount": {
+    "min": 0.0,
+    "max": 2388.26,
+    "mean": 174.9976692,
+    "unique": 13189
+  },
+  "revenue": {
+    "min": 0.0,
+    "max": 7889.36,
+    "mean": 404.6467624,
+    "unique": 5573
+  },
+  "pages_viewed": {
+    "min": 1.0,
+    "max": 24.0,
+    "mean": 12.53584,
+    "unique": 24
+  },
+  "time_on_site_sec": {
+    "min": 10.0,
+    "max": 1799.0,
+    "mean": 903.26292,
+    "unique": 1790
+  },
+  "added_to_cart": {
+    "min": 0.0,
+    "max": 1.0,
+    "mean": 0.64468,
+    "unique": 2
+  },
+  "purchased": {
+    "min": 0.0,
+    "max": 1.0,
+    "mean": 0.22464,
+    "unique": 2
+  },
+  "cart_abandoned": {
+    "min": 0.0,
+    "max": 1.0,
+    "mean": 0.42004,
+    "unique": 2
+  },
+  "rating": {
+    "min": 1.0,
+    "max": 5.0,
+    "mean": 3.948,
+    "unique": 5
+  },
+  "review_text": {
+    "min": 0.0,
+    "max": 10.0,
+    "mean": 1.67488,
+    "unique": 11
+  },
+  "review_helpful_votes": {
+    "min": 0.0,
+    "max": 49.0,
+    "mean": 5.5208,
+    "unique": 50
+  },
+  "payment_method": {
+    "min": 0.0,
+    "max": 5.0,
+    "mean": 2.48316,
+    "unique": 6
+  },
+  "visit_day": {
+    "min": 1.0,
+    "max": 31.0,
+    "mean": 15.71452,
+    "unique": 31
+  },
+  "visit_month": {
+    "min": 1.0,
+    "max": 12.0,
+    "mean": 6.51052,
+    "unique": 12
+  },
+  "visit_weekday": {
+    "min": 0.0,
+    "max": 6.0,
+    "mean": 2.9808,
+    "unique": 7
+  },
+  "visit_season": {
+    "min": 0.0,
+    "max": 3.0,
+    "mean": 1.5044,
+    "unique": 4
+  },
+  "revenue_normalized": {
+    "min": 0.0,
+    "max": 1.0,
+    "mean": 0.05129018860860001,
+    "unique": 5573
+  },
+  "location": {
+    "min": 0.0,
+    "max": 224.0,
+    "mean": 111.70692,
+    "unique": 225
+  },
+  "session_duration_bucket": {
+    "unique": 4,
+    "sample_values": [
+      "Long",
+      "Short",
+      "Very Long",
+      "Very Short"
+    ]
+  },
+  "visit_date": {
+    "unique": 365,
+    "sample_values": [
+      "2024-11-28",
+      "2024-09-25",
+      "2024-05-31",
+      "2024-01-30",
+      "2024-02-25"
+    ]
+  }
+}

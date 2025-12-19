@@ -1,0 +1,117 @@
+{
+  "User ID": {
+    "unique": 17686,
+    "sample_values": [
+      "U00001",
+      "U00002",
+      "U00003",
+      "U00004",
+      "U00005"
+    ]
+  },
+  "Age": {
+    "min": 15.0,
+    "max": 60.0,
+    "mean": 37.58424742734366,
+    "unique": 46
+  },
+  "Gender": {
+    "unique": 3,
+    "sample_values": [
+      "Male",
+      "Other",
+      "Female"
+    ]
+  },
+  "Location": {
+    "unique": 10,
+    "sample_values": [
+      "Mumbai",
+      "Delhi",
+      "Ahmedabad",
+      "Pune",
+      "Jaipur"
+    ]
+  },
+  "Phone Brand": {
+    "unique": 10,
+    "sample_values": [
+      "Vivo",
+      "Realme",
+      "Nokia",
+      "Samsung",
+      "Xiaomi"
+    ]
+  },
+  "OS": {
+    "unique": 2,
+    "sample_values": [
+      "Android",
+      "iOS"
+    ]
+  },
+  "Screen Time (hrs/day)": {
+    "min": 1.0,
+    "max": 12.0,
+    "mean": 6.546375664367296,
+    "unique": 111
+  },
+  "Data Usage (GB/month)": {
+    "min": 1.0,
+    "max": 50.0,
+    "mean": 25.411257491801422,
+    "unique": 491
+  },
+  "Calls Duration (mins/day)": {
+    "min": 5.0,
+    "max": 300.0,
+    "mean": 151.4058464322063,
+    "unique": 2945
+  },
+  "Number of Apps Installed": {
+    "min": 10.0,
+    "max": 200.0,
+    "mean": 104.58486938821667,
+    "unique": 191
+  },
+  "Social Media Time (hrs/day)": {
+    "min": 0.5,
+    "max": 6.0,
+    "mean": 3.252369105507181,
+    "unique": 56
+  },
+  "E-commerce Spend (INR/month)": {
+    "min": 100.0,
+    "max": 10000.0,
+    "mean": 5075.70784801538,
+    "unique": 8202
+  },
+  "Streaming Time (hrs/day)": {
+    "min": 0.5,
+    "max": 8.0,
+    "mean": 4.250616306683252,
+    "unique": 76
+  },
+  "Gaming Time (hrs/day)": {
+    "min": 0.0,
+    "max": 5.0,
+    "mean": 2.4908741377360624,
+    "unique": 51
+  },
+  "Monthly Recharge Cost (INR)": {
+    "min": 100.0,
+    "max": 2000.0,
+    "mean": 1042.7853669569151,
+    "unique": 1901
+  },
+  "Primary Use": {
+    "unique": 5,
+    "sample_values": [
+      "Education",
+      "Gaming",
+      "Entertainment",
+      "Social Media",
+      "Work"
+    ]
+  }
+}

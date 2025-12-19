@@ -1,0 +1,12 @@
+{
+  "typescript.tsdk": "Project_1/node_modules/typescript/lib",
+  "typescript.enablePromptUseWorkspaceTsdk": true,
+  "css.validate": false,
+  "css.customData": [],
+  "files.associations": {
+    "*.css": "tailwindcss"
+  },
+  "[css]": {
+    "editor.suggest.insertMode": "replace"
+  }
+}
