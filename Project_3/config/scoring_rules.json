@@ -1,0 +1,136 @@
+{
+  "rules": [
+    {
+      "field": "company",
+      "condition": "exists",
+      "value": null,
+      "points": 20,
+      "description": "Has company information"
+    },
+    {
+      "field": "title",
+      "condition": "contains",
+      "value": "Director",
+      "points": 25,
+      "description": "Director-level title"
+    },
+    {
+      "field": "title",
+      "condition": "contains",
+      "value": "VP",
+      "points": 30,
+      "description": "VP-level title"
+    },
+    {
+      "field": "title",
+      "condition": "contains",
+      "value": "C-Level",
+      "points": 35,
+      "description": "C-Level executive"
+    },
+    {
+      "field": "title",
+      "condition": "contains",
+      "value": "Manager",
+      "points": 15,
+      "description": "Manager-level title"
+    },
+    {
+      "field": "email",
+      "condition": "not_contains",
+      "value": "gmail.com",
+      "points": 10,
+      "description": "Business email (not Gmail)"
+    },
+    {
+      "field": "email",
+      "condition": "not_contains",
+      "value": "yahoo.com",
+      "points": 10,
+      "description": "Business email (not Yahoo)"
+    },
+    {
+      "field": "email",
+      "condition": "not_contains",
+      "value": "hotmail.com",
+      "points": 10,
+      "description": "Business email (not Hotmail)"
+    },
+    {
+      "field": "tags",
+      "condition": "contains",
+      "value": "enterprise",
+      "points": 30,
+      "description": "Enterprise tag present"
+    },
+    {
+      "field": "tags",
+      "condition": "contains",
+      "value": "demo_requested",
+      "points": 25,
+      "description": "Requested demo"
+    },
+    {
+      "field": "tags",
+      "condition": "contains",
+      "value": "pricing",
+      "points": 20,
+      "description": "Interested in pricing"
+    },
+    {
+      "field": "tags",
+      "condition": "contains",
+      "value": "high_intent",
+      "points": 25,
+      "description": "High-intent signal detected"
+    },
+    {
+      "field": "source",
+      "condition": "equals",
+      "value": "referral",
+      "points": 20,
+      "description": "Referral lead"
+    },
+    {
+      "field": "source",
+      "condition": "equals",
+      "value": "organic",
+      "points": 15,
+      "description": "Organic lead"
+    },
+    {
+      "field": "email",
+      "condition": "contains",
+      "value": "test@",
+      "points": -50,
+      "description": "Test email address"
+    },
+    {
+      "field": "company",
+      "condition": "contains",
+      "value": "test",
+      "points": -20,
+      "description": "Test company name"
+    },
+    {
+      "field": "tags",
+      "condition": "contains",
+      "value": "unsubscribed",
+      "points": -100,
+      "description": "Previously unsubscribed"
+    },
+    {
+      "field": "tags",
+      "condition": "contains",
+      "value": "competitor",
+      "points": -30,
+      "description": "Competitor identified"
+    }
+  ],
+  "thresholds": {
+    "hot": 70,
+    "warm": 40,
+    "cold": 0
+  },
+  "max_score": 100
+}
