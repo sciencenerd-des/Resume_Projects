@@ -27,8 +27,26 @@ from src.agent import create_agent
 
 app = Flask(__name__)
 
-# Global agent instance (created at startup)
-agent = None
+# Global agent instance - will be lazily initialized
+_agent = None
+
+
+def get_agent():
+    """Get or create the agent instance (lazy initialization).
+    
+    This ensures the agent is available whether the server is started via:
+    - python server.py
+    - flask run
+    - gunicorn server:app
+    """
+    global _agent
+    if _agent is None:
+        import os
+        _agent = create_agent(
+            verbose=os.getenv("DEBUG", "false").lower() == "true",
+            notify_slack=os.getenv("DISABLE_SLACK", "false").lower() != "true"
+        )
+    return _agent
 
 
 @app.route("/health", methods=["GET"])
@@ -57,7 +75,7 @@ def process_leads():
     Returns:
         JSON with processing results
     """
-    global agent
+    agent = get_agent()
     
     # Validate content type
     if not request.is_json:
@@ -146,7 +164,7 @@ def process_csv():
     Returns:
         JSON with processing results
     """
-    global agent
+    agent = get_agent()
     
     if 'file' not in request.files:
         return jsonify({"error": "No file uploaded. Use 'file' field."}), 400
@@ -214,7 +232,7 @@ def slack_command():
     Returns:
         Slack-formatted response
     """
-    global agent
+    agent = get_agent()
     
     # Slack sends form data, not JSON
     text = request.form.get("text", "").strip()
@@ -364,7 +382,7 @@ def slack_events():
 
 
 def main():
-    global agent
+    agent = get_agent()
     
     parser = argparse.ArgumentParser(
         description="Run lead processor webhook server",
@@ -410,8 +428,9 @@ Test with curl:
     
     args = parser.parse_args()
     
-    # Create global agent
-    agent = create_agent(
+    # Set up agent with CLI options (also used by get_agent() for lazy init)
+    global _agent
+    _agent = create_agent(
         verbose=args.debug,
         notify_slack=not args.no_slack
     )
