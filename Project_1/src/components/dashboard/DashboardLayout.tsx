@@ -2,6 +2,7 @@ import React from "react";
 import { Routes, Route, Link, useLocation } from "react-router-dom";
 import { FilterProvider } from "./FilterContext";
 import { DataNotesTooltip } from "./DataNotesTooltip";
+import { Glossary } from "./Glossary";
 import { OverviewPage, FunnelPage, RetentionPage, ChannelsPage, MarketPage } from "@/pages";
 import {
   SidebarProvider,
@@ -45,11 +46,11 @@ function DashboardContent({ data, range, onRangeChange, statusMessage }: Dashboa
             <Route path="/market" element={<MarketPage data={data} />} />
           </Routes>
 
-          <footer className="border-t-3 border-foreground pt-6 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-            <p className="text-sm font-semibold text-muted-foreground">
+          <footer className="border-t-3 border-foreground pt-6 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+            <p className="text-sm font-semibold text-foreground/70">
               Built with React, Tailwind, and shadcn/ui using the processed Project 1 datasets.
             </p>
-            <p className="text-xs uppercase tracking-wide text-muted-foreground">{statusMessage}</p>
+            <p className="text-sm font-bold uppercase tracking-wide text-foreground/60">{statusMessage}</p>
             <DataNotesTooltip />
           </footer>
         </div>
@@ -153,7 +154,8 @@ export function DashboardLayout() {
           <SidebarContent>
             <SidebarNavigation />
           </SidebarContent>
-          <SidebarFooter>
+          <SidebarFooter className="space-y-2">
+            <Glossary />
             <DataNotesTooltip />
           </SidebarFooter>
         </Sidebar>

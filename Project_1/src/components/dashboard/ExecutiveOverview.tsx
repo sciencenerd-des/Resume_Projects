@@ -6,7 +6,9 @@ import { ComboChart } from "./ComboChart";
 import { StackedBarChart } from "./StackedBarChart";
 import { formatCurrency, formatNumber, formatPercent } from "@/lib/format";
 import { TrendingUp } from "lucide-react";
-import { useFilters } from "./FilterContext";
+import { useFilteredData } from "@/hooks/useFilteredData";
+import { EmptyState } from "@/components/ui/empty-state";
+import { useFilters } from "@/components/dashboard/FilterContext";
 import {
   RANGE_LABELS,
   getSeriesForRange,
@@ -34,71 +36,52 @@ type KpiKey = (typeof KPI_CONFIG)[number]["key"];
 type TrendableKpi = TrendableKpiKey;
 
 export function ExecutiveOverview({ data, range, onRangeChange }: ExecutiveOverviewProps) {
-  const { selectedChannels, selectedDevices, userType } = useFilters();
+  // Use centralized filter hook instead of inline filtering logic
+  const { monthlySeries: filteredMonthlySeries, channelRatio, isEmpty } = useFilteredData(data);
+  const { resetFilters } = useFilters();
   
-  // Filter the monthly series data based on selected filters
-  // Uses proportional scaling to preserve monthly variation while reflecting filter selections
-  const filterMonthlySeries = (series: typeof data.monthlySeries) => {
-    // Calculate total metrics across all channels for ratio computation
-    const allChannelSessions = data.channels.reduce((sum, channel) => sum + channel.sessions, 0);
-    const allChannelPurchases = data.channels.reduce((sum, channel) => sum + channel.purchases, 0);
-    const allChannelRevenue = data.channels.reduce((sum, channel) => sum + channel.revenue, 0);
-    
-    // Calculate total metrics for selected channels
-    const filteredChannels = data.channels.filter(channel =>
-      selectedChannels.includes(channel.channelId)
+  // Show empty state if filters return no data
+  if (isEmpty) {
+    return (
+      <section className="space-y-8">
+        <div className="flex flex-wrap items-end justify-between gap-6">
+          <div>
+            <p className="text-sm font-bold uppercase tracking-[0.25em] text-secondary bg-foreground text-background inline-block px-3 py-1">
+              Project 1 · India Funnel
+            </p>
+            <h1 className="mt-4 text-4xl font-black uppercase tracking-tight">
+              Growth Analytics Command Center
+            </h1>
+          </div>
+        </div>
+        <EmptyState onReset={resetFilters} />
+      </section>
     );
-    const selectedChannelSessions = filteredChannels.reduce((sum, channel) => sum + channel.sessions, 0);
-    const selectedChannelPurchases = filteredChannels.reduce((sum, channel) => sum + channel.purchases, 0);
-    const selectedChannelRevenue = filteredChannels.reduce((sum, channel) => sum + channel.revenue, 0);
-    
-    // Calculate channel filter ratios (what proportion of total is selected)
-    const channelSessionsRatio = allChannelSessions > 0 ? selectedChannelSessions / allChannelSessions : 1;
-    const channelPurchasesRatio = allChannelPurchases > 0 ? selectedChannelPurchases / allChannelPurchases : 1;
-    const channelRevenueRatio = allChannelRevenue > 0 ? selectedChannelRevenue / allChannelRevenue : 1;
-    
-    // Calculate total metrics across all devices for ratio computation
-    const allDeviceSessions = data.devices.reduce((sum, device) => sum + device.sessions, 0);
-    const allDeviceRevenue = data.devices.reduce((sum, device) => sum + device.revenue, 0);
-    
-    // Calculate total metrics for selected devices
-    const filteredDevices = data.devices.filter(device =>
-      selectedDevices.includes(device.deviceId)
-    );
-    const selectedDeviceSessions = filteredDevices.reduce((sum, device) => sum + device.sessions, 0);
-    const selectedDeviceRevenue = filteredDevices.reduce((sum, device) => sum + device.revenue, 0);
-    
-    // Calculate device filter ratios
-    const deviceSessionsRatio = allDeviceSessions > 0 ? selectedDeviceSessions / allDeviceSessions : 1;
-    const deviceRevenueRatio = allDeviceRevenue > 0 ? selectedDeviceRevenue / allDeviceRevenue : 1;
-    
-    // Combine ratios (use the more restrictive of the two filters)
-    const combinedSessionsRatio = Math.min(channelSessionsRatio, deviceSessionsRatio);
-    const combinedPurchasesRatio = channelPurchasesRatio; // Only channels have purchase data
-    const combinedRevenueRatio = Math.min(channelRevenueRatio, deviceRevenueRatio);
-    
-    return series.map(month => {
-      // Apply user type filter for newCustomers
-      let newCustomers = month.newCustomers;
-      if (userType === "returning") {
-        newCustomers = 0;
-      }
-      
-      // Scale the original monthly data proportionally based on filter ratios
-      // This preserves the monthly variation while reflecting filter selections
-      return {
-        ...month,
-        sessions: Math.round(month.sessions * combinedSessionsRatio),
-        purchases: Math.round(month.purchases * combinedPurchasesRatio),
-        revenue: Math.round(month.revenue * combinedRevenueRatio * 100) / 100,
-        newCustomers: userType === "returning" ? 0 : Math.round(newCustomers * combinedSessionsRatio),
-      };
-    });
-  };
+  }
   
   const stats = data.summaryByRange[range];
-  const series = filterMonthlySeries(getSeriesForRange(data, range));
-  const previousSeries = filterMonthlySeries(getPreviousSeries(data, range));
+  
+  // Apply filtering to time-sliced series using the same ratios
+  const rawSeries = getSeriesForRange(data, range);
+  const rawPreviousSeries = getPreviousSeries(data, range);
+  
+  // Filter series data proportionally
+  const series = rawSeries.map((month, idx) => {
+    const filtered = filteredMonthlySeries.find(m => m.month === month.month) || filteredMonthlySeries[idx];
+    return filtered || month;
+  });
+  
+  const previousSeries = rawPreviousSeries.map((month, idx) => {
+    // Apply same ratio to previous series
+    return {
+      ...month,
+      sessions: Math.round(month.sessions * channelRatio),
+      purchases: Math.round(month.purchases * channelRatio),
+      revenue: Math.round(month.revenue * channelRatio * 100) / 100,
+      newCustomers: Math.round(month.newCustomers * channelRatio),
+    };
+  });
+  
   const deltas = computeKpiDeltas(series, previousSeries);
 
   // Removed duplicate headline cards as they're redundant with KPI cards below
@@ -151,7 +134,7 @@ export function ExecutiveOverview({ data, range, onRangeChange }: ExecutiveOverv
           return (
             <div 
               key={kpi.label}
-              className="border-3 border-foreground shadow-brutal p-4"
+              className="border-3 border-foreground shadow-brutal p-4 hover-brutal cursor-pointer transition-all"
               style={{ backgroundColor: kpiColors[index % kpiColors.length] }}
             >
               <p className="text-sm font-bold uppercase tracking-wide text-foreground/80">{kpi.label}</p>

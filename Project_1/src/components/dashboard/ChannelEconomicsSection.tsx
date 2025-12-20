@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import type { DashboardData } from "@/data";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -6,20 +6,34 @@ import { ScatterPlot } from "./ScatterPlot";
 import { WhatIfPanel } from "./WhatIfPanel";
 import { SpendRevenueChart } from "./SpendRevenueChart";
 import { formatCurrency, formatNumber, formatPercent } from "@/lib/format";
-import { useFilters } from "./FilterContext";
+import { useFilteredData } from "@/hooks/useFilteredData";
+import { EmptyState } from "@/components/ui/empty-state";
+import { useFilters } from "@/components/dashboard/FilterContext";
 
 interface Props {
   data: DashboardData;
 }
 
 export function ChannelEconomicsSection({ data }: Props) {
-  const { selectedChannels, selectedDevices, userType } = useFilters();
+  // Use centralized filter hook instead of inline filtering
+  const { channels: filteredChannels, isEmpty } = useFilteredData(data);
+  const { resetFilters } = useFilters();
   const [channelId, setChannelId] = useState(() => data.channels[0]?.channelId ?? 0);
   
-  // Filter channels based on selected filters
-  const filteredChannels = data.channels.filter(channel =>
-    selectedChannels.includes(channel.channelId)
-  );
+  // Show empty state if filters return no data
+  if (isEmpty) {
+    return (
+      <section className="space-y-4" id="channel">
+        <div className="flex flex-wrap items-end justify-between gap-4">
+          <div>
+            <p className="text-sm font-medium uppercase tracking-[0.3em] text-muted-foreground">Page 4</p>
+            <h2 className="text-2xl font-semibold">Channel Unit Economics</h2>
+          </div>
+        </div>
+        <EmptyState onReset={resetFilters} />
+      </section>
+    );
+  }
   
   const selected = useMemo(() => filteredChannels.find(channel => channel.channelId === channelId) ?? filteredChannels[0], [channelId, filteredChannels]);
 
@@ -130,25 +144,28 @@ export function ChannelEconomicsSection({ data }: Props) {
           </CardContent>
         </Card>
         {selected ? (
-          <Card>
-            <CardHeader>
+          <Card className={`transition-all duration-300 ${channelId !== (filteredChannels[0]?.channelId ?? 0) ? 'ring-4 ring-accent shadow-brutal-lg' : ''}`}>
+            <CardHeader className="relative">
+              <div className="absolute top-2 right-2 text-xs font-bold uppercase tracking-wide bg-accent text-accent-foreground px-2 py-1">
+                Selected
+              </div>
               <CardTitle>{selected.label} drill-down</CardTitle>
               <CardDescription>{formatPercent(selected.purchaseRate, 1)} purchase rate · {formatPercent(selected.share, 1)} of sessions</CardDescription>
             </CardHeader>
             <CardContent className="grid gap-4 sm:grid-cols-2">
-              <div className="border-3 border-foreground shadow-brutal p-4" style={{ backgroundColor: '#4ECDC4' }}>
+              <div className="border-3 border-foreground shadow-brutal p-4 hover-brutal cursor-pointer transition-all" style={{ backgroundColor: '#4ECDC4' }}>
                 <p className="text-sm font-bold text-foreground uppercase tracking-wide">Revenue</p>
                 <p className="text-2xl font-black text-foreground mt-1">{formatCurrency(selected.revenue / 1_00_000, 1)} L</p>
               </div>
-              <div className="border-3 border-foreground shadow-brutal p-4" style={{ backgroundColor: '#FFE135' }}>
+              <div className="border-3 border-foreground shadow-brutal p-4 hover-brutal cursor-pointer transition-all" style={{ backgroundColor: '#FFE135' }}>
                 <p className="text-sm font-bold text-foreground uppercase tracking-wide">CAC</p>
                 <p className="text-2xl font-black text-foreground mt-1">{formatCurrency(selected.cac, 0)}</p>
               </div>
-              <div className="border-3 border-foreground shadow-brutal p-4" style={{ backgroundColor: '#FF6B6B' }}>
+              <div className="border-3 border-foreground shadow-brutal p-4 hover-brutal cursor-pointer transition-all" style={{ backgroundColor: '#FF6B6B' }}>
                 <p className="text-sm font-bold text-foreground uppercase tracking-wide">LTV</p>
                 <p className="text-2xl font-black text-foreground mt-1">{formatCurrency(selected.ltv, 0)}</p>
               </div>
-              <div className="border-3 border-foreground shadow-brutal p-4" style={{ backgroundColor: '#A855F7' }}>
+              <div className="border-3 border-foreground shadow-brutal p-4 hover-brutal cursor-pointer transition-all" style={{ backgroundColor: '#A855F7' }}>
                 <p className="text-sm font-bold text-foreground uppercase tracking-wide">Synthetic spend</p>
                 <p className="text-2xl font-black text-foreground mt-1">{formatCurrency(selected.syntheticSpend, 0)}</p>
               </div>

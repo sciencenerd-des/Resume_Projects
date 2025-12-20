@@ -1,7 +1,7 @@
 marketing_channel_id,channel_label
-0,Channel 0
-1,Channel 1
-2,Channel 2
-3,Channel 3
-4,Channel 4
-5,Channel 5
+0,Organic Search
+1,Paid Search
+2,Social Media
+3,Email Marketing
+4,Referral
+5,Direct Traffic

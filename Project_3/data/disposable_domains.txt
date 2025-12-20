@@ -1,0 +1,103 @@
+# Disposable Email Domains
+# Email addresses from these domains should be flagged or rejected
+# Source: Common temporary/disposable email providers
+
+# Popular Disposable Email Services
+mailinator.com
+10minutemail.com
+10minutemail.net
+tempmail.com
+tempmail.net
+guerrillamail.com
+guerrillamail.org
+guerrillamail.net
+sharklasers.com
+grr.la
+guerrillamail.biz
+guerrillamailblock.com
+spam4.me
+throwaway.email
+throwawaymail.com
+temp-mail.org
+fakeinbox.com
+tempinbox.com
+dispostable.com
+mintemail.com
+getairmail.com
+getnada.com
+mohmal.com
+mailnesia.com
+trashmail.com
+trashmail.net
+trashmail.org
+trash-mail.com
+yopmail.com
+yopmail.net
+yopmail.fr
+tempr.email
+tempail.com
+mailcatch.com
+maildrop.cc
+mailnull.com
+spamgourmet.com
+mailexpire.com
+mytrashmail.com
+fakemailgenerator.com
+emailondeck.com
+throwawaye.mail
+privy-mail.com
+discard.email
+discardmail.com
+mailsac.com
+moakt.com
+inboxalias.com
+burnermail.io
+33mail.com
+spamex.com
+boun.cr
+mailnesia.com
+mytemp.email
+mt2015.com
+mt2014.com
+
+# High Volume Temporary Services
+guerillamail.de
+guerillamail.info
+guerillamail.org
+guerrillamail.info
+jetable.org
+tmpmail.org
+tmpmail.net
+mail-temp.com
+emailfake.com
+generator.email
+dontmail.me
+wegwerfemail.de
+mailinator2.com
+correo.blogos.net
+sogetthis.com
+incognitomail.org
+spam.la
+spamspot.com
+thisisnotmyrealemail.com
+mailslite.com
+clearmailhub.com
+10minemail.com
+mail.tm
+proxymail.eu
+gmailnator.com
+
+# Catch-all Patterns (Role-based)
+# These patterns in local part suggest automated/test emails
+# info@
+# support@
+# noreply@
+# no-reply@
+# admin@
+# webmaster@
+# postmaster@
+# sales@
+# marketing@
+# contact@
+# hello@
+# test@

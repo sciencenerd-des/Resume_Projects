@@ -2,60 +2,51 @@ import type { DashboardData } from "@/data";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScatterDiagnostic } from "./ScatterDiagnostic";
 import { formatCurrency, formatNumber, formatPercent } from "@/lib/format";
-import { useFilters } from "./FilterContext";
+import { useFilteredData } from "@/hooks/useFilteredData";
+import { EmptyState } from "@/components/ui/empty-state";
+import { useFilters } from "@/components/dashboard/FilterContext";
 
 interface FunnelSectionProps {
   data: DashboardData;
 }
 
 export function FunnelSection({ data }: FunnelSectionProps) {
-  const { selectedChannels, selectedDevices, userType } = useFilters();
+  // Use centralized filter hook instead of inline filtering logic
+  const { 
+    channels: filteredChannels, 
+    devices: filteredDevices, 
+    funnel: filteredFunnel,
+    isEmpty 
+  } = useFilteredData(data);
+  const { resetFilters } = useFilters();
   
-  // Filter data based on selected filters
-  const filteredChannels = data.channels.filter(channel =>
-    selectedChannels.includes(channel.channelId)
-  );
-  
-  const filteredDevices = data.devices.filter(device =>
-    selectedDevices.includes(device.deviceId)
-  );
-  
-  // Calculate filtered funnel metrics
-  const totalChannelSessions = filteredChannels.reduce((sum, channel) => sum + channel.sessions, 0);
-  const totalChannelPurchases = filteredChannels.reduce((sum, channel) => sum + channel.purchases, 0);
-  const totalChannelRevenue = filteredChannels.reduce((sum, channel) => sum + channel.revenue, 0);
-  const totalChannelAddToCart = filteredChannels.reduce((sum, channel) => sum + channel.addToCart, 0);
-  
-  const totalDeviceSessions = filteredDevices.reduce((sum, device) => sum + device.sessions, 0);
-  const avgDevicePurchaseRate = filteredDevices.reduce((sum, device) => sum + device.purchaseRate, 0) / Math.max(filteredDevices.length, 1);
-  const estimatedDevicePurchases = totalDeviceSessions * avgDevicePurchaseRate;
-  const totalDeviceRevenue = filteredDevices.reduce((sum, device) => sum + device.revenue, 0);
-  
-  // Apply user type filter
-  let filteredNewCustomers = data.funnel.newCustomers;
-  if (userType === "new") {
-    filteredNewCustomers = data.funnel.newCustomers;
-  } else if (userType === "returning") {
-    filteredNewCustomers = 0;
+  // Show empty state if filters return no data
+  if (isEmpty) {
+    return (
+      <section className="space-y-4" id="funnel">
+        <div className="flex flex-wrap items-end justify-between gap-4">
+          <div>
+            <p className="text-sm font-medium uppercase tracking-[0.3em] text-muted-foreground">Page 2</p>
+            <h2 className="text-2xl font-semibold">Funnel & Drop-off</h2>
+          </div>
+        </div>
+        <EmptyState onReset={resetFilters} />
+      </section>
+    );
   }
   
-  // Calculate final filtered metrics
-  const filteredSessions = Math.min(totalChannelSessions, totalDeviceSessions);
-  const filteredPurchases = Math.min(totalChannelPurchases, estimatedDevicePurchases);
-  const filteredRevenue = Math.min(totalChannelRevenue, totalDeviceRevenue);
-  const filteredAddToCart = Math.min(totalChannelAddToCart, filteredSessions * 0.64); // Using avg add to cart rate
-  
+  // Use the pre-calculated filtered funnel metrics from the hook
   const funnel = {
-    sessions: filteredSessions,
-    addToCart: filteredAddToCart,
-    purchases: filteredPurchases,
-    cartAbandons: filteredAddToCart - filteredPurchases,
-    revenue: filteredRevenue,
-    newCustomers: filteredNewCustomers,
-    addToCartRate: filteredAddToCart / Math.max(filteredSessions, 1),
-    purchaseRate: filteredPurchases / Math.max(filteredSessions, 1),
-    cartToPurchaseRate: filteredPurchases / Math.max(filteredAddToCart, 1),
-    aov: filteredRevenue / Math.max(filteredPurchases, 1),
+    sessions: filteredFunnel.sessions,
+    addToCart: filteredFunnel.addToCart,
+    purchases: filteredFunnel.purchases,
+    cartAbandons: filteredFunnel.cartAbandons,
+    revenue: filteredFunnel.revenue,
+    newCustomers: filteredFunnel.newCustomers,
+    addToCartRate: filteredFunnel.addToCartRate,
+    purchaseRate: filteredFunnel.purchaseRate,
+    cartToPurchaseRate: filteredFunnel.cartToPurchaseRate,
+    aov: filteredFunnel.aov,
   };
   
   const stages = [
@@ -90,7 +81,7 @@ export function FunnelSection({ data }: FunnelSectionProps) {
                 return (
                   <div key={stage.label} className="flex-1 flex flex-col">
                     <div 
-                      className="border-3 border-foreground shadow-brutal p-4"
+                      className="border-3 border-foreground shadow-brutal p-4 hover-brutal cursor-pointer transition-all"
                       style={{ 
                         backgroundColor: bgColors[index],
                         minHeight: '100px'
@@ -156,18 +147,26 @@ export function FunnelSection({ data }: FunnelSectionProps) {
             <CardDescription>Conversion efficiency by form factor</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="grid gap-4 sm:grid-cols-3">
+            <div className="grid gap-6 sm:grid-cols-3">
               {filteredDevices.map((device, index) => {
                 const deviceColors = ['#4ECDC4', '#FFE135', '#FF6B6B'];
                 return (
                   <div 
                     key={device.deviceId} 
-                    className="border-3 border-foreground shadow-brutal p-4"
+                    className="border-3 border-foreground shadow-brutal p-5 min-h-[140px] flex flex-col justify-between hover-brutal transition-all"
                     style={{ backgroundColor: deviceColors[index % deviceColors.length] }}
                   >
-                    <p className="text-sm font-bold text-foreground uppercase tracking-wide">{device.label}</p>
-                    <p className="text-3xl font-black text-foreground mt-1">{formatPercent(device.purchaseRate, 1)}</p>
-                    <p className="text-xs font-bold text-foreground/80 mt-2">Cart → Purchase {formatPercent(device.cartToPurchaseRate, 1)}</p>
+                    <div>
+                      <p className="text-sm font-bold text-foreground uppercase tracking-wide">{device.label}</p>
+                      <p className="text-4xl font-black text-foreground mt-2">{formatPercent(device.purchaseRate, 1)}</p>
+                      <p className="text-xs font-medium text-foreground/70 mt-1">Purchase Rate</p>
+                    </div>
+                    <div className="mt-4 pt-3 border-t-2 border-foreground/20">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold text-foreground/80 uppercase">Cart → Purchase</span>
+                        <span className="text-sm font-black text-foreground">{formatPercent(device.cartToPurchaseRate, 1)}</span>
+                      </div>
+                    </div>
                   </div>
                 );
               })}

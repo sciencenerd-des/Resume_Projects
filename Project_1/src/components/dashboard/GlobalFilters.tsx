@@ -1,22 +1,8 @@
-import { useFilters, DEFAULT_CHANNELS, DEFAULT_DEVICES } from "./FilterContext";
+import { useFilters } from "./FilterContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Filter, RotateCcw } from "lucide-react";
-
-const CHANNEL_LABELS: Record<number, string> = {
-  0: "Channel 0",
-  1: "Channel 1",
-  2: "Channel 2",
-  3: "Channel 3",
-  4: "Channel 4",
-  5: "Channel 5",
-};
-
-const DEVICE_LABELS: Record<number, string> = {
-  0: "Desktop",
-  1: "Mobile",
-  2: "Tablet",
-};
+import { CHANNEL_LABELS, DEVICE_LABELS, DEFAULT_CHANNELS, DEFAULT_DEVICES } from "@/lib/constants";
 
 const USER_TYPE_OPTIONS = [
   { value: "all" as const, label: "All Users" },
@@ -61,7 +47,7 @@ export function GlobalFilters() {
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Filter className="size-5" />
+            <Filter className="size-5" aria-hidden="true" />
             <CardTitle className="text-base">Global Filters</CardTitle>
             {isFiltered && (
               <span className="text-xs font-bold uppercase tracking-wide bg-foreground text-background px-2 py-0.5">
@@ -71,22 +57,37 @@ export function GlobalFilters() {
           </div>
           {isFiltered && (
             <Button variant="outline" size="sm" onClick={resetFilters} className="gap-1.5">
-              <RotateCcw className="size-3.5" />
+              <RotateCcw className="size-3.5" aria-hidden="true" />
               Reset
             </Button>
           )}
         </div>
       </CardHeader>
       <CardContent>
+        {/* Aria-live region for screen reader announcements */}
+        <div 
+          aria-live="polite" 
+          aria-atomic="true" 
+          className="sr-only"
+        >
+          {isFiltered && `Filters active: ${selectedChannels.length} channels, ${selectedDevices.length} devices, ${userType} users`}
+        </div>
+
         <div className="grid gap-6 md:grid-cols-3">
           {/* Channel Filter */}
           <div className="space-y-2">
-            <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Marketing Channel</p>
-            <div className="flex flex-wrap gap-1.5">
+            <p id="channel-filter-label" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Marketing Channel</p>
+            <div 
+              role="group" 
+              aria-labelledby="channel-filter-label"
+              className="flex flex-wrap gap-1.5"
+            >
               {DEFAULT_CHANNELS.map(id => (
                 <button
                   key={id}
                   onClick={() => toggleChannel(id)}
+                  aria-pressed={selectedChannels.includes(id)}
+                  aria-label={`${CHANNEL_LABELS[id]} channel filter`}
                   className={`px-2.5 py-1 text-xs font-semibold border-2 border-foreground transition-all ${
                     selectedChannels.includes(id)
                       ? "bg-foreground text-background shadow-brutal-xs"
@@ -101,12 +102,18 @@ export function GlobalFilters() {
 
           {/* Device Filter */}
           <div className="space-y-2">
-            <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Device Type</p>
-            <div className="flex flex-wrap gap-1.5">
+            <p id="device-filter-label" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Device Type</p>
+            <div 
+              role="group" 
+              aria-labelledby="device-filter-label"
+              className="flex flex-wrap gap-1.5"
+            >
               {DEFAULT_DEVICES.map(id => (
                 <button
                   key={id}
                   onClick={() => toggleDevice(id)}
+                  aria-pressed={selectedDevices.includes(id)}
+                  aria-label={`${DEVICE_LABELS[id]} device filter`}
                   className={`px-3 py-1 text-xs font-semibold border-2 border-foreground transition-all ${
                     selectedDevices.includes(id)
                       ? "bg-foreground text-background shadow-brutal-xs"
@@ -121,12 +128,18 @@ export function GlobalFilters() {
 
           {/* User Type Filter */}
           <div className="space-y-2">
-            <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">User Type</p>
-            <div className="flex flex-wrap gap-1.5">
+            <p id="usertype-filter-label" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">User Type</p>
+            <div 
+              role="group" 
+              aria-labelledby="usertype-filter-label"
+              className="flex flex-wrap gap-1.5"
+            >
               {USER_TYPE_OPTIONS.map(option => (
                 <button
                   key={option.value}
                   onClick={() => setUserType(option.value)}
+                  aria-pressed={userType === option.value}
+                  aria-label={`${option.label} filter`}
                   className={`px-3 py-1 text-xs font-semibold border-2 border-foreground transition-all ${
                     userType === option.value
                       ? "bg-foreground text-background shadow-brutal-xs"

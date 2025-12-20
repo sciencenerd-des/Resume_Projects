@@ -10,7 +10,9 @@ def generate_report(
     valid_count: int,
     invalid_count: int,
     errors: List[str] = None,
-    notion_results: Dict[str, Any] = None
+    notion_results: Dict[str, Any] = None,
+    score_stats: Dict[str, Any] = None,
+    ai_analyzed: int = 0
 ) -> str:
     """
     Generate a summary report of the lead processing run.
@@ -20,6 +22,8 @@ def generate_report(
         invalid_count: Count of rejected leads
         errors: List of error messages
         notion_results: Results from Notion batch operation
+        score_stats: Lead scoring statistics (categories, avg_score)
+        ai_analyzed: Number of leads analyzed with AI
         
     Returns:
         Formatted report string
@@ -42,6 +46,23 @@ def generate_report(
         f"║  Invalid Leads:      {invalid_count:>5}  ❌                          ║",
         f"║  Success Rate:       {success_rate:>5.1f}%                           ║",
     ]
+    
+    # Add scoring categories section if available
+    if score_stats:
+        hot = score_stats.get("hot", 0)
+        warm = score_stats.get("warm", 0)
+        cold = score_stats.get("cold", 0)
+        avg_score = score_stats.get("avg_score", 0)
+        report_lines.extend([
+            "╠══════════════════════════════════════════════════════════╣",
+            "║  Lead Categories:                                        ║",
+            f"║    🔥 HOT:           {hot:>3}                                  ║",
+            f"║    🌡️  WARM:          {warm:>3}                                  ║",
+            f"║    ❄️  COLD:          {cold:>3}                                  ║",
+            f"║  Avg Score:        {avg_score:>5.1f}                              ║",
+        ])
+        if ai_analyzed > 0:
+            report_lines.append(f"║  AI Analyzed:        {ai_analyzed:>3}  🤖                           ║")
     
     # Add Notion sync info if available
     if notion_results:
