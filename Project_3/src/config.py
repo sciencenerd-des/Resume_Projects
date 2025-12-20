@@ -21,6 +21,10 @@ NOTION_DATABASE_ID = os.getenv("NOTION_DATABASE_ID")
 # Optional Zapier MCP Configuration
 ZAPIER_MCP_URL = os.getenv("ZAPIER_MCP_URL")
 
+# Slack Bot Configuration (for file attachment processing)
+SLACK_BOT_TOKEN = os.getenv("SLACK_BOT_TOKEN")
+SLACK_SIGNING_SECRET = os.getenv("SLACK_SIGNING_SECRET")
+
 
 def validate_config():
     """Validate that required configuration is present."""
