@@ -13,7 +13,7 @@ from dataclasses import dataclass
 
 from stats_engine import ABTestAnalyzer, ABTestResult
 from bayesian_engine import BayesianAnalyzer, BayesianResult
-from guardrails import GuardrailChecker, GuardrailReport
+from guardrails import GuardrailChecker, GuardrailReport, GuardrailStatus
 
 
 @dataclass
@@ -107,8 +107,8 @@ class DecisionMemoGenerator:
         guardrail_rows = ""
         if self.guardrail_report:
             for result in self.guardrail_report.results:
-                status = "✅" if result.passed else "❌"
-                guardrail_rows += f"| {result.metric_name} | Must not exceed threshold | {status} No significant change |\n"
+                status = "✅" if result.status == GuardrailStatus.PASS else ("⚠️" if result.status == GuardrailStatus.WARNING else "❌")
+                guardrail_rows += f"| {result.metric_name} | Must not exceed threshold | {status} {result.message} |\n"
         else:
             guardrail_rows = "| Bounce Rate | Must not increase >5% | ✅ No change |\n" \
                            "| Time to Sign-up | Must not increase >10% | ✅ No change |\n" \
