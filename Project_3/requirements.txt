@@ -7,8 +7,16 @@ python-dotenv>=1.0.0
 pydantic>=2.5.0
 notion-client>=2.0.0
 
+# Automated triggers
+watchdog>=3.0.0
+flask>=2.0.0
+
 # Testing
 pytest>=8.0.0
+pytest-mock>=3.10.0
+
+# Optional: PDF export
+# reportlab>=4.0.0
 
 # Optional: Zapier MCP integration
 # httpx>=0.27.0

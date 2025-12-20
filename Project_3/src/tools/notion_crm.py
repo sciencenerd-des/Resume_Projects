@@ -24,7 +24,9 @@ def add_lead_to_notion(
     email: str,
     company: Optional[str] = None,
     tags: Optional[str] = None,
-    source: Optional[str] = None
+    source: Optional[str] = None,
+    score: Optional[int] = None,
+    score_category: Optional[str] = None
 ) -> Dict[str, Any]:
     """
     Add a validated lead to the Notion CRM database.
@@ -35,6 +37,8 @@ def add_lead_to_notion(
         company: Company name (optional)
         tags: Comma-separated tags (optional)
         source: Lead source (optional)
+        score: Lead score (optional)
+        score_category: Lead category - hot/warm/cold (optional)
         
     Returns:
         Dict with lead_id and status, or error info
@@ -75,6 +79,12 @@ def add_lead_to_notion(
     if source:
         properties["Source"] = {"select": {"name": source}}
     
+    if score is not None:
+        properties["Score"] = {"number": score}
+    
+    if score_category:
+        properties["Category"] = {"select": {"name": score_category.upper()}}
+    
     try:
         response = notion.pages.create(
             parent={"database_id": database_id},
@@ -113,7 +123,9 @@ def add_leads_batch(leads: List[Dict[str, Any]]) -> Dict[str, Any]:
             email=lead.get("email", ""),
             company=lead.get("company"),
             tags=lead.get("tags"),
-            source=lead.get("source", "csv_import")
+            source=lead.get("source", "csv_import"),
+            score=lead.get("score"),
+            score_category=lead.get("score_category")
         )
         results.append(result)
         
