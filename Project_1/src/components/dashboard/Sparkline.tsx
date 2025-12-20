@@ -64,13 +64,11 @@ export function Sparkline({
     label: labels?.[index] || `Point ${index + 1}`,
   }));
 
-  // Calculate domain with padding to make sparkline variations more prominent
+  // Calculate proper domain to fill vertical space
   const dataMin = Math.min(...values);
   const dataMax = Math.max(...values);
-  const range = dataMax - dataMin || 1; // Avoid division by zero
-  const padding = range * 0.15; // 15% padding
-  const minDomain = Math.floor(dataMin - padding);
-  const maxDomain = Math.ceil(dataMax + padding);
+  const range = dataMax - dataMin || 1;
+  const padding = range * 0.05; // 5% padding
 
   return (
     <div className="w-full">
@@ -84,11 +82,11 @@ export function Sparkline({
       <div className="border-2 border-foreground bg-muted/30" style={{ height, width: '100%' }}>
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={chartData} margin={{ top: 8, right: 8, left: 8, bottom: 8 }}>
-            {/* Hidden YAxis with auto-scaled domain based on data min/max with padding */}
+            {/* YAxis with domain based on actual data range */}
             <YAxis 
               hide 
-              domain={[minDomain, maxDomain]}
-              dataKey="value"
+              domain={[dataMin - padding, dataMax + padding]}
+              allowDataOverflow={false}
             />
             <ChartTooltip
               cursor={false}
@@ -129,3 +127,4 @@ export function Sparkline({
     </div>
   );
 }
+

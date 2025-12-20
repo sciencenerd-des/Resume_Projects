@@ -2,7 +2,9 @@ import type { DashboardData } from "@/data";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScatterPlot } from "./ScatterPlot";
 import { formatCurrency, formatNumber, formatPercent } from "@/lib/format";
-import { useFilters } from "./FilterContext";
+import { useFilteredData } from "@/hooks/useFilteredData";
+import { EmptyState } from "@/components/ui/empty-state";
+import { useFilters } from "@/components/dashboard/FilterContext";
 
 interface Props {
   data: DashboardData;
@@ -14,21 +16,27 @@ const OS_COLOR: Record<string, string> = {
 };
 
 export function MarketSegmentationSection({ data }: Props) {
-  const { selectedDevices, userType } = useFilters();
+  // Use centralized filter hook - replaces magic numbers 0.3/0.7
+  const { phoneUsage, isEmpty } = useFilteredData(data);
+  const { resetFilters } = useFilters();
   
-  // For market segmentation, we'll apply a simplified filter approach
-  // Since phone usage data doesn't have direct channel/device associations,
-  // we'll filter based on device type assumptions
-  const filteredScreenVsSpend = data.phoneUsage.screenVsSpend.filter(point => {
-    // Simple heuristic: if mobile is selected, include more mobile data points
-    if (selectedDevices.includes(1) && point.os === "iOS") return true;
-    if (selectedDevices.includes(1) && point.os === "Android") return true;
-    // If desktop is selected, include all data points
-    if (selectedDevices.includes(0)) return true;
-    // If tablet is selected, include all data points
-    if (selectedDevices.includes(2)) return true;
-    return false;
-  });
+  // Show empty state if filters return no data
+  if (isEmpty) {
+    return (
+      <section className="space-y-4" id="market">
+        <div>
+          <p className="text-sm font-medium uppercase tracking-[0.3em] text-muted-foreground">Page 5</p>
+          <h2 className="text-2xl font-semibold">India Market Segmentation</h2>
+        </div>
+        <EmptyState onReset={resetFilters} />
+      </section>
+    );
+  }
+  
+  // Use properly filtered phone usage data from the hook
+  const filteredScreenVsSpend = phoneUsage.screenVsSpend;
+  const filteredDataUsageBuckets = phoneUsage.dataUsageBuckets;
+  const filteredByPrimaryUse = phoneUsage.byPrimaryUse;
   
   const scatterPoints = filteredScreenVsSpend.map(point => ({
     x: point.screenTime,
@@ -36,17 +44,6 @@ export function MarketSegmentationSection({ data }: Props) {
     label: `${point.os}-${point.apps}`,
     size: Math.max(1, Math.min(4, point.apps / 40)),
     color: OS_COLOR[point.os] ?? "fill-primary/70",
-  }));
-
-  // Apply user type filter to usage buckets
-  const filteredDataUsageBuckets = data.phoneUsage.dataUsageBuckets.map(bucket => ({
-    ...bucket,
-    users: userType === "all" ? bucket.users : Math.floor(bucket.users * (userType === "new" ? 0.3 : 0.7))
-  }));
-  
-  const filteredByPrimaryUse = data.phoneUsage.byPrimaryUse.map(segment => ({
-    ...segment,
-    users: userType === "all" ? segment.users : Math.floor(segment.users * (userType === "new" ? 0.3 : 0.7))
   }));
 
   const maxBucket = filteredDataUsageBuckets.length ? Math.max(...filteredDataUsageBuckets.map(bucket => bucket.users)) : 0;
@@ -63,20 +60,12 @@ export function MarketSegmentationSection({ data }: Props) {
       </div>
 
       <div className="grid gap-4 grid-cols-2">
-        {data.phoneUsage.byOS
-          .filter(os => {
-            if (selectedDevices.includes(0) || selectedDevices.includes(2)) return true;
-            if (selectedDevices.includes(1)) {
-              return os.os === "Android" || os.os === "iOS";
-            }
-            return false;
-          })
-          .map((os, index) => {
+        {phoneUsage.byOS.map((os, index) => {
             const bgColors = ['#10B981', '#6366F1']; // Green for Android, Indigo for iOS
             return (
               <div 
                 key={os.os}
-                className="border-3 border-foreground shadow-brutal p-4"
+                className="border-3 border-foreground shadow-brutal p-4 hover-brutal cursor-pointer transition-all"
                 style={{ backgroundColor: bgColors[index % bgColors.length] }}
               >
                 <div className="flex items-center justify-between mb-2">
@@ -114,18 +103,27 @@ export function MarketSegmentationSection({ data }: Props) {
             <CardDescription>Helps set media mix expectations</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-2 text-sm">
-              {filteredDataUsageBuckets.map(bucket => (
-                <div key={bucket.bucket}>
-                  <div className="flex items-center justify-between">
-                    <span>{bucket.bucket} GB</span>
-                    <span className="font-medium">{formatNumber(bucket.users)}</span>
+            <div className="space-y-3 text-sm">
+              {filteredDataUsageBuckets.map(bucket => {
+                const pct = (bucket.users / safeMaxBucket) * 100;
+                return (
+                  <div key={bucket.bucket}>
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="font-bold">{bucket.bucket} GB</span>
+                      <span className="font-medium">{formatNumber(bucket.users)}</span>
+                    </div>
+                    <div className="h-6 bg-muted border-2 border-foreground relative">
+                      <div 
+                        className="h-full bg-primary transition-all duration-300" 
+                        style={{ width: `${pct}%` }} 
+                      />
+                      <span className="absolute inset-0 flex items-center justify-center text-xs font-bold text-foreground mix-blend-difference">
+                        {pct.toFixed(0)}%
+                      </span>
+                    </div>
                   </div>
-                  <div className="h-2 rounded-full bg-muted">
-                    <div className="h-full rounded-full bg-primary" style={{ width: `${(bucket.users / safeMaxBucket) * 100}%` }} />
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </CardContent>
         </Card>
@@ -169,18 +167,27 @@ export function MarketSegmentationSection({ data }: Props) {
             <CardTitle>Primary use cases</CardTitle>
             <CardDescription>Segments sized by users, sorted by spend</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-3">
-            {filteredByPrimaryUse.map(segment => (
-              <div key={segment.primaryUse}>
-                <div className="flex items-center justify-between text-sm">
-                  <span className="font-medium">{segment.primaryUse}</span>
-                  <span>{formatCurrency(segment.avgSpend, 0)}</span>
+          <CardContent className="space-y-4">
+            {filteredByPrimaryUse.map(segment => {
+              const pct = (segment.users / safeMaxPrimary) * 100;
+              return (
+                <div key={segment.primaryUse}>
+                  <div className="flex items-center justify-between text-sm mb-1">
+                    <span className="font-bold">{segment.primaryUse}</span>
+                    <span className="font-medium">{formatCurrency(segment.avgSpend, 0)}</span>
+                  </div>
+                  <div className="h-6 bg-muted border-2 border-foreground relative">
+                    <div 
+                      className="h-full bg-secondary transition-all duration-300" 
+                      style={{ width: `${pct}%` }} 
+                    />
+                    <span className="absolute inset-0 flex items-center justify-center text-xs font-bold">
+                      {pct.toFixed(0)}%
+                    </span>
+                  </div>
                 </div>
-                <div className="h-2 rounded-full bg-muted">
-                  <div className="h-full rounded-full bg-secondary" style={{ width: `${(segment.users / safeMaxPrimary) * 100}%` }} />
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </CardContent>
         </Card>
       </div>
