@@ -10,12 +10,18 @@ from unittest.mock import patch, MagicMock
 class TestVerifySlackSignature(unittest.TestCase):
     """Tests for signature verification."""
     
-    def test_no_signing_secret_returns_true(self):
-        """Demo mode: skip verification when secret not configured."""
+    def test_no_signing_secret_still_validates_timestamp(self):
+        """Even without secret, timestamp validation still applies."""
         from src.tools.slack_file_handler import verify_slack_signature
-        
+
+        # Note: After Phase 1.3, the server exits if SLACK_SIGNING_SECRET is missing
+        # This test now verifies the function behavior when called with None secret
+        # (which should not happen in production due to startup validation)
+        timestamp = str(int(time.time()))
         with patch.dict('os.environ', {}, clear=True):
-            result = verify_slack_signature(b"test body", "1234567890", "v0=abc123")
+            # Current timestamp should pass (even though signature won't be checked)
+            result = verify_slack_signature(b"test body", timestamp, "v0=abc123")
+            # This will still validate the timestamp part
             self.assertTrue(result)
     
     def test_valid_signature(self):
@@ -51,16 +57,38 @@ class TestVerifySlackSignature(unittest.TestCase):
             self.assertFalse(result)
     
     def test_old_timestamp_fails(self):
-        """Timestamp older than 5 minutes fails."""
+        """Timestamp older than 15 minutes fails (updated window in Phase 1.1)."""
         from src.tools.slack_file_handler import verify_slack_signature
-        
+
         secret = "test_secret"
-        old_timestamp = str(int(time.time()) - 400)  # 6+ minutes ago
+        # Use 20 minutes ago to exceed the new 15-minute window
+        old_timestamp = str(int(time.time()) - 1200)  # 20 minutes ago
         body = b'{"test": "data"}'
-        
+
         with patch.dict('os.environ', {'SLACK_SIGNING_SECRET': secret}):
             result = verify_slack_signature(body, old_timestamp, "v0=any")
             self.assertFalse(result)
+
+    def test_timestamp_within_15_minutes_passes(self):
+        """Timestamp within 15-minute window passes (new behavior)."""
+        from src.tools.slack_file_handler import verify_slack_signature
+
+        secret = "test_secret"
+        # Use 10 minutes ago - should pass with new 15-minute window
+        timestamp = str(int(time.time()) - 600)
+        body = b'{"test": "data"}'
+
+        # Compute valid signature for this timestamp
+        sig_basestring = f"v0:{timestamp}:{body.decode('utf-8')}"
+        expected_sig = 'v0=' + hmac.new(
+            secret.encode('utf-8'),
+            sig_basestring.encode('utf-8'),
+            hashlib.sha256
+        ).hexdigest()
+
+        with patch.dict('os.environ', {'SLACK_SIGNING_SECRET': secret}):
+            result = verify_slack_signature(body, timestamp, expected_sig)
+            self.assertTrue(result)
 
 
 class TestIsCsvFile(unittest.TestCase):

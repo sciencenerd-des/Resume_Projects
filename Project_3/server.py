@@ -15,6 +15,7 @@ import tempfile
 import argparse
 from pathlib import Path
 from datetime import datetime
+from typing import Dict, Any
 
 try:
     from flask import Flask, request, jsonify
@@ -24,7 +25,19 @@ except ImportError:
 
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent))
-from src.agent import create_agent
+from src.agent import create_agent  # Always available for rollback
+
+# SDK imports are conditional - only import if SDK is enabled
+# This prevents import errors in Python 3.9 when USE_SDK_AGENT=false
+_use_sdk = os.getenv("USE_SDK_AGENT", "true").lower() == "true"
+if _use_sdk:
+    try:
+        from src.sdk.agents.orchestrator import create_orchestrator_agent
+        from src.sdk.utils.legacy_adapter import LegacyAdapter
+    except (ImportError, TypeError) as e:
+        print(f"⚠️  Warning: Failed to import SDK agent (requires Python 3.10+): {e.__class__.__name__}", flush=True)
+        print("Falling back to legacy agent", flush=True)
+        _use_sdk = False
 
 app = Flask(__name__)
 
@@ -38,15 +51,99 @@ print(f"Working directory: {os.getcwd()}")
 print(f"SLACK_BOT_TOKEN: {'✓ Configured' if os.getenv('SLACK_BOT_TOKEN') else '✗ MISSING'}")
 print(f"SLACK_SIGNING_SECRET: {'✓ Configured' if os.getenv('SLACK_SIGNING_SECRET') else '✗ MISSING'}")
 print(f"SLACK_WEBHOOK_URL: {'✓ Configured' if os.getenv('SLACK_WEBHOOK_URL') else '✗ MISSING'}")
+print()
+print("FEATURE FLAGS:")
+print(f"  USE_SDK_AGENT: {'✓ ON (multi-agent SDK)' if os.getenv('USE_SDK_AGENT', 'true').lower() == 'true' else '✗ OFF (legacy agent)'}")
+print(f"  ENABLE_AI_ANALYSIS: {'✓ ON' if os.getenv('ENABLE_AI_ANALYSIS', 'false').lower() == 'true' else '✗ OFF'}")
+print(f"  DEBUG: {'✓ ON' if os.getenv('DEBUG', 'false').lower() == 'true' else '✗ OFF'}")
+print(f"  DISABLE_SLACK: {'✓ ON (notifications disabled)' if os.getenv('DISABLE_SLACK', 'false').lower() == 'true' else '✗ OFF (notifications enabled)'}")
+print("=" * 60)
+print()
+
+# CRITICAL: Validate required Slack credentials
+# Without these, the server will fail at runtime with confusing errors
+print("VALIDATING REQUIRED CREDENTIALS...")
+
+missing_credentials = []
+
+if not os.getenv('SLACK_BOT_TOKEN'):
+    missing_credentials.append('SLACK_BOT_TOKEN')
+
+if not os.getenv('SLACK_SIGNING_SECRET'):
+    missing_credentials.append('SLACK_SIGNING_SECRET')
+
+if missing_credentials:
+    print()
+    print("=" * 60)
+    print("❌ FATAL ERROR: Missing required Slack credentials")
+    print("=" * 60)
+    for cred in missing_credentials:
+        print(f"  ✗ {cred} is not configured")
+    print()
+    print("Please set these environment variables and restart the server.")
+    print("See .env.example for configuration details.")
+    print("=" * 60)
+    sys.exit(1)
+
+print("✓ All required credentials configured")
 print("=" * 60)
 print()
 
 # Global agent instance - will be lazily initialized
 _agent = None
 
+# File processing lock to prevent race conditions
+# When file_shared and message events arrive simultaneously for same file,
+# only one should process the file
+import threading
+import time
+
+_processing_files = {}  # Dict[file_id, dict] - tracks files currently being processed
+_processing_files_lock = threading.Lock()  # Thread-safe access to _processing_files
+
+
+def acquire_file_lock(file_id: str, context: str) -> bool:
+    """
+    Attempt to acquire processing lock for a file.
+
+    Args:
+        file_id: Slack file ID
+        context: Description of who's acquiring lock (e.g., "file_shared handler")
+
+    Returns:
+        True if lock acquired, False if file already being processed
+    """
+    with _processing_files_lock:
+        if file_id in _processing_files:
+            existing = _processing_files[file_id]
+            print(f"[DEBUG] File {file_id} already being processed by {existing['context']} (started {time.time() - existing['start_time']:.1f}s ago)", flush=True)
+            return False
+
+        _processing_files[file_id] = {
+            "context": context,
+            "start_time": time.time()
+        }
+        print(f"[DEBUG] Acquired file lock: {file_id} for {context}", flush=True)
+        return True
+
+
+def release_file_lock(file_id: str):
+    """Release processing lock for a file."""
+    with _processing_files_lock:
+        if file_id in _processing_files:
+            duration = time.time() - _processing_files[file_id]["start_time"]
+            print(f"[DEBUG] Released file lock: {file_id} (processed for {duration:.1f}s)", flush=True)
+            del _processing_files[file_id]
+
 
 def get_agent():
     """Get or create the agent instance (lazy initialization).
+
+    Configuration priority:
+    1. Environment variables (USE_SDK_AGENT, ENABLE_AI_ANALYSIS, DEBUG, DISABLE_SLACK)
+    2. Defaults (SDK enabled, no AI, no debug, Slack enabled)
+
+    Supports both SDK multi-agent orchestrator and legacy single agent via feature flag.
 
     This ensures the agent is available whether the server is started via:
     - python server.py
@@ -55,11 +152,53 @@ def get_agent():
     """
     global _agent
     if _agent is None:
-        _agent = create_agent(
-            verbose=os.getenv("DEBUG", "false").lower() == "true",
-            notify_slack=os.getenv("DISABLE_SLACK", "false").lower() != "true"
-        )
+        # Read configuration from environment
+        enable_ai = os.getenv("ENABLE_AI_ANALYSIS", "false").lower() == "true"
+        verbose = os.getenv("DEBUG", "false").lower() == "true"
+        notify_slack = os.getenv("DISABLE_SLACK", "false").lower() != "true"
+
+        # Log configuration for debugging
+        # Use _use_sdk determined at import time (includes Python version fallback)
+        print(f"[DEBUG] Agent config: use_sdk={_use_sdk}, enable_ai={enable_ai}, verbose={verbose}, notify_slack={notify_slack}", flush=True)
+
+        # Feature flag: Use SDK agent or legacy agent
+        if _use_sdk:
+            print("[DEBUG] Creating SDK orchestrator agent", flush=True)
+            _agent = create_orchestrator_agent(
+                verbose=verbose,
+                notify_slack=notify_slack
+            )
+        else:
+            print("[DEBUG] Creating legacy agent (USE_SDK_AGENT=false)", flush=True)
+            _agent = create_agent(
+                verbose=verbose,
+                notify_slack=notify_slack
+            )
     return _agent
+
+
+def process_leads_with_agent(agent, csv_path: str) -> Dict[str, Any]:
+    """Process leads using either SDK or legacy agent.
+
+    Handles method name differences between SDK and legacy agents:
+    - Legacy: agent.process_leads(csv_path)
+    - SDK: agent.run_pipeline(mode="batch", csv_path=csv_path)
+
+    Args:
+        agent: Either OrchestratorAgent (SDK) or LeadProcessorAgent (legacy)
+        csv_path: Absolute path to CSV file
+
+    Returns:
+        Dict in legacy format with all expected fields
+    """
+    # Check if SDK agent (has run_pipeline method)
+    if hasattr(agent, 'run_pipeline'):
+        # SDK agent - call run_pipeline and convert to legacy format
+        sdk_result = agent.run_pipeline(mode="batch", csv_path=csv_path)
+        return LegacyAdapter.to_legacy_dict(sdk_result)
+    else:
+        # Legacy agent - call process_leads directly
+        return agent.process_leads(csv_path)
 
 
 @app.before_request
@@ -74,6 +213,34 @@ def log_request():
         print(f"[SLACK] Request from Slack detected")
         print(f"[SLACK] Timestamp: {request.headers.get('X-Slack-Request-Timestamp')}")
     print(f"{'='*60}\n")
+
+
+@app.route("/", methods=["GET"])
+def root():
+    """Root endpoint with service information and diagnostics."""
+    return jsonify({
+        "status": "online",
+        "service": "Project_3 Lead Processor",
+        "endpoints": {
+            "/": "Service information (this endpoint)",
+            "/health": "Health check",
+            "/process": "Process leads from JSON payload (POST)",
+            "/process/csv": "Process CSV file upload (POST)",
+            "/slack/command": "Slack slash command handler (POST)",
+            "/slack/events": "Slack Events API (POST)",
+            "/slack/interactive": "Slack interactive components (POST)"
+        },
+        "configuration": {
+            "slack_bot_token": "✓ Configured" if os.getenv('SLACK_BOT_TOKEN') else "✗ MISSING",
+            "slack_signing_secret": "✓ Configured" if os.getenv('SLACK_SIGNING_SECRET') else "✗ MISSING",
+            "slack_webhook_url": "✓ Configured" if os.getenv('SLACK_WEBHOOK_URL') else "✗ MISSING",
+            "openai_api_key": "✓ Configured" if os.getenv('OPENAI_API_KEY') else "✗ MISSING",
+            "enable_ai_analysis": os.getenv('ENABLE_AI_ANALYSIS', 'false').lower() == 'true',
+            "debug": os.getenv('DEBUG', 'false').lower() == 'true'
+        },
+        "timestamp": datetime.now().isoformat(),
+        "version": "1.0.0"
+    })
 
 
 @app.route("/health", methods=["GET"])
@@ -143,7 +310,7 @@ def process_leads():
             temp_path = f.name
         
         # Process through agent
-        results = agent.process_leads(temp_path)
+        results = process_leads_with_agent(agent, temp_path)
         
         # Clean up temp file
         Path(temp_path).unlink(missing_ok=True)
@@ -211,7 +378,7 @@ def process_csv():
             temp_path = f.name
         
         # Process through agent
-        results = agent.process_leads(temp_path)
+        results = process_leads_with_agent(agent, temp_path)
         
         # Clean up temp file
         Path(temp_path).unlink(missing_ok=True)
@@ -303,7 +470,7 @@ def slack_command():
             writer.writerow(lead)
             temp_path = f.name
         
-        results = agent.process_leads(temp_path)
+        results = process_leads_with_agent(agent, temp_path)
         Path(temp_path).unlink(missing_ok=True)
         
         # Format Slack response
@@ -422,13 +589,29 @@ def _process_csv_from_message_files(
         get_message_by_timestamp
     )
 
+    print(f"[DEBUG] _process_csv_from_message_files called with {len(files)} files", flush=True)
+
     # If files array is empty, fetch from message history
     if not files and message_ts:
-        print("[DEBUG] Files array empty, fetching message from history...", flush=True)
+        print(f"[DEBUG] Files array empty, fetching message from history (ts={message_ts})...", flush=True)
+
+        # Try fetching message - sometimes metadata isn't ready immediately
         message = get_message_by_timestamp(channel_id, message_ts)
         if message:
             files = message.get("files", [])
             print(f"[DEBUG] Retrieved {len(files)} files from message history", flush=True)
+
+        # If still no files, wait 2 seconds and try again (Slack API eventual consistency)
+        if not files:
+            print(f"[DEBUG] Files still empty, waiting 2s and retrying...", flush=True)
+            time.sleep(2)
+            message = get_message_by_timestamp(channel_id, message_ts)
+            if message:
+                files = message.get("files", [])
+                print(f"[DEBUG] Retry retrieved {len(files)} files", flush=True)
+
+        if not files:
+            print(f"[WARNING] Files array still empty after retry for message {message_ts}", flush=True)
 
     # Find CSV file in attachments
     csv_file = None
@@ -436,6 +619,8 @@ def _process_csv_from_message_files(
         file_id = f.get("id")
         if file_id:
             file_info = get_file_info(file_id)
+            print(f"[DEBUG] Checking if file is CSV: {file_info.get('file', {}).get('name', 'unknown')}", flush=True)
+            print(f"[DEBUG] File metadata: mimetype={file_info.get('file', {}).get('mimetype')}, filetype={file_info.get('file', {}).get('filetype')}", flush=True)
             if is_csv_file(file_info):
                 csv_file = (file_id, file_info)
                 break
@@ -446,6 +631,11 @@ def _process_csv_from_message_files(
     file_id, file_info = csv_file
     filename = file_info.get("file", {}).get("name", "leads.csv")
     print(f"[DEBUG] Found CSV attachment in message: {filename}", flush=True)
+
+    # Check if already processing (race with file_shared event)
+    if not acquire_file_lock(file_id, "message handler"):
+        print(f"[DEBUG] File {file_id} already being processed, skipping", flush=True)
+        return True  # Return True to indicate "handled" (by other handler)
 
     import threading
 
@@ -466,7 +656,7 @@ def _process_csv_from_message_files(
             print(f"[DEBUG] CSV downloaded to: {temp_path}")
 
             agent = get_agent()
-            results = agent.process_leads(temp_path)
+            results = process_leads_with_agent(agent, temp_path)
             print(f"[DEBUG] Processing complete. Status: {results.get('status')}")
 
             Path(temp_path).unlink(missing_ok=True)
@@ -484,6 +674,10 @@ def _process_csv_from_message_files(
                 f"❌ Error processing `{filename}`: {str(e)}",
                 thread_ts=thread_ts
             )
+
+        finally:
+            # ALWAYS release lock, even on exception
+            release_file_lock(file_id)
 
     threading.Thread(target=process_csv_attachment).start()
     return True
@@ -519,14 +713,229 @@ def slack_interactive():
         return jsonify({"error": str(e)}), 500
 
 
+# Conversational Mode Support (Phase 4)
+# Session manager is initialized lazily when needed
+_session_manager = None
+
+
+def get_session_manager():
+    """Get or create session manager instance (lazy initialization)."""
+    global _session_manager
+    if _session_manager is None:
+        # Only import if SDK is available
+        if _use_sdk:
+            try:
+                from src.sdk.sessions.slack_session_manager import create_session_manager
+                redis_url = os.getenv("REDIS_URL")
+                _session_manager = create_session_manager(redis_url=redis_url)
+                print(f"[SessionManager] Initialized: {_session_manager.get_stats()}", flush=True)
+            except Exception as e:
+                print(f"[SessionManager] Failed to initialize: {e}", flush=True)
+                _session_manager = None
+        else:
+            print("[SessionManager] Skipped (SDK not available)", flush=True)
+            _session_manager = None
+    return _session_manager
+
+
+def _is_conversational_query(text: str) -> bool:
+    """
+    Determine if a message is a conversational query (vs a command).
+
+    Returns True if the message appears to be asking a question or
+    requesting information, rather than triggering an action.
+
+    Excludes explicit commands like "add lead:" and "add leads:"
+    """
+    if not text:
+        return False
+
+    text_lower = text.lower().strip()
+
+    # EXPLICIT COMMAND EXCLUSIONS - these are NEVER conversational
+    command_prefixes = [
+        "add lead:",
+        "add leads:",
+        "upload",
+        "process",
+        "import"
+    ]
+
+    for prefix in command_prefixes:
+        if text_lower.startswith(prefix):
+            print(f"[DEBUG] Not conversational - explicit command: '{prefix}'", flush=True)
+            return False
+
+    # Conversational triggers
+    conversational_triggers = [
+        "how many",
+        "what",
+        "show",
+        "show me",
+        "tell me",
+        "list",
+        "report",
+        "summary",
+        "summarize",
+        "stats",
+        "statistics",
+        "find",
+        "search",
+        "who",
+        "when",
+        "which",
+        "why",
+        "can you",
+        "could you",
+        "please",
+        "help",
+        "explain",
+    ]
+
+    # Check for conversational patterns
+    for trigger in conversational_triggers:
+        if trigger in text_lower:
+            return True
+
+    # Check for question marks (questions are conversational)
+    if "?" in text:
+        return True
+
+    return False
+
+
+def _handle_conversation(event: Dict[str, Any]) -> Dict[str, Any]:
+    """Handle conversational query using SDK sessions.
+
+    Args:
+        event: Slack message event
+
+    Returns:
+        Response dict for Slack
+    """
+    from src.tools.slack_file_handler import post_message_to_channel
+
+    channel_id = event.get("channel")
+    text = event.get("text", "")
+    thread_ts = event.get("thread_ts") or event.get("ts")
+    user_id = event.get("user", "unknown")
+
+    print(f"[Conversation] Query from <@{user_id}>: '{text}'", flush=True)
+
+    # Check if SDK is available
+    if not _use_sdk:
+        post_message_to_channel(
+            channel_id,
+            "⚠️ Conversational mode requires Python 3.10+ with SDK enabled.\n\n"
+            "For now, you can use:\n"
+            "• `add lead: email@example.com Name, Company` - Add single lead\n"
+            "• `add leads:` (with CSV) - Batch process leads",
+            thread_ts=thread_ts
+        )
+        return jsonify({"ok": True})
+
+    # Get session manager
+    session_manager = get_session_manager()
+    if not session_manager:
+        post_message_to_channel(
+            channel_id,
+            "❌ Session manager not available. Conversational mode disabled.",
+            thread_ts=thread_ts
+        )
+        return jsonify({"ok": True})
+
+    try:
+        # Get or create session
+        session_data = session_manager.get_session(channel_id, thread_ts)
+        if not session_data:
+            print(f"[Conversation] Creating new session for {channel_id}:{thread_ts}", flush=True)
+            session_data = {
+                "messages": [],
+                "context": {"mode": "conversational"}
+            }
+
+        # Add user message to history
+        session_data["messages"].append({
+            "role": "user",
+            "content": text,
+            "timestamp": datetime.now().isoformat()
+        })
+
+        # Get agent (use SDK orchestrator for conversational mode)
+        agent = get_agent()
+
+        # Run conversational query
+        # Note: This uses the orchestrator in conversational mode
+        # The agent will use session context to maintain conversation state
+        if hasattr(agent, 'run_pipeline'):
+            # SDK agent with conversational mode
+            result = agent.run_pipeline(
+                mode="conversational",
+                message=text
+            )
+            response_text = result.get("response", "I processed your request.")
+        else:
+            # Legacy agent doesn't support conversational mode
+            response_text = "Conversational mode requires the SDK agent. Please use commands:\n" \
+                          "• `add lead: email@example.com Name, Company`\n" \
+                          "• `add leads:` (with CSV attachment)"
+
+        # Add assistant response to history
+        session_data["messages"].append({
+            "role": "assistant",
+            "content": response_text,
+            "timestamp": datetime.now().isoformat()
+        })
+
+        # Save session
+        session_manager.save_session(channel_id, thread_ts, session_data)
+
+        # Send response to Slack
+        post_message_to_channel(channel_id, response_text, thread_ts=thread_ts)
+
+        print(f"[Conversation] Response sent. Session has {len(session_data['messages'])} messages", flush=True)
+
+        return jsonify({"ok": True})
+
+    except Exception as e:
+        import traceback
+        import json
+
+        error_context = {
+            "error_type": e.__class__.__name__,
+            "error_message": str(e),
+            "channel_id": channel_id,
+            "user_id": event.get("user"),
+            "thread_ts": thread_ts,
+            "query_text": text[:100] if text else "none",  # First 100 chars
+            "event_type": "conversational_query"
+        }
+
+        print(f"\n{'='*60}", flush=True)
+        print(f"[ERROR] Exception in conversational handler", flush=True)
+        print(f"{'='*60}", flush=True)
+        print(json.dumps(error_context, indent=2), flush=True)
+        print(f"\nStack trace:", flush=True)
+        print(traceback.format_exc(), flush=True)
+        print(f"{'='*60}\n", flush=True)
+
+        post_message_to_channel(
+            channel_id,
+            f"❌ Error processing conversational query: {str(e)}",
+            thread_ts=thread_ts
+        )
+        return jsonify({"ok": True})
+
+
 @app.route("/slack/events", methods=["POST"])
 def slack_events():
     """
     Handle Slack Events API.
-    
+
     Supported events:
     - file_shared: Automatically process CSV file attachments
     - message: Trigger lead processing from "add lead:" messages
+    - message: Conversational queries for SDK sessions (NEW in Phase 4)
     """
     print(f"\n[DEBUG] Incoming request to /slack/events at {datetime.now().isoformat()}", flush=True)
     
@@ -565,8 +974,23 @@ def slack_events():
     if not verify_slack_signature(raw_body, timestamp, signature):
         print("[DEBUG] Signature verification FAILED", flush=True)
         return jsonify({"error": "Invalid signature"}), 401
-    
+
     print("[DEBUG] Signature verification PASSED", flush=True)
+
+    # Check for Slack retry headers (Slack retries failed events up to 3 times)
+    retry_num = request.headers.get("X-Slack-Retry-Num")
+    retry_reason = request.headers.get("X-Slack-Retry-Reason")
+
+    if retry_num:
+        print(f"[INFO] Slack retry detected: attempt #{retry_num}, reason: {retry_reason}", flush=True)
+        print(f"[INFO] Event ID: {data.get('event_id', 'unknown')}, Type: {data.get('type')}", flush=True)
+
+        # Return 200 OK to acknowledge receipt, but don't reprocess
+        # This prevents duplicate processing of the same event
+        return jsonify({
+            "ok": True,
+            "message": f"Retry #{retry_num} acknowledged (not reprocessed)"
+        })
     
     # Handle events
     event = data.get("event", {})
@@ -576,6 +1000,8 @@ def slack_events():
         print(f"[DEBUG] Message event details - text: '{event.get('text', '')}', has_files: {'files' in event}, files_count: {len(event.get('files', []))}, subtype: {event.get('subtype', 'none')}", flush=True)
     
     # Handle file_shared events - auto-process CSV attachments
+    # NOTE: file_shared events don't include bot_id, so bot uploads ARE processed
+    # This is intentional - we want to process CSV files uploaded by bots/automations
     if event_type == "file_shared":
         file_id = event.get("file_id")
         channel_id = event.get("channel_id")
@@ -610,10 +1036,18 @@ def slack_events():
             if is_csv_file(file_info):
                 filename = file_info.get("file", {}).get("name", "leads.csv")
                 print(f"[DEBUG] Detected CSV file: {filename}", flush=True)
-                
+
+                # Check if file is already being processed (race condition prevention)
+                if not acquire_file_lock(file_id, "file_shared handler"):
+                    print(f"[DEBUG] Skipping duplicate processing for file {file_id}", flush=True)
+                    return jsonify({
+                        "ok": True,
+                        "message": "File already being processed"
+                    })
+
                 # Acknowledge quickly (Slack requires response within 3s)
                 import threading
-                
+
                 def process_in_background():
                     try:
                         print(f"[DEBUG] Background task started for {filename}")
@@ -633,7 +1067,7 @@ def slack_events():
                         # Process through agent
                         agent = get_agent()
                         print("[DEBUG] Agent initialized, starting processing...")
-                        results = agent.process_leads(temp_path)
+                        results = process_leads_with_agent(agent, temp_path)
                         print(f"[DEBUG] Processing complete. Status: {results.get('status')}")
                         
                         # Clean up temp file
@@ -652,12 +1086,39 @@ def slack_events():
                         print("[DEBUG] Results posted to Slack")
                         
                     except Exception as e:
-                        print(f"[DEBUG] Exception in background processing: {e}")
+                        import traceback
+                        import json
+
+                        # Create structured error context
+                        error_context = {
+                            "error_type": e.__class__.__name__,
+                            "error_message": str(e),
+                            "file_id": file_id,
+                            "filename": filename,
+                            "channel_id": channel_id,
+                            "user_id": user_id if 'user_id' in locals() else "unknown",
+                            "event_type": "file_shared"
+                        }
+
+                        # Log full details for debugging
+                        print(f"\n{'='*60}", flush=True)
+                        print(f"[ERROR] Exception in background file processing", flush=True)
+                        print(f"{'='*60}", flush=True)
+                        print(json.dumps(error_context, indent=2), flush=True)
+                        print(f"\nStack trace:", flush=True)
+                        print(traceback.format_exc(), flush=True)
+                        print(f"{'='*60}\n", flush=True)
+
+                        # Post user-friendly error to Slack
                         post_message_to_channel(
                             channel_id,
-                            f"❌ Error processing `{filename}`: {str(e)}"
+                            f"❌ Error processing `{filename}`: {str(e)}\n\n_Error ID: {error_context['error_type']}_"
                         )
-                
+
+                    finally:
+                        # ALWAYS release lock, even on exception
+                        release_file_lock(file_id)
+
                 # Start background processing
                 thread = threading.Thread(target=process_in_background)
                 thread.start()
@@ -667,7 +1128,13 @@ def slack_events():
                 print(f"[DEBUG] File {file_id} is not a CSV")
     
     # Handle message events
-    if event_type == "message" and not event.get("bot_id"):
+    if event_type == "message":
+        bot_id = event.get("bot_id")
+        if bot_id:
+            print(f"[DEBUG] Message from bot {bot_id} filtered out (prevents loops)", flush=True)
+            return jsonify({"ok": True, "message": "Bot message ignored"})
+
+        # Continue with rest of message handling...
         text = event.get("text", "")
         files = event.get("files", [])
         subtype = event.get("subtype", "none")
@@ -734,7 +1201,7 @@ def slack_events():
                         temp_path = f.name
 
                     agent = get_agent()
-                    results = agent.process_leads(temp_path)
+                    results = process_leads_with_agent(agent, temp_path)
                     Path(temp_path).unlink(missing_ok=True)
 
                     if results.get("status") == "complete" and len(results.get("valid_leads", [])) > 0:
@@ -764,15 +1231,52 @@ def slack_events():
                     post_message_to_channel(channel_id, message, thread_ts=thread_ts)
 
                 except Exception as e:
-                    print(f"[DEBUG] Error processing add lead message: {e}")
+                    import traceback
+                    import json
+
+                    # Create structured error context
+                    error_context = {
+                        "error_type": e.__class__.__name__,
+                        "error_message": str(e),
+                        "channel_id": channel_id,
+                        "user_id": user_id,
+                        "thread_ts": thread_ts,
+                        "lead_email": lead.get("email", "unknown") if 'lead' in locals() else "unknown",
+                        "event_type": "add_lead"
+                    }
+
+                    # Log full details for debugging
+                    print(f"\n{'='*60}", flush=True)
+                    print(f"[ERROR] Exception in add lead handler", flush=True)
+                    print(f"{'='*60}", flush=True)
+                    print(json.dumps(error_context, indent=2), flush=True)
+                    print(f"\nStack trace:", flush=True)
+                    print(traceback.format_exc(), flush=True)
+                    print(f"{'='*60}\n", flush=True)
+
+                    # Post user-friendly error to Slack
                     post_message_to_channel(
                         channel_id,
-                        f"❌ Error processing lead: {str(e)}",
+                        f"❌ Error processing lead: {str(e)}\n\n_Error ID: {error_context['error_type']}_",
                         thread_ts=thread_ts
                     )
 
             threading.Thread(target=process_message_lead).start()
             return jsonify({"ok": True, "message": "Processing lead..."})
+
+        # NEW in Phase 4: Check for conversational queries
+        # If message doesn't match explicit commands, check if it's conversational
+        # Check for conversational query, but NOT if message has file attachments
+        # Files with "add leads?" should trigger file processing, not conversation
+        has_files = bool(event.get("files")) or event.get("subtype") == "file_share"
+
+        if text and not has_files and _is_conversational_query(text):
+            print(f"[DEBUG] Conversational query detected (no files attached)", flush=True)
+            return _handle_conversation(event)
+
+        if text and has_files and _is_conversational_query(text):
+            print(f"[DEBUG] Message matches conversational pattern but has files - treating as file command", flush=True)
+            # Fall through to return "ok" (file will be handled by file_shared event)
 
     return jsonify({"ok": True})
 

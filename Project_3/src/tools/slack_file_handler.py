@@ -40,22 +40,36 @@ def verify_slack_signature(
         True if signature is valid, False otherwise
     """
     signing_secret = _get_slack_signing_secret()
-    
-    if not signing_secret:
-        print("[DEBUG] No SLACK_SIGNING_SECRET configured, skipping verification", flush=True)
-        return True
-    
-    # Check timestamp to prevent replay attacks (allow 5 min window)
+    # Note: signing_secret is guaranteed to exist due to startup validation in server.py
+    # The server now exits on startup if SLACK_SIGNING_SECRET is missing
+
+    # Check timestamp to prevent replay attacks (allow 15 min window)
+    # Increased from 5 minutes to handle Slack retries which use original timestamp
+    SIGNATURE_TIMESTAMP_WINDOW = 900  # 15 minutes (to handle Slack retries)
     try:
         request_time = int(timestamp)
         current_time = int(time.time())
-        if abs(current_time - request_time) > 300:
-            print(f"[DEBUG] Timestamp expired: {abs(current_time - request_time)}s difference", flush=True)
+        time_diff = abs(current_time - request_time)
+
+        if time_diff > SIGNATURE_TIMESTAMP_WINDOW:
+            print(f"[WARNING] Signature timestamp expired: {time_diff}s difference (limit: {SIGNATURE_TIMESTAMP_WINDOW}s)", flush=True)
+            print(f"[WARNING] Request timestamp: {request_time}, Current time: {current_time}", flush=True)
             return False
+
+        # Log when timestamp is getting old but still valid (helps debugging)
+        if time_diff > 300:  # More than 5 minutes
+            print(f"[INFO] Old timestamp accepted: {time_diff}s difference (within {SIGNATURE_TIMESTAMP_WINDOW}s window)", flush=True)
+
     except (ValueError, TypeError) as e:
         print(f"[DEBUG] Invalid timestamp format: {e}", flush=True)
         return False
-    
+
+    # If no signing secret (should only happen in tests), can't verify signature
+    # In production, server.py startup validation ensures this is always set
+    if not signing_secret:
+        print("[DEBUG] No SLACK_SIGNING_SECRET - cannot verify signature (test mode)", flush=True)
+        return True  # Allow for testing purposes
+
     # Compute expected signature
     sig_basestring = f"v0:{timestamp}:{body.decode('utf-8')}"
     expected_sig = 'v0=' + hmac.new(
@@ -116,35 +130,43 @@ def get_file_info(file_id: str) -> Dict[str, Any]:
 
 def is_csv_file(file_info: Dict[str, Any]) -> bool:
     """
-    Check if a Slack file is a CSV.
-    
-    Args:
-        file_info: File info from Slack API
-        
-    Returns:
-        True if file is a CSV, False otherwise
+    Determine if a Slack file is a CSV using multiple detection methods.
     """
     if not file_info.get("ok", False):
+        print("[DEBUG] is_csv_file: File info not OK", flush=True)
         return False
-    
+
     file_data = file_info.get("file", {})
-    
-    # Check by mimetype
+    if not file_data:
+        print("[DEBUG] is_csv_file: No file data provided", flush=True)
+        return False
+
+    filename = file_data.get("name", "unknown")
     mimetype = file_data.get("mimetype", "")
-    print(f"[DEBUG] Checking file type: mimetype={mimetype}, extension={file_data.get('name', '').split('.')[-1]}", flush=True)
-    if mimetype in ["text/csv", "application/csv", "text/comma-separated-values"]:
-        return True
-    
-    # Check by file extension
-    filename = file_data.get("name", "")
-    if filename.lower().endswith(".csv"):
-        return True
-    
-    # Check by filetype field
     filetype = file_data.get("filetype", "")
-    if filetype == "csv":
+
+    print(f"[DEBUG] Checking file type for '{filename}':", flush=True)
+    print(f"[DEBUG]   mimetype: {mimetype}", flush=True)
+    print(f"[DEBUG]   filetype: {filetype}", flush=True)
+    print(f"[DEBUG]   extension: {filename.split('.')[-1] if '.' in filename else 'none'}", flush=True)
+
+    # Tier 1: MIME type check
+    csv_mimetypes = ["text/csv", "application/csv", "text/comma-separated-values"]
+    if mimetype in csv_mimetypes:
+        print(f"[DEBUG] ✓ Detected as CSV via mimetype: {mimetype}", flush=True)
         return True
-    
+
+    # Tier 2: File extension check
+    if filename.lower().endswith(".csv"):
+        print(f"[DEBUG] ✓ Detected as CSV via .csv extension", flush=True)
+        return True
+
+    # Tier 3: Slack filetype field
+    if filetype == "csv":
+        print(f"[DEBUG] ✓ Detected as CSV via filetype field", flush=True)
+        return True
+
+    print(f"[DEBUG] ✗ File '{filename}' is NOT a CSV", flush=True)
     return False
 
 
