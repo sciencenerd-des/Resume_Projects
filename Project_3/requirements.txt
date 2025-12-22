@@ -3,9 +3,11 @@
 
 # Core dependencies
 openai>=1.50.0
+openai-agents>=0.6.0  # OpenAI Agents SDK for multi-agent workflows (latest: 0.6.4)
 python-dotenv>=1.0.0
 pydantic>=2.5.0
 notion-client>=2.0.0
+redis>=5.0.0  # Session storage for conversational Slack
 
 # Automated triggers
 watchdog>=3.0.0

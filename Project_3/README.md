@@ -2,7 +2,7 @@
 
 > An AI-powered lead processing agent that automates the growth marketing pipeline using Python, OpenAI, and modern integrations.
 
-![Python](https://img.shields.io/badge/Python-3.11+-blue.svg)
+![Python](https://img.shields.io/badge/Python-3.10+-blue.svg)
 ![OpenAI](https://img.shields.io/badge/OpenAI-Agents%20SDK-412991.svg)
 ![Notion](https://img.shields.io/badge/Notion-CRM-000000.svg)
 ![Slack](https://img.shields.io/badge/Slack-Notifications-4A154B.svg)
@@ -38,6 +38,47 @@ This project demonstrates **operational efficiency** through marketing automatio
 └─────────────────────────────────────────────────────────────┘
 ```
 
+### Multi-Agent Architecture (OpenAI Agents SDK)
+
+This project uses the **OpenAI Agents SDK** for multi-agent orchestration:
+
+- **Orchestrator Agent**: Coordinates the complete pipeline
+- **Email Validator Agent**: Validates email addresses with RFC 5322 compliance
+- **Lead Scorer Agent**: Scores and categorizes leads (HOT/WARM/COLD)
+- **AI Analyzer Agent**: Optional AI-powered insights (when ENABLE_AI_ANALYSIS=true)
+- **Notion Syncer Agent**: Syncs leads to Notion CRM
+- **Report Generator Agent**: Creates formatted reports
+- **Slack Notifier Agent**: Sends notifications (when DISABLE_SLACK=false)
+
+**Rollback to Legacy Agent:**
+
+If you encounter issues with the SDK multi-agent system, you can instantly rollback to the legacy single-agent implementation:
+
+```bash
+# In your .env file
+USE_SDK_AGENT=false
+```
+
+Then restart the server. The system will automatically use the legacy agent instead. No code changes needed!
+
+**Automatic Fallback (Python 3.9):**
+
+If running in Python 3.9, the system will automatically fall back to the legacy agent since the SDK requires Python 3.10+. You'll see a warning message:
+
+```
+⚠️  Warning: Failed to import SDK agent (requires Python 3.10+): TypeError
+Falling back to legacy agent
+```
+
+This is by design and ensures the system continues to work in Python 3.9 environments.
+
+## 📋 Requirements
+
+- **Python 3.10+** (required for OpenAI Agents SDK)
+- OpenAI API key
+- Notion API key (optional - runs in demo mode without it)
+- Slack webhook URL (optional)
+
 ## 🚀 Quick Start
 
 ### 1. Install Dependencies
@@ -71,28 +112,58 @@ python main.py data/sample_leads.csv --quiet
 
 ```
 Project_3/
-├── main.py                 # CLI entry point
-├── requirements.txt        # Python dependencies
-├── .env.example           # Environment template
+├── main.py                     # CLI entry point
+├── server.py                   # Flask webhook server
+├── requirements.txt            # Python dependencies
+├── .env.example               # Environment template
 │
 ├── src/
-│   ├── agent.py           # Main agent orchestrator
-│   ├── config.py          # Configuration management
-│   └── tools/
+│   ├── agent.py               # Legacy agent (rollback support)
+│   ├── config.py              # Configuration management
+│   │
+│   ├── sdk/                   # OpenAI Agents SDK (NEW)
+│   │   ├── sdk_config.py      # SDK configuration & presets
+│   │   ├── agents/            # Specialized agents
+│   │   │   ├── orchestrator.py    # Main coordinator
+│   │   │   ├── email_validator.py # Email validation agent
+│   │   │   ├── lead_scorer.py     # Lead scoring agent
+│   │   │   ├── ai_analyzer.py     # AI analysis agent
+│   │   │   ├── notion_syncer.py   # Notion CRM agent
+│   │   │   ├── report_generator.py# Report generation agent
+│   │   │   └── slack_notifier.py  # Slack notification agent
+│   │   ├── tools/             # @function_tool wrappers
+│   │   ├── sessions/          # Conversational sessions (Phase 4)
+│   │   │   └── slack_session_manager.py
+│   │   └── utils/             # Adapters & utilities
+│   │       ├── legacy_adapter.py  # SDK → Legacy format
+│   │       └── feature_flags.py   # Feature flag management
+│   │
+│   └── tools/                 # Legacy tools
 │       ├── csv_ingest.py      # CSV file processing
 │       ├── email_validator.py # Email validation
+│       ├── lead_scorer.py     # Lead scoring
 │       ├── notion_crm.py      # Notion API integration
 │       ├── report_generator.py# Report formatting
 │       └── slack_notify.py    # Slack webhooks
 │
 ├── data/
-│   └── sample_leads.csv   # Test data
+│   └── sample_leads.csv       # Test data
 │
-├── tests/
-│   ├── test_csv_ingest.py
-│   └── test_email_validator.py
+├── scripts/                   # Utility scripts
+│   ├── validate_compatibility.py  # SDK vs Legacy validation
+│   └── benchmark_performance.py   # Performance benchmarks
 │
-└── research_report.md     # Project research documentation
+├── tests/                     # Test suite
+│   ├── test_legacy_adapter.py # Legacy adapter tests
+│   ├── test_session_manager.py# Session manager tests
+│   ├── test_conversational_detection.py
+│   └── test_sdk_integration.py# Integration tests
+│
+└── docs/                      # Documentation
+    ├── PHASE3_COMPLETION_SUMMARY.md
+    ├── PHASE4_COMPLETION_SUMMARY.md
+    ├── DEPLOYMENT_GUIDE.md
+    └── USER_GUIDE.md
 ```
 
 ## ⚙️ Configuration
@@ -209,6 +280,82 @@ Simply upload a CSV file to any channel. The bot will automatically:
 /processlead john@example.com John Doe, Acme Corp
 ```
 Works the same as the single lead message command.
+
+**5. Conversational Mode** ✨ NEW in Phase 4 (Requires Python 3.10+ with SDK)
+Natural language queries for lead insights and reports:
+```
+How many leads did we process today?
+Show me the top 5 HOT leads
+What's the average score this week?
+List all leads from Acme Corp
+```
+The bot will:
+- Understand natural language questions
+- Maintain conversation context across multiple messages
+- Provide formatted responses with lead data
+- Remember previous queries in the thread
+
+**Requirements:**
+- Python 3.10+ with OpenAI Agents SDK enabled
+- Optional: Redis for persistent session storage (otherwise uses in-memory)
+
+**Configuration:**
+```bash
+# In .env file
+USE_SDK_AGENT=true  # Enable SDK agents
+REDIS_URL=redis://localhost:6379  # Optional: for persistent sessions
+SESSION_TTL_SECONDS=86400  # 24-hour session timeout
+```
+
+**Example Conversation:**
+```
+User: How many leads did we process today?
+Bot: We processed 47 leads today: 12 HOT, 20 WARM, 15 COLD
+
+User: Show me the top 3 HOT leads
+Bot: Here are the top 3 HOT leads:
+     1. john@acme.com - VP of Sales at Acme Corp (score: 92)
+     2. jane@techco.com - Director at TechCo (score: 88)
+     3. bob@startup.io - Founder at Startup Inc (score: 85)
+
+User: Add a lead: sarah@enterprise.com Sarah Johnson, Enterprise Inc
+Bot: ✅ Lead added and processed!
+     - Email: Valid
+     - Score: 78 (HOT)
+     - Synced to Notion
+```
+
+## 🤖 AI-Powered Features
+
+### Enable AI Analysis
+
+The lead processor can use OpenAI to analyze HOT leads and provide insights. To enable:
+
+1. Set environment variable in `.env`:
+   ```bash
+   ENABLE_AI_ANALYSIS=true
+   ```
+
+2. Ensure `OPENAI_API_KEY` is configured
+
+3. Restart the server
+
+**What AI Analysis Does:**
+- Classifies HOT leads with AI-generated insights
+- Provides reasoning for lead quality assessment
+- Suggests personalized outreach strategies
+- Works for both CLI (`main.py`) and Slack-triggered processing
+
+**Example AI Output:**
+```
+🤖 AI Insight: Senior decision-maker at enterprise company.
+Strong engagement indicators. Recommend personalized outreach
+focusing on ROI and integration capabilities.
+```
+
+**Cost:** Uses OpenAI API (approximately $0.001 per lead analyzed)
+
+**Note:** When enabled, only HOT leads (score ≥ 75) are analyzed to optimize API costs.
 
 ## 📚 Portfolio Context
 

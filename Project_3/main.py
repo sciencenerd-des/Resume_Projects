@@ -15,7 +15,19 @@ from pathlib import Path
 # Add project root to path for imports
 sys.path.insert(0, str(Path(__file__).parent))
 
-from src.agent import create_agent
+from src.agent import create_agent  # Always available for rollback
+
+# SDK imports are conditional - only import if SDK is enabled
+# This prevents import errors in Python 3.9 when USE_SDK_AGENT=false
+_use_sdk = os.getenv("USE_SDK_AGENT", "true").lower() == "true"
+if _use_sdk:
+    try:
+        from src.sdk.agents.orchestrator import create_orchestrator_agent
+        from src.sdk.utils.legacy_adapter import LegacyAdapter
+    except (ImportError, TypeError) as e:
+        print(f"⚠️  Warning: Failed to import SDK agent (requires Python 3.10+): {e.__class__.__name__}")
+        print("Falling back to legacy agent")
+        _use_sdk = False
 
 
 def main():
@@ -89,13 +101,25 @@ Examples:
 """)
         print(f"📁 Input file: {csv_path.absolute()}\n")
     
-    # Create and run agent
-    agent = create_agent(
-        verbose=not args.quiet,
-        notify_slack=not args.no_slack
-    )
-    
-    results = agent.process_leads(str(csv_path))
+    # Create agent (supports both SDK and legacy via feature flag)
+    # Use the _use_sdk variable determined at import time (includes fallback logic)
+    if _use_sdk:
+        agent = create_orchestrator_agent(
+            verbose=not args.quiet,
+            notify_slack=not args.no_slack
+        )
+    else:
+        agent = create_agent(
+            verbose=not args.quiet,
+            notify_slack=not args.no_slack
+        )
+
+    # Process leads
+    if _use_sdk:
+        sdk_result = agent.run_pipeline(mode="batch", csv_path=str(csv_path))
+        results = LegacyAdapter.to_legacy_dict(sdk_result)
+    else:
+        results = agent.process_leads(str(csv_path))
     
     # Print report
     if results.get("report"):
