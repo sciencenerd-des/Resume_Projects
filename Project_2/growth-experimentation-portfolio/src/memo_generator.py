@@ -8,12 +8,15 @@ This is the final output of the experimentation pipeline.
 import pandas as pd
 from pathlib import Path
 from datetime import datetime
-from typing import Optional
-from dataclasses import dataclass
+from typing import Optional, List, Dict, Any
+from dataclasses import dataclass, field
 
-from stats_engine import ABTestAnalyzer, ABTestResult
+from stats_engine import ABTestAnalyzer, ABTestResult, SRMSeverity
 from bayesian_engine import BayesianAnalyzer, BayesianResult
 from guardrails import GuardrailChecker, GuardrailReport, GuardrailStatus
+from segment_analyzer import SegmentAnalyzer, SegmentAnalysisReport, CorrectionMethod
+from sequential_testing import SequentialTester, SpendingFunction, InterimResult, SequentialTestPlan
+from cuped import CUPEDAnalyzer, CUPEDResult
 
 
 @dataclass
@@ -33,6 +36,11 @@ class MemoConfig:
     duration: str = "7 days"
     traffic_split: str = "50/50 randomized"
 
+    # Sequential testing configuration
+    enable_sequential: bool = True
+    sequential_n_looks: int = 5
+    sequential_spending: SpendingFunction = SpendingFunction.OBRIEN_FLEMING
+
 
 class DecisionMemoGenerator:
     """
@@ -47,6 +55,11 @@ class DecisionMemoGenerator:
         self.freq_result: Optional[ABTestResult] = None
         self.bayes_result: Optional[BayesianResult] = None
         self.guardrail_report: Optional[GuardrailReport] = None
+        self.segment_reports: Dict[str, SegmentAnalysisReport] = {}
+        self.sequential_results: List[InterimResult] = []
+        self.sequential_plan: Optional[SequentialTestPlan] = None
+        self.decision_confidence: Optional[Dict[str, Any]] = None
+        self.cuped_result: Optional[CUPEDResult] = None
     
     def analyze_data(self, df: pd.DataFrame) -> None:
         """Run all analyses on the provided data."""
@@ -74,21 +87,220 @@ class DecisionMemoGenerator:
         else:
             # No guardrail metrics available - report as N/A
             self.guardrail_report = None
+
+        # Segment analysis
+        if 'device' in df.columns:
+            segment_analyzer = SegmentAnalyzer(correction=CorrectionMethod.HOLM)
+            self.segment_reports = segment_analyzer.analyze_all_segments(df)
+        else:
+            self.segment_reports = {}
+
+        # Sequential testing analysis
+        if self.config.enable_sequential and 'timestamp' in df.columns:
+            seq_tester = SequentialTester(
+                alpha=0.05,
+                n_looks=self.config.sequential_n_looks,
+                spending_function=self.config.sequential_spending
+            )
+            self.sequential_plan = seq_tester.create_plan()
+            self.sequential_results = seq_tester.analyze_sequential(df)
+
+        # CUPED variance reduction (if pre-experiment data available)
+        if 'pre_experiment_converted' in df.columns:
+            cuped_analyzer = CUPEDAnalyzer()
+            self.cuped_result = cuped_analyzer.analyze(df)
+
+        # Calculate decision confidence
+        self.decision_confidence = self._calculate_decision_confidence()
     
     def get_recommendation(self) -> str:
-        """Determine the final recommendation."""
-        if self.freq_result is None:
+        """
+        Determine the final recommendation using enhanced decision framework.
+
+        Decision Framework (Priority Order):
+        1. HALT_SRM: Sample Ratio Mismatch detected - investigation required
+        2. HALT_GUARDRAIL: Critical guardrail failure - do not proceed
+        3. EARLY_STOP_EFFICACY: Sequential testing indicates early success
+        4. EARLY_STOP_FUTILITY: Sequential testing indicates early failure
+        5. ITERATE_SEGMENTS: Significant negative segments need investigation
+        6. SHIP: Frequentist significant AND Bayesian P(V>C) >= 95%
+        7. LIKELY_SHIP: Bayesian very confident but frequentist borderline
+        8. ROLLBACK: Both approaches indicate negative effect
+        9. ITERATE: Either approach inconclusive
+        """
+        if self.freq_result is None or self.bayes_result is None:
             return "UNKNOWN"
-        
-        if not self.freq_result.statistically_significant:
-            return "ITERATE"
-        
-        if self.freq_result.relative_lift > 0.05:  # >5% improvement
+
+        # 1. CRITICAL: Check for Sample Ratio Mismatch (data quality)
+        if self.freq_result.srm_detected:
+            return "HALT_SRM"
+
+        # 2. CRITICAL: Check for guardrail failures
+        if self.guardrail_report and self.guardrail_report.results:
+            critical_failures = [
+                r for r in self.guardrail_report.results
+                if r.status == GuardrailStatus.FAIL
+            ]
+            if critical_failures:
+                return "HALT_GUARDRAIL"
+
+        # 3. Sequential testing early stopping (if applicable)
+        if self.sequential_results:
+            last_result = self.sequential_results[-1]
+            if last_result.reject_null:
+                # Stopped early - determine direction
+                if last_result.lift > 0:
+                    return "EARLY_STOP_EFFICACY"
+                else:
+                    return "EARLY_STOP_FUTILITY"
+
+        # 4. Check for significant negative segments (heterogeneity warning)
+        segment_warnings = self._get_segment_warnings()
+        if segment_warnings:
+            return "ITERATE_SEGMENTS"
+
+        # 5. Standard decision logic
+        freq_sig = self.freq_result.statistically_significant
+        freq_positive = self.freq_result.relative_lift > 0
+        freq_substantial = self.freq_result.relative_lift > 0.05
+
+        bayes_confident = self.bayes_result.probability_variant_better >= 0.95
+        bayes_negative = self.bayes_result.probability_variant_better <= 0.05
+
+        # Strong positive signal from both approaches
+        if freq_sig and freq_substantial and bayes_confident:
             return "SHIP"
-        elif self.freq_result.relative_lift > 0:
-            return "ITERATE"
-        else:
+
+        # Strong negative signal from both approaches
+        if freq_sig and not freq_positive and bayes_negative:
             return "ROLLBACK"
+
+        # Bayesian very confident but frequentist not quite there
+        if bayes_confident and freq_positive:
+            return "LIKELY_SHIP"
+
+        # Frequentist significant but Bayesian not confident
+        if freq_sig and freq_positive and not bayes_confident:
+            return "ITERATE"
+
+        # Neither approach shows clear signal
+        return "ITERATE"
+
+    def _get_segment_warnings(self) -> List[str]:
+        """Identify segments with significantly negative effects."""
+        warnings = []
+        if self.segment_reports:
+            for dim, report in self.segment_reports.items():
+                for r in report.results:
+                    # Flag segments with significant AND substantial negative lift
+                    if r.significant_adjusted and r.lift_relative < -0.10:
+                        warnings.append(
+                            f"{dim}:{r.segment_value} ({r.lift_relative:+.1%})"
+                        )
+        return warnings
+
+    def _calculate_decision_confidence(self) -> Dict[str, Any]:
+        """
+        Calculate multi-dimensional confidence score for the decision.
+
+        Experts evaluate decisions on:
+        - Statistical rigor (power, p-value margin)
+        - Practical significance (effect size)
+        - Data quality (SRM, guardrails)
+        - Robustness (segment consistency)
+        """
+        if self.freq_result is None or self.bayes_result is None:
+            return {'overall_confidence': 0, 'confidence_grade': 'F', 'concerns': []}
+
+        scores = {}
+
+        # Power score (0-1): Penalize underpowered studies
+        power = self.freq_result.power
+        scores['power'] = min(power / 0.80, 1.0)  # Full credit at 80%
+
+        # P-value margin (0-1): How far below threshold?
+        p = self.freq_result.p_value
+        if p < 0.001:
+            scores['p_margin'] = 1.0
+        elif p < 0.01:
+            scores['p_margin'] = 0.8
+        elif p < 0.05:
+            scores['p_margin'] = 0.6
+        else:
+            scores['p_margin'] = 0.0
+
+        # Effect size score (Cohen's h for proportions)
+        import numpy as np
+        h = 2 * (
+            np.arcsin(np.sqrt(self.freq_result.variant_conversion)) -
+            np.arcsin(np.sqrt(self.freq_result.control_conversion))
+        )
+        scores['effect_size'] = min(abs(h) / 0.2, 1.0)  # Full credit at h=0.2
+
+        # Data quality (0-1)
+        srm_ok = not self.freq_result.srm_detected
+        guardrails_ok = True
+        if self.guardrail_report and self.guardrail_report.results:
+            guardrails_ok = all(
+                r.status != GuardrailStatus.FAIL
+                for r in self.guardrail_report.results
+            )
+        scores['data_quality'] = 1.0 if (srm_ok and guardrails_ok) else 0.0
+
+        # Segment consistency (0-1)
+        if self.segment_reports:
+            all_directions = []
+            for report in self.segment_reports.values():
+                for r in report.results:
+                    all_directions.append(r.lift_relative > 0)
+            if all_directions:
+                overall_positive = self.freq_result.relative_lift > 0
+                consistency = sum(all_directions) / len(all_directions)
+                scores['segment_consistency'] = consistency if overall_positive else (1 - consistency)
+            else:
+                scores['segment_consistency'] = 0.5
+        else:
+            scores['segment_consistency'] = 0.5  # Unknown
+
+        # Overall confidence (weighted average)
+        weights = {
+            'power': 0.20,
+            'p_margin': 0.25,
+            'effect_size': 0.15,
+            'data_quality': 0.25,
+            'segment_consistency': 0.15
+        }
+        overall = sum(scores[k] * weights[k] for k in weights)
+
+        # Grade the confidence
+        if overall >= 0.90:
+            grade = 'A'
+        elif overall >= 0.80:
+            grade = 'B'
+        elif overall >= 0.70:
+            grade = 'C'
+        elif overall >= 0.60:
+            grade = 'D'
+        else:
+            grade = 'F'
+
+        # Identify concerns
+        concerns = []
+        if scores['power'] < 0.8:
+            concerns.append(f"Underpowered study ({self.freq_result.power:.0%} vs 80% target)")
+        if scores['data_quality'] < 1.0:
+            concerns.append("Data quality issues detected (SRM or guardrail violations)")
+        if scores['segment_consistency'] < 0.7:
+            concerns.append("Inconsistent effects across segments - investigate heterogeneity")
+        if self.freq_result.power < 0.80:
+            concerns.append(f"Achieved power ({self.freq_result.power:.0%}) below 80% threshold")
+
+        return {
+            'component_scores': scores,
+            'overall_confidence': overall,
+            'confidence_grade': grade,
+            'concerns': concerns
+        }
     
     def generate_memo(self) -> str:
         """Generate the complete decision memo as markdown."""
@@ -96,23 +308,46 @@ class DecisionMemoGenerator:
             raise ValueError("Must call analyze_data() before generating memo")
         
         recommendation = self.get_recommendation()
-        rec_emoji = "✅" if recommendation == "SHIP" else ("⚠️" if recommendation == "ITERATE" else "❌")
+        rec_emoji = {
+            "SHIP": "✅",
+            "LIKELY_SHIP": "🟢",
+            "ITERATE": "⚠️",
+            "ROLLBACK": "❌",
+            "UNKNOWN": "❓",
+            "HALT_SRM": "⛔",
+            "HALT_GUARDRAIL": "⛔",
+            "EARLY_STOP_EFFICACY": "✅",
+            "EARLY_STOP_FUTILITY": "❌",
+            "ITERATE_SEGMENTS": "⚠️"
+        }.get(recommendation, "❓")
         rec_action = {
             "SHIP": "Ship to 100%",
+            "LIKELY_SHIP": "Ship with Monitoring",
             "ITERATE": "Continue Testing",
-            "ROLLBACK": "Rollback to Control"
+            "ROLLBACK": "Rollback to Control",
+            "UNKNOWN": "Insufficient Data",
+            "HALT_SRM": "HALT - Investigate SRM",
+            "HALT_GUARDRAIL": "HALT - Guardrail Failure",
+            "EARLY_STOP_EFFICACY": "Ship (Early Stop - Efficacy)",
+            "EARLY_STOP_FUTILITY": "Rollback (Early Stop - Futility)",
+            "ITERATE_SEGMENTS": "Continue Testing - Segment Issues"
         }.get(recommendation, "Unknown")
         
         # Format guardrail status
         guardrail_rows = ""
-        if self.guardrail_report:
+        if self.guardrail_report and self.guardrail_report.results:
             for result in self.guardrail_report.results:
-                status = "✅" if result.status == GuardrailStatus.PASS else ("⚠️" if result.status == GuardrailStatus.WARNING else "❌")
-                guardrail_rows += f"| {result.metric_name} | Must not exceed threshold | {status} {result.message} |\n"
+                status_icon = "✅" if result.status == GuardrailStatus.PASS else (
+                    "⚠️" if result.status == GuardrailStatus.WARNING else "❌"
+                )
+                change_str = f"{result.change_pct:+.2f}%" if result.change_pct != 0 else "No change"
+                guardrail_rows += (
+                    f"| {result.metric_name.replace('_', ' ').title()} | "
+                    f"Must not exceed {result.threshold_pct}% | "
+                    f"{status_icon} {change_str} (p={result.p_value:.3f}) |\n"
+                )
         else:
-            guardrail_rows = "| Bounce Rate | Must not increase >5% | ✅ No change |\n" \
-                           "| Time to Sign-up | Must not increase >10% | ✅ No change |\n" \
-                           "| Error Rate | Must not increase | ✅ No change |\n"
+            guardrail_rows = "| *No guardrail metrics available* | - | ⚠️ N/A |\n"
         
         # Calculate business impact
         visitors = 100000
@@ -122,7 +357,118 @@ class DecisionMemoGenerator:
         
         # Bayesian metrics
         bayes_prob = self.bayes_result.probability_variant_better * 100 if self.bayes_result else 0
-        
+
+        # Build SRM status section
+        srm_section = ""
+        if self.freq_result.srm_result:
+            srm = self.freq_result.srm_result
+            srm_status = "✅ PASS" if not srm.srm_detected else f"⛔ {srm.severity.value.upper()}"
+            srm_section = f"""### Sample Ratio Mismatch (SRM) Check
+
+| Metric | Expected | Observed | Status |
+|--------|----------|----------|--------|
+| Split Ratio | {srm.expected_ratio:.1%} / {(1-srm.expected_ratio):.1%} | {srm.observed_ratio:.1%} / {(1-srm.observed_ratio):.1%} | {srm_status} |
+
+- **Chi-Square**: χ² = {srm.chi2_statistic:.2f}
+- **P-Value**: {srm.p_value:.6f}
+- **Interpretation**: {"Randomization appears valid" if not srm.srm_detected else "⚠️ Sample ratio mismatch detected - investigate before proceeding"}
+
+"""
+
+        # Build decision confidence section
+        confidence_section = ""
+        if self.decision_confidence:
+            dc = self.decision_confidence
+            scores = dc.get('component_scores', {})
+            concerns_list = ""
+            if dc.get('concerns'):
+                concerns_list = "\n".join([f"- ⚠️ {c}" for c in dc['concerns']])
+            else:
+                concerns_list = "- ✅ No significant concerns identified"
+
+            confidence_section = f"""## Decision Confidence
+
+**Overall Grade**: {dc.get('confidence_grade', 'N/A')} ({dc.get('overall_confidence', 0):.0%})
+
+| Component | Score | Description |
+|-----------|-------|-------------|
+| Power | {scores.get('power', 0):.0%} | Statistical power adequacy |
+| P-Value Margin | {scores.get('p_margin', 0):.0%} | Distance from significance threshold |
+| Effect Size | {scores.get('effect_size', 0):.0%} | Practical significance |
+| Data Quality | {scores.get('data_quality', 0):.0%} | SRM and guardrail checks |
+| Segment Consistency | {scores.get('segment_consistency', 0):.0%} | Effect consistency across segments |
+
+**Concerns**:
+{concerns_list}
+
+---
+
+"""
+
+        # Build guardrail summary for rationale
+        guardrail_summary = ""
+        if self.guardrail_report and self.guardrail_report.results:
+            warnings = [r for r in self.guardrail_report.results if r.status == GuardrailStatus.WARNING]
+            failures = [r for r in self.guardrail_report.results if r.status == GuardrailStatus.FAIL]
+            if failures:
+                guardrail_summary = f"⛔ {len(failures)} guardrail(s) FAILED - do not proceed"
+            elif warnings:
+                guardrail_summary = f"⚠️ {len(warnings)} guardrail warning(s) - monitor closely"
+            else:
+                guardrail_summary = "✅ All guardrails passed - no negative user experience impact detected"
+        else:
+            guardrail_summary = "⚠️ No guardrail metrics available"
+
+        # Build CUPED section
+        cuped_section = ""
+        if self.cuped_result:
+            cr = self.cuped_result
+            cuped_section = f"""### CUPED Variance Reduction
+
+CUPED (Controlled-experiment Using Pre-Experiment Data) uses pre-experiment behavior to reduce variance in treatment effect estimates.
+
+| Metric | Original | CUPED-Adjusted | Change |
+|--------|----------|----------------|--------|
+| Lift | {cr.original_lift:+.4f} | {cr.adjusted_lift:+.4f} | {(cr.adjusted_lift - cr.original_lift):.4f} |
+| Standard Error | {cr.original_se:.4f} | {cr.adjusted_se:.4f} | {((cr.adjusted_se - cr.original_se) / cr.original_se * 100):+.1f}% |
+| P-Value | {cr.original_p_value:.4f} | {cr.adjusted_p_value:.4f} | - |
+| Significant? | {"Yes" if cr.original_significant else "No"} | {"Yes" if cr.adjusted_significant else "No"} | - |
+
+- **Variance Reduction**: {cr.variance_reduction_pct:.1%}
+- **Covariate Correlation**: {cr.covariate_correlation:.3f}
+- **Theta (optimal coefficient)**: {cr.theta:.4f}
+
+"""
+
+        # Build segment warnings section
+        segment_warnings = self._get_segment_warnings()
+        segment_warning_text = ""
+        if segment_warnings:
+            segment_warning_text = "\n\n> ⚠️ **Segment Alert**: The following segments show significantly negative effects:\n"
+            for w in segment_warnings:
+                segment_warning_text += f"> - {w}\n"
+            segment_warning_text += "> \n> Consider investigating before full rollout.\n"
+
+        # Build segment analysis section
+        segment_section = ""
+        if self.segment_reports:
+            segment_section = "## 7. Segment Analysis\n\n"
+            for dim, report in self.segment_reports.items():
+                segment_section += f"### By {dim.title()}\n\n"
+                segment_section += f"*Correction: {report.correction_method.value}, alpha={report.alpha}*\n\n"
+                segment_section += "| Segment | Control | Variant | Lift | Adj. p-value | Sig? |\n"
+                segment_section += "|---------|---------|---------|------|--------------|------|\n"
+                for r in report.results:
+                    sig = "✅" if r.significant_adjusted else "❌"
+                    segment_section += (
+                        f"| {r.segment_value} | {r.control_rate:.2%} | {r.variant_rate:.2%} | "
+                        f"{r.lift_relative:+.2%} | {r.p_value_adjusted:.4f} | {sig} |\n"
+                    )
+                if report.simpsons_paradox_warning:
+                    segment_section += "\n> ⚠️ **Warning**: Possible Simpson's Paradox detected. "
+                    segment_section += "Overall effect may differ from segment-level effects.\n"
+                segment_section += "\n---\n\n"
+
         memo = f"""# A/B Test Decision Memo: {self.config.experiment_name}
 
 ## Executive Summary
@@ -157,7 +503,7 @@ class DecisionMemoGenerator:
 ### Randomization
 Users were randomly assigned to Control ({self.config.control_description}) or Variant ({self.config.variant_description}) groups using consistent hashing on user ID to ensure stable assignment across sessions.
 
----
+{srm_section}---
 
 ## 3. Primary Metric
 
@@ -185,11 +531,22 @@ Users were randomly assigned to Control ({self.config.control_description}) or V
 - **Statistical Significance**: {"✅ **Achieved**" if self.freq_result.statistically_significant else "❌ **Not Achieved**"}
 - **Achieved Power**: {self.freq_result.power:.0%}
 
-### Bayesian Analysis
+{cuped_section}### Bayesian Analysis
 
 - **P(Variant > Control)**: {bayes_prob:.1f}%
 - **Expected Lift**: {self.bayes_result.expected_lift:+.2%}
 - **95% Credible Interval**: [{self.bayes_result.credible_interval[0]:+.4f}, {self.bayes_result.credible_interval[1]:+.4f}]
+
+### Methodology Comparison
+
+| Criterion | Frequentist | Bayesian |
+|-----------|-------------|----------|
+| **Question Answered** | "Is the effect unlikely by chance?" | "What's the probability variant is better?" |
+| **P-Value / Probability** | {self.freq_result.p_value:.4f} | {bayes_prob:.1f}% |
+| **Interpretation** | {"Reject" if self.freq_result.statistically_significant else "Fail to reject"} null hypothesis | {bayes_prob:.1f}% confidence variant wins |
+| **Decision Support** | Binary (significant/not) | Continuous probability |
+
+**Agreement Analysis**: {"✅ Both approaches agree on positive effect" if (self.freq_result.statistically_significant and self.bayes_result.probability_variant_better >= 0.95) else ("✅ Both approaches agree (no significant effect)" if (not self.freq_result.statistically_significant and self.bayes_result.probability_variant_better < 0.95) else "⚠️ Approaches disagree - consider additional testing")}
 
 ### Visualization
 
@@ -206,7 +563,7 @@ Variant ({self.config.variant_description}) {"█" * int(self.freq_result.varian
 
 ---
 
-## 5. Recommendation
+{confidence_section}## 5. Recommendation
 
 ### Decision: **{rec_action}**
 
@@ -221,10 +578,10 @@ Variant ({self.config.variant_description}) {"█" * int(self.freq_result.varian
 
 3. **Bayesian Confidence**: {bayes_prob:.1f}% probability that the variant is better than control.
 
-4. **No Guardrail Violations**: All secondary metrics remained stable, indicating no negative user experience impact.
+4. **Guardrail Status**: {guardrail_summary}
 
 5. **Implementation Cost**: Minimal - simple color change with no engineering complexity.
-
+{segment_warning_text}
 ---
 
 ## 6. Risk Assessment
@@ -238,7 +595,9 @@ Variant ({self.config.variant_description}) {"█" * int(self.freq_result.varian
 
 ---
 
-## 7. Next Steps
+{segment_section}
+
+## 8. Next Steps
 
 1. [x] Complete statistical analysis
 2. [x] Complete Bayesian analysis
@@ -288,8 +647,8 @@ def main():
     print("DECISION MEMO GENERATOR")
     print("=" * 60)
     
-    # Load simulation data
-    data_path = Path(__file__).parent.parent / 'data' / 'processed' / 'simulation_clean.csv'
+    # Load simulation data (use raw for segment and guardrail data)
+    data_path = Path(__file__).parent.parent / 'data' / 'processed' / 'simulation_raw.csv'
     
     if not data_path.exists():
         print(f"\n❌ No simulation data found at {data_path}")
