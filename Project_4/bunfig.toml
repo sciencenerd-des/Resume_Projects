@@ -1,0 +1,21 @@
+# Path aliases for bundler (must match tsconfig.json)
+[bundle]
+[bundle.define]
+
+[serve]
+[serve.development]
+hmr = true
+
+[test]
+preload = ["./tests/happy-dom-preload.ts", "./tests/mocks/setup-mocks.ts", "./tests/setup.ts"]
+# Exclude Playwright e2e tests - they use a different test runner
+exclude = ["tests/e2e/**", "**/e2e/**", "**/*.spec.ts"]
+coverage = true
+coverageDir = "./coverage"
+coverageReporters = ["text", "html", "lcov"]
+
+[test.coverageThreshold]
+statements = 80
+branches = 75
+functions = 80
+lines = 80

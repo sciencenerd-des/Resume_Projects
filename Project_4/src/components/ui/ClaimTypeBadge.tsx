@@ -1,0 +1,57 @@
+/**
+ * ClaimTypeBadge Component
+ * @version 2.0.0
+ * Displays claim type classification with themed styling
+ */
+
+import { cn } from "@/lib/utils"
+import type { ClaimType } from "@/types"
+
+interface ClaimTypeBadgeProps {
+  type: ClaimType
+  size?: "sm" | "md"
+  className?: string
+}
+
+const typeConfig: Record<ClaimType, { label: string; bgClass: string; textClass: string }> = {
+  fact: {
+    label: "Fact",
+    bgClass: "bg-blue-500/10",
+    textClass: "text-blue-400",
+  },
+  policy: {
+    label: "Policy",
+    bgClass: "bg-purple-500/10",
+    textClass: "text-purple-400",
+  },
+  numeric: {
+    label: "Numeric",
+    bgClass: "bg-emerald-500/10",
+    textClass: "text-emerald-400",
+  },
+  definition: {
+    label: "Definition",
+    bgClass: "bg-muted",
+    textClass: "text-muted-foreground",
+  },
+}
+
+export function ClaimTypeBadge({ type, size = "md", className }: ClaimTypeBadgeProps) {
+  const config = typeConfig[type]
+
+  return (
+    <span
+      className={cn(
+        "inline-flex items-center rounded-full font-medium",
+        size === "sm" ? "px-2 py-0.5 text-[10px]" : "px-2.5 py-0.5 text-xs",
+        config.bgClass,
+        config.textClass,
+        className
+      )}
+    >
+      {config.label}
+    </span>
+  )
+}
+
+export default ClaimTypeBadge

@@ -1,0 +1,949 @@
+openapi: 3.0.3
+info:
+  title: VerityDraft API
+  description: |
+    Evidence-Ledger Copilot API for verified answers and drafts.
+
+    ## Authentication
+    All endpoints require a valid Supabase JWT token in the Authorization header:
+    ```
+    Authorization: Bearer <token>
+    ```
+  version: 1.0.0
+  contact:
+    name: VerityDraft Support
+    email: support@veritydraft.com
+
+servers:
+  - url: /api/v1
+    description: API v1
+
+security:
+  - bearerAuth: []
+
+tags:
+  - name: Workspaces
+    description: Workspace management
+  - name: Documents
+    description: Document upload and management
+  - name: Query
+    description: Q&A and draft generation
+  - name: Sessions
+    description: Session history and ledger
+  - name: Admin
+    description: Usage metrics and administration
+
+paths:
+  /workspaces:
+    get:
+      tags: [Workspaces]
+      summary: List workspaces
+      operationId: listWorkspaces
+      responses:
+        '200':
+          description: List of workspaces
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkspaceListResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+    post:
+      tags: [Workspaces]
+      summary: Create workspace
+      operationId: createWorkspace
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateWorkspaceRequest'
+      responses:
+        '201':
+          description: Workspace created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkspaceResponse'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+
+  /workspaces/{workspaceId}:
+    parameters:
+      - $ref: '#/components/parameters/workspaceId'
+
+    get:
+      tags: [Workspaces]
+      summary: Get workspace
+      operationId: getWorkspace
+      responses:
+        '200':
+          description: Workspace details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkspaceResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    put:
+      tags: [Workspaces]
+      summary: Update workspace
+      operationId: updateWorkspace
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateWorkspaceRequest'
+      responses:
+        '200':
+          description: Workspace updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkspaceResponse'
+
+    delete:
+      tags: [Workspaces]
+      summary: Delete workspace
+      operationId: deleteWorkspace
+      responses:
+        '204':
+          description: Workspace deleted
+
+  /workspaces/{workspaceId}/documents:
+    parameters:
+      - $ref: '#/components/parameters/workspaceId'
+
+    get:
+      tags: [Documents]
+      summary: List documents
+      operationId: listDocuments
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+            maximum: 100
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [uploading, processing, ready, error]
+        - name: tags
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+      responses:
+        '200':
+          description: List of documents
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentListResponse'
+
+  /workspaces/{workspaceId}/documents/upload:
+    parameters:
+      - $ref: '#/components/parameters/workspaceId'
+
+    post:
+      tags: [Documents]
+      summary: Upload document
+      operationId: uploadDocument
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: PDF or DOCX file
+                tags:
+                  type: string
+                  description: Comma-separated tags
+                metadata:
+                  type: string
+                  description: JSON metadata
+      responses:
+        '201':
+          description: Document upload started
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentUploadResponse'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+
+  /documents/{documentId}:
+    parameters:
+      - $ref: '#/components/parameters/documentId'
+
+    get:
+      tags: [Documents]
+      summary: Get document
+      operationId: getDocument
+      responses:
+        '200':
+          description: Document details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    delete:
+      tags: [Documents]
+      summary: Delete document
+      operationId: deleteDocument
+      responses:
+        '204':
+          description: Document deleted
+
+  /documents/{documentId}/chunks:
+    parameters:
+      - $ref: '#/components/parameters/documentId'
+
+    get:
+      tags: [Documents]
+      summary: Get document chunks
+      operationId: getDocumentChunks
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Document chunks
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChunkListResponse'
+
+  /workspaces/{workspaceId}/query:
+    parameters:
+      - $ref: '#/components/parameters/workspaceId'
+
+    post:
+      tags: [Query]
+      summary: Submit query
+      description: |
+        Submit a question or draft request. Response is streamed via SSE.
+      operationId: submitQuery
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QueryRequest'
+      responses:
+        '200':
+          description: Streaming response
+          content:
+            text/event-stream:
+              schema:
+                type: string
+                description: Server-Sent Events stream
+        '400':
+          $ref: '#/components/responses/ValidationError'
+
+  /sessions/{sessionId}:
+    parameters:
+      - $ref: '#/components/parameters/sessionId'
+
+    get:
+      tags: [Sessions]
+      summary: Get session
+      operationId: getSession
+      responses:
+        '200':
+          description: Session details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SessionResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /sessions/{sessionId}/ledger:
+    parameters:
+      - $ref: '#/components/parameters/sessionId'
+
+    get:
+      tags: [Sessions]
+      summary: Get evidence ledger
+      operationId: getSessionLedger
+      responses:
+        '200':
+          description: Evidence ledger
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LedgerResponse'
+
+  /sessions/{sessionId}/feedback:
+    parameters:
+      - $ref: '#/components/parameters/sessionId'
+
+    post:
+      tags: [Sessions]
+      summary: Submit feedback
+      operationId: submitFeedback
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FeedbackRequest'
+      responses:
+        '201':
+          description: Feedback submitted
+        '400':
+          $ref: '#/components/responses/ValidationError'
+
+  /sessions/{sessionId}/export:
+    parameters:
+      - $ref: '#/components/parameters/sessionId'
+
+    post:
+      tags: [Sessions]
+      summary: Export session
+      operationId: exportSession
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExportRequest'
+      responses:
+        '200':
+          description: Export URL
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExportResponse'
+
+  /admin/usage:
+    get:
+      tags: [Admin]
+      summary: Get usage metrics
+      operationId: getUsageMetrics
+      parameters:
+        - name: start_date
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: end_date
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: workspace_id
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Usage metrics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UsageMetricsResponse'
+
+  /admin/errors:
+    get:
+      tags: [Admin]
+      summary: Get error log
+      operationId: getErrorLog
+      responses:
+        '200':
+          description: Error log
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorLogResponse'
+
+  /admin/costs:
+    get:
+      tags: [Admin]
+      summary: Get cost summary
+      operationId: getCostSummary
+      responses:
+        '200':
+          description: Cost summary
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CostSummaryResponse'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  parameters:
+    workspaceId:
+      name: workspaceId
+      in: path
+      required: true
+      schema:
+        type: string
+      description: Workspace ID
+
+    documentId:
+      name: documentId
+      in: path
+      required: true
+      schema:
+        type: string
+      description: Document ID
+
+    sessionId:
+      name: sessionId
+      in: path
+      required: true
+      schema:
+        type: string
+      description: Session ID
+
+  responses:
+    Unauthorized:
+      description: Missing or invalid authentication
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    ValidationError:
+      description: Invalid request parameters
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+  schemas:
+    ErrorResponse:
+      type: object
+      required: [success, error]
+      properties:
+        success:
+          type: boolean
+          example: false
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+            message:
+              type: string
+            details:
+              type: array
+              items:
+                type: object
+                properties:
+                  field:
+                    type: string
+                  message:
+                    type: string
+
+    Workspace:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        role:
+          type: string
+          enum: [owner, admin, member]
+        settings:
+          type: object
+        document_count:
+          type: integer
+        session_count:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+
+    WorkspaceListResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type: object
+          properties:
+            workspaces:
+              type: array
+              items:
+                $ref: '#/components/schemas/Workspace'
+
+    WorkspaceResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type: object
+          properties:
+            workspace:
+              $ref: '#/components/schemas/Workspace'
+
+    CreateWorkspaceRequest:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        settings:
+          type: object
+          properties:
+            default_mode:
+              type: string
+              enum: [answer, draft]
+            strict_mode:
+              type: boolean
+
+    UpdateWorkspaceRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        settings:
+          type: object
+
+    Document:
+      type: object
+      properties:
+        id:
+          type: string
+        filename:
+          type: string
+        file_type:
+          type: string
+          enum: [pdf, docx]
+        file_size:
+          type: integer
+        status:
+          type: string
+          enum: [uploading, processing, ready, error]
+        chunk_count:
+          type: integer
+        tags:
+          type: array
+          items:
+            type: string
+        metadata:
+          type: object
+        created_at:
+          type: string
+          format: date-time
+
+    DocumentListResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type: object
+          properties:
+            documents:
+              type: array
+              items:
+                $ref: '#/components/schemas/Document'
+            pagination:
+              $ref: '#/components/schemas/Pagination'
+
+    DocumentResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type: object
+          properties:
+            document:
+              $ref: '#/components/schemas/Document'
+
+    DocumentUploadResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type: object
+          properties:
+            document:
+              type: object
+              properties:
+                id:
+                  type: string
+                filename:
+                  type: string
+                status:
+                  type: string
+                estimated_completion:
+                  type: string
+                  format: date-time
+
+    Chunk:
+      type: object
+      properties:
+        id:
+          type: string
+        chunk_hash:
+          type: string
+        content:
+          type: string
+        chunk_index:
+          type: integer
+        page_number:
+          type: integer
+        heading_path:
+          type: array
+          items:
+            type: string
+
+    ChunkListResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type: object
+          properties:
+            chunks:
+              type: array
+              items:
+                $ref: '#/components/schemas/Chunk'
+            pagination:
+              $ref: '#/components/schemas/Pagination'
+
+    QueryRequest:
+      type: object
+      required: [query, mode]
+      properties:
+        query:
+          type: string
+          minLength: 1
+          maxLength: 5000
+        mode:
+          type: string
+          enum: [answer, draft]
+        settings:
+          type: object
+          properties:
+            strict_mode:
+              type: boolean
+              default: false
+            citation_density:
+              type: string
+              enum: [minimal, normal, verbose]
+              default: normal
+            verification_mode:
+              type: string
+              enum: [fast, verified]
+              default: verified
+        document_ids:
+          type: array
+          items:
+            type: string
+
+    Session:
+      type: object
+      properties:
+        id:
+          type: string
+        workspace_id:
+          type: string
+        query:
+          type: string
+        mode:
+          type: string
+          enum: [answer, draft]
+        response:
+          type: string
+        status:
+          type: string
+          enum: [pending, processing, completed, error]
+        created_at:
+          type: string
+          format: date-time
+        completed_at:
+          type: string
+          format: date-time
+        metadata:
+          type: object
+          properties:
+            evidence_coverage:
+              type: number
+            unsupported_claim_count:
+              type: integer
+            processing_time_ms:
+              type: integer
+
+    SessionResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type: object
+          properties:
+            session:
+              $ref: '#/components/schemas/Session'
+
+    LedgerEntry:
+      type: object
+      properties:
+        id:
+          type: string
+        claim_id:
+          type: string
+        claim_text:
+          type: string
+        claim_type:
+          type: string
+          enum: [fact, policy, numeric, definition]
+        claim_importance:
+          type: string
+          enum: [critical, material, minor]
+        verdict:
+          type: string
+          enum: [supported, weak, contradicted, not_found]
+        confidence_score:
+          type: number
+          minimum: 0
+          maximum: 1
+        evidence_snippet:
+          type: string
+        source_document:
+          type: object
+          properties:
+            id:
+              type: string
+            filename:
+              type: string
+            page_number:
+              type: integer
+
+    Ledger:
+      type: object
+      properties:
+        id:
+          type: string
+        session_id:
+          type: string
+        entries:
+          type: array
+          items:
+            $ref: '#/components/schemas/LedgerEntry'
+        summary:
+          type: object
+          properties:
+            total_claims:
+              type: integer
+            supported:
+              type: integer
+            weak:
+              type: integer
+            contradicted:
+              type: integer
+            not_found:
+              type: integer
+            evidence_coverage:
+              type: number
+        risk_flags:
+          type: array
+          items:
+            type: object
+            properties:
+              type:
+                type: string
+              severity:
+                type: string
+                enum: [high, medium, low]
+              description:
+                type: string
+
+    LedgerResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type: object
+          properties:
+            ledger:
+              $ref: '#/components/schemas/Ledger'
+
+    FeedbackRequest:
+      type: object
+      required: [feedback_type]
+      properties:
+        feedback_type:
+          type: string
+          enum: [helpful, incorrect, missing_citation]
+        comment:
+          type: string
+        corrections:
+          type: array
+          items:
+            type: object
+            properties:
+              claim_id:
+                type: string
+              issue:
+                type: string
+                enum: [wrong_verdict, wrong_evidence, missing_claim]
+              expected_verdict:
+                type: string
+              explanation:
+                type: string
+
+    ExportRequest:
+      type: object
+      required: [format]
+      properties:
+        format:
+          type: string
+          enum: [markdown, pdf]
+        include_ledger:
+          type: boolean
+          default: true
+        include_sources:
+          type: boolean
+          default: false
+
+    ExportResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type: object
+          properties:
+            download_url:
+              type: string
+              format: uri
+            expires_at:
+              type: string
+              format: date-time
+
+    UsageMetricsResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type: object
+          properties:
+            period:
+              type: object
+              properties:
+                start:
+                  type: string
+                  format: date
+                end:
+                  type: string
+                  format: date
+            metrics:
+              type: object
+              properties:
+                total_sessions:
+                  type: integer
+                total_documents:
+                  type: integer
+                avg_evidence_coverage:
+                  type: number
+
+    ErrorLogResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type: object
+          properties:
+            errors:
+              type: array
+              items:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  type:
+                    type: string
+                  message:
+                    type: string
+                  timestamp:
+                    type: string
+                    format: date-time
+
+    CostSummaryResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type: object
+          properties:
+            totals:
+              type: object
+              properties:
+                llm_cost_usd:
+                  type: number
+                embedding_cost_usd:
+                  type: number
+                total_cost_usd:
+                  type: number
+
+    Pagination:
+      type: object
+      properties:
+        page:
+          type: integer
+        limit:
+          type: integer
+        total:
+          type: integer
+        total_pages:
+          type: integer
+        has_next:
+          type: boolean
+        has_prev:
+          type: boolean
