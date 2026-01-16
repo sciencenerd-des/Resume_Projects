@@ -13,7 +13,7 @@ VerityDraft is an Evidence-Ledger Copilot - a document-grounded AI assistant tha
 - **Backend:** Bun.serve() with WebSocket support
 - **Database:** Supabase (PostgreSQL + pgvector)
 - **Auth:** Supabase Auth
-- **LLM:** OpenRouter API (GPT-5 Nano for Writer, KimiK2 for Skeptic, GLM 4.7 for Judge)
+- **LLM:** OpenRouter API (GPT-5 Nano for Writer, GLM 4.7 for Skeptic, DeepSeek V3.2 Speciale for Judge)
 - **Embeddings:** OpenAI text-embedding-3-small (1536 dimensions)
 
 ## Commands
@@ -54,8 +54,8 @@ bun run db:migrate
 The core differentiator is an adversarial verification loop:
 
 1. **Writer** (GPT-5 Nano) - Generates content with `[cite:chunk_hash]` citation anchors
-2. **Skeptic** (KimiK2 Thinking) - Challenges claims, identifies gaps and contradictions
-3. **Judge** (GLM 4.7) - Verifies claims against evidence, produces Evidence Ledger
+2. **Skeptic** (GLM 4.7) - Challenges claims, identifies gaps and contradictions
+3. **Judge** (DeepSeek V3.2 Speciale) - Verifies claims against evidence, produces Evidence Ledger
 
 Pipeline flow: Query → Retrieve chunks → Writer → Skeptic → Judge → (Revision loop up to 2x) → Final response + Ledger
 

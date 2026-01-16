@@ -35,10 +35,10 @@ export default function WorkspaceListPage() {
 
     setIsCreating(true);
     try {
-      const workspace = await createWorkspace(newWorkspaceName.trim());
+      const workspaceId = await createWorkspace(newWorkspaceName.trim());
       setShowCreateModal(false);
       setNewWorkspaceName('');
-      navigate(`/workspaces/${workspace.id}`);
+      navigate(`/workspaces/${workspaceId}`);
     } catch (error) {
       console.error('Failed to create workspace:', error);
     } finally {
@@ -170,7 +170,7 @@ function WorkspaceCard({
 
       <div className="flex items-center gap-1 text-xs text-muted-foreground/70 mt-4">
         <Calendar className="w-3 h-3" />
-        Created {new Date(workspace.created_at).toLocaleDateString()}
+        Created {workspace.created_at ? new Date(workspace.created_at).toLocaleDateString() : 'recently'}
       </div>
     </button>
   );

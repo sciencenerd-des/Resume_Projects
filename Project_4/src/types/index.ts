@@ -12,13 +12,37 @@ export interface AuthSession {
   user: User;
 }
 
-// Workspace
+// Workspace - Compatible with both Convex (_id, ownerId) and legacy (id, owner_id)
 export interface Workspace {
+  // Convex format
+  _id?: string;
+  ownerId?: string;
+  _creationTime?: number;
+  // Legacy format (for backward compatibility)
   id: string;
   name: string;
-  owner_id: string;
-  created_at: string;
-  updated_at: string;
+  owner_id?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+// Helper to convert Convex workspace to legacy format
+export function normalizeWorkspace(w: {
+  _id: string;
+  name: string;
+  ownerId: string;
+  _creationTime: number;
+}): Workspace {
+  return {
+    _id: w._id,
+    id: w._id,
+    name: w.name,
+    ownerId: w.ownerId,
+    owner_id: w.ownerId,
+    _creationTime: w._creationTime,
+    created_at: new Date(w._creationTime).toISOString(),
+    updated_at: new Date(w._creationTime).toISOString(),
+  };
 }
 
 // Document
@@ -67,6 +91,8 @@ export interface Message {
   content: string;
   citations?: Citation[];
   timestamp: Date;
+  isPartial?: boolean; // True if response was interrupted (e.g., by error)
+  isVerified?: boolean; // True if response was verified by Judge
 }
 
 export interface Citation {

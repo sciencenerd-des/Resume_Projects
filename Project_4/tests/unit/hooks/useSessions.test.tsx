@@ -29,24 +29,17 @@ const mockApi = {
   exportSession: mock<() => AsyncData<{ url: string }>>(() => resolve<{ url: string }>({ url: '' })),
 };
 
-// Mock Supabase as well since api.ts imports it
-mock.module('../../../src/services/supabase', () => ({
-  supabase: {
-    auth: {
-      getSession: mock(async () => ({
-        data: { session: { access_token: 'mock-token' } },
-      })),
-    },
-  },
-}));
-
-// Mock the api module
-mock.module('../../../src/services/api', () => ({
-  api: mockApi,
-}));
-
-// Import hooks AFTER mocking
+import { api } from '../../../src/services/api';
 import { useSessions, useSession, useSessionMessages, useSessionLedger, useExportSession } from '../../../src/hooks/useSessions';
+
+// Apply mocks directly to the api object in beforeEach (doesn't pollute other tests)
+beforeEach(() => {
+  (api as any).getWorkspaceSessions = mockApi.getWorkspaceSessions;
+  (api as any).getSession = mockApi.getSession;
+  (api as any).getSessionMessages = mockApi.getSessionMessages;
+  (api as any).getSessionLedger = mockApi.getSessionLedger;
+  (api as any).exportSession = mockApi.exportSession;
+});
 
 describe('useSessions', () => {
   let queryClient: QueryClient;

@@ -3,32 +3,33 @@ import { describe, test, expect } from 'bun:test';
 import { render, screen, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { LedgerTable } from '@/components/evidence/LedgerTable';
+import type { LedgerEntry } from '@/types';
 
-const mockEntries = [
+const mockEntries: LedgerEntry[] = [
   {
     id: '1',
     claim_text: 'Revenue increased by 15%',
-    claim_type: 'numeric' as const,
-    importance: 'critical' as const,
-    verdict: 'supported' as const,
+    claim_type: 'numeric',
+    importance: 'critical',
+    verdict: 'supported',
     confidence: 0.95,
     chunk_ids: ['abc123'],
   },
   {
     id: '2',
     claim_text: 'Policy requires approval',
-    claim_type: 'policy' as const,
-    importance: 'material' as const,
-    verdict: 'weak' as const,
+    claim_type: 'policy',
+    importance: 'material',
+    verdict: 'weak',
     confidence: 0.65,
     chunk_ids: ['def456'],
   },
   {
     id: '3',
     claim_text: 'No refunds available',
-    claim_type: 'fact' as const,
-    importance: 'minor' as const,
-    verdict: 'contradicted' as const,
+    claim_type: 'fact',
+    importance: 'minor',
+    verdict: 'contradicted',
     confidence: 0.88,
     chunk_ids: ['ghi789'],
   },
@@ -52,10 +53,15 @@ describe('LedgerTable', () => {
     });
 
     test('renders empty state when no entries', () => {
-      const { container } = render(<LedgerTable entries={[]} />);
-      // Empty table has no rows in tbody
-      const tbody = container.querySelector('tbody');
-      expect(tbody?.children.length).toBe(0);
+      render(<LedgerTable entries={[]} />);
+      expect(screen.getByText('No claims to display')).toBeInTheDocument();
+    });
+
+    test('applies custom className', () => {
+      const { container } = render(
+        <LedgerTable entries={mockEntries} className="custom-table" />
+      );
+      expect(container.querySelector('.custom-table')).toBeInTheDocument();
     });
   });
 
@@ -67,30 +73,59 @@ describe('LedgerTable', () => {
       expect(rows[1]).toHaveTextContent('Policy requires approval'); // weak
       expect(rows[2]).toHaveTextContent('No refunds available'); // contradicted
     });
+
+    test('not_found verdicts appear last', () => {
+      const entriesWithNotFound: LedgerEntry[] = [
+        { ...mockEntries[0], verdict: 'not_found' },
+        { ...mockEntries[1], verdict: 'supported' },
+      ];
+      const { container } = render(<LedgerTable entries={entriesWithNotFound} />);
+      const rows = container.querySelectorAll('tbody tr');
+      expect(rows[0]).toHaveTextContent('Policy requires approval'); // supported
+      expect(rows[1]).toHaveTextContent('Revenue increased by 15%'); // not_found
+    });
   });
 
   describe('interactions', () => {
     test('calls onRowClick when row is clicked', () => {
-      const handleRowClick = () => { mockCalls++; };
-      let mockCalls = 0;
-      render(<LedgerTable entries={mockEntries} onRowClick={handleRowClick} />);
+      let clickedEntry: LedgerEntry | null = null;
+      render(
+        <LedgerTable
+          entries={mockEntries}
+          onRowClick={(entry) => { clickedEntry = entry; }}
+        />
+      );
       fireEvent.click(screen.getByText('Revenue increased by 15%'));
-      expect(mockCalls).toBe(1);
+      expect(clickedEntry?.id).toBe('1');
     });
 
     test('highlights row when highlightedId matches', () => {
       render(<LedgerTable entries={mockEntries} highlightedId="1" />);
       const row = screen.getByText('Revenue increased by 15%').closest('tr');
-      expect(row).toHaveClass('bg-blue-50');
+      // The component uses bg-primary/5 for highlighted rows
+      expect(row).toHaveClass('bg-primary/5');
+    });
+
+    test('non-highlighted rows have hover effect', () => {
+      render(<LedgerTable entries={mockEntries} highlightedId="1" />);
+      const row = screen.getByText('Policy requires approval').closest('tr');
+      // Non-highlighted rows have hover:bg-accent/5
+      expect(row).toHaveClass('hover:bg-accent/5');
+    });
+
+    test('rows have cursor-pointer for clickability', () => {
+      render(<LedgerTable entries={mockEntries} />);
+      const row = screen.getByText('Revenue increased by 15%').closest('tr');
+      expect(row).toHaveClass('cursor-pointer');
     });
   });
 
   describe('subcomponents', () => {
-    test('renders importance dots correctly', () => {
+    test('renders importance dots with correct titles', () => {
       render(<LedgerTable entries={mockEntries} />);
-      expect(screen.getByTitle('critical claim')).toHaveClass('bg-red-500');
-      expect(screen.getByTitle('material claim')).toHaveClass('bg-amber-500');
-      expect(screen.getByTitle('minor claim')).toHaveClass('bg-gray-400');
+      expect(screen.getByTitle('Critical')).toBeInTheDocument();
+      expect(screen.getByTitle('Material')).toBeInTheDocument();
+      expect(screen.getByTitle('Minor')).toBeInTheDocument();
     });
 
     test('renders claim type badges', () => {
@@ -107,27 +142,50 @@ describe('LedgerTable', () => {
       expect(screen.getByText('Contradicted')).toBeInTheDocument();
     });
 
-    test('renders confidence bars with correct colors', () => {
+    test('renders confidence percentages', () => {
+      render(<LedgerTable entries={mockEntries} />);
+      expect(screen.getByText('95%')).toBeInTheDocument();
+      expect(screen.getByText('65%')).toBeInTheDocument();
+      expect(screen.getByText('88%')).toBeInTheDocument();
+    });
+
+    test('renders progress bars for confidence', () => {
       const { container } = render(<LedgerTable entries={mockEntries} />);
-      // Confidence bars: >= 0.8 = green, >= 0.5 = amber, < 0.5 = red
-      // Entry 1: confidence=0.95 -> green bar
-      // Entry 2: confidence=0.65 -> amber bar
-      // Entry 3: confidence=0.88 -> green bar
-      //
-      // Note: bg-amber-500 is also used for 'material' importance dots
-      // so we check specifically within confidence bar containers
-      const rows = container.querySelectorAll('tbody tr');
+      // Progress component renders with role="progressbar"
+      const progressBars = container.querySelectorAll('[role="progressbar"]');
+      expect(progressBars.length).toBe(3);
+    });
+  });
 
-      // Row 1 (supported, 95%) should have green confidence bar
-      const row1ConfBar = rows[0].querySelector('.bg-green-500');
-      expect(row1ConfBar).toBeInTheDocument();
+  describe('table structure', () => {
+    test('has table element', () => {
+      const { container } = render(<LedgerTable entries={mockEntries} />);
+      expect(container.querySelector('table')).toBeInTheDocument();
+    });
 
-      // Row 2 (weak, 65%) should have amber confidence bar
-      // Get the confidence cell (4th td) and check for amber
-      const row2Cells = rows[1].querySelectorAll('td');
-      const row2ConfCell = row2Cells[3];
-      const row2ConfBar = row2ConfCell?.querySelector('.bg-amber-500');
-      expect(row2ConfBar).toBeInTheDocument();
+    test('has thead with headers', () => {
+      const { container } = render(<LedgerTable entries={mockEntries} />);
+      expect(container.querySelector('thead')).toBeInTheDocument();
+    });
+
+    test('has tbody with rows', () => {
+      const { container } = render(<LedgerTable entries={mockEntries} />);
+      const tbody = container.querySelector('tbody');
+      expect(tbody).toBeInTheDocument();
+      expect(tbody?.querySelectorAll('tr').length).toBe(3);
+    });
+  });
+
+  describe('styling', () => {
+    test('table has scrollable container', () => {
+      const { container } = render(<LedgerTable entries={mockEntries} />);
+      expect(container.querySelector('.overflow-x-auto')).toBeInTheDocument();
+    });
+
+    test('claim text has line clamp for long content', () => {
+      const { container } = render(<LedgerTable entries={mockEntries} />);
+      const claimSpan = container.querySelector('.line-clamp-2');
+      expect(claimSpan).toBeInTheDocument();
     });
   });
 });

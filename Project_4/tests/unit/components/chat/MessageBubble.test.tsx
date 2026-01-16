@@ -11,13 +11,13 @@ const mockUserMessage = {
   timestamp: new Date('2026-01-03T10:00:00'),
 };
 
-// Content needs [1] pattern for citations to be parsed by ResponseContent
+// Content needs [cite:hash] pattern for citations to be parsed by ResponseContent
 const mockAssistantMessage = {
   id: '2',
   role: 'assistant' as const,
-  content: 'The policy states that [1] refunds are allowed.',
+  content: 'The policy states that [cite:abc12345] refunds are allowed.',
   citations: [
-    { index: 1, chunk_id: 'abc123', document_id: 'doc1' },
+    { index: 1, chunk_id: 'abc12345', document_id: 'doc1' },
   ],
   timestamp: new Date('2026-01-03T10:00:01'),
 };
@@ -84,7 +84,7 @@ describe('MessageBubble', () => {
         />
       );
       fireEvent.click(screen.getByRole('button', { name: '1' }));
-      expect(clickedChunkId).toBe('abc123');
+      expect(clickedChunkId).toBe('abc12345');
     });
   });
 

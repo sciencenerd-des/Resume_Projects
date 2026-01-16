@@ -25,12 +25,12 @@ export function ErrorWithRetry({
 }: ErrorWithRetryProps) {
   return (
     <div className={`text-center py-12 ${className}`}>
-      <div className="w-14 h-14 rounded-2xl bg-red-50 flex items-center justify-center mx-auto mb-4">
-        <AlertTriangle className="w-7 h-7 text-red-500" />
+      <div className="w-14 h-14 rounded-2xl bg-destructive/10 flex items-center justify-center mx-auto mb-4">
+        <AlertTriangle className="w-7 h-7 text-destructive" />
       </div>
 
       <h3 className="text-lg font-semibold text-gray-900 mb-1">{title}</h3>
-      <p className="text-sm text-gray-500 max-w-sm mx-auto mb-6">{message}</p>
+      <p className="text-sm text-muted-foreground max-w-sm mx-auto mb-6">{message}</p>
 
       <Button
         variant="secondary"

@@ -45,12 +45,12 @@ export function Modal({ isOpen, onClose, title, size = 'md', children }: ModalPr
         onClick={onClose}
         style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)' }}
       />
-      <div className={clsx('relative bg-white rounded-xl shadow-xl w-full mx-4', sizeStyles[size])} style={{ position: 'relative', zIndex: 1 }}>
+      <div className={clsx('relative bg-card rounded-xl shadow-xl w-full mx-4', sizeStyles[size])} style={{ position: 'relative', zIndex: 1 }}>
         {title && (
           <div className="flex items-center justify-between px-6 py-4 border-b">
             <h2 className="text-lg font-semibold">{title}</h2>
-            <button onClick={onClose} className="p-1 rounded-lg hover:bg-gray-100 transition-colors">
-              <X className="w-5 h-5 text-gray-500" />
+            <button onClick={onClose} className="p-1 rounded-lg hover:bg-accent transition-colors">
+              <X className="w-5 h-5 text-muted-foreground" />
             </button>
           </div>
         )}

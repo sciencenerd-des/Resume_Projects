@@ -15,12 +15,12 @@ interface HeaderProps {
 
 export function Header({ title, onMenuClick, actions }: HeaderProps) {
   return (
-    <header className="sticky top-0 z-30 flex items-center justify-between h-16 px-4 bg-white border-b">
+    <header className="sticky top-0 z-30 flex items-center justify-between h-16 px-4 bg-background border-b border-border">
       <div className="flex items-center gap-4">
-        <button onClick={onMenuClick} className="p-2 rounded-lg hover:bg-gray-100 lg:hidden">
+        <button onClick={onMenuClick} className="p-2 rounded-lg hover:bg-accent lg:hidden">
           <Menu className="w-5 h-5" />
         </button>
-        {title && <h1 className="text-lg font-semibold text-gray-900">{title}</h1>}
+        {title && <h1 className="text-lg font-semibold text-foreground">{title}</h1>}
       </div>
       {actions && <div className="flex items-center gap-2">{actions}</div>}
     </header>

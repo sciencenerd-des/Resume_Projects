@@ -35,7 +35,7 @@ export function WorkspaceSwitcher({
       <div className="relative">
         <button
           onClick={() => setIsOpen(!isOpen)}
-          className="w-full flex items-center justify-between gap-2 px-3 py-2 bg-gray-800 rounded-lg text-sm text-gray-300 hover:bg-gray-700 transition-colors"
+          className="w-full flex items-center justify-between gap-2 px-3 py-2 bg-sidebar-accent rounded-lg text-sm text-sidebar-foreground hover:bg-sidebar-accent/80 transition-colors"
         >
           <div className="flex items-center gap-2 min-w-0">
             <Building2 className="w-4 h-4 flex-shrink-0" />
@@ -54,27 +54,27 @@ export function WorkspaceSwitcher({
               className="fixed inset-0 z-10"
               onClick={() => setIsOpen(false)}
             />
-            <div className="absolute top-full left-0 right-0 mt-2 py-2 bg-gray-800 rounded-lg shadow-xl z-20">
+            <div className="absolute top-full left-0 right-0 mt-2 py-2 bg-sidebar-accent rounded-lg shadow-xl z-20">
               {workspaces.map((workspace) => (
                 <button
                   key={workspace.id}
                   onClick={() => handleSelect(workspace.id)}
                   className={`w-full px-3 py-2 text-left text-sm transition-colors ${
                     current?.id === workspace.id
-                      ? 'bg-gray-700 text-white'
-                      : 'text-gray-300 hover:bg-gray-700'
+                      ? 'bg-sidebar-accent/80 text-sidebar-foreground'
+                      : 'text-sidebar-muted-foreground hover:bg-sidebar-accent/80'
                   }`}
                 >
                   {workspace.name}
                 </button>
               ))}
-              <div className="border-t border-gray-700 mt-2 pt-2">
+              <div className="border-t border-sidebar-border mt-2 pt-2">
                 <button
                   onClick={() => {
                     setIsOpen(false);
                     setShowCreateModal(true);
                   }}
-                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-blue-400 hover:bg-gray-700 transition-colors"
+                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-primary hover:bg-sidebar-accent/80 transition-colors"
                 >
                   <Plus className="w-4 h-4" />
                   Create Workspace
@@ -128,7 +128,7 @@ function WorkspaceCreateForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
+        <label className="block text-sm font-medium text-foreground mb-1">
           Workspace Name
         </label>
         <input
@@ -136,7 +136,7 @@ function WorkspaceCreateForm({
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="My Workspace"
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
           autoFocus
         />
       </div>

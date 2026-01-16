@@ -62,7 +62,7 @@ export function SignupForm({ onSubmit, isLoading }: SignupFormProps) {
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       {error && (
-        <div className="flex items-center gap-2 p-3 text-sm text-red-600 bg-red-50 rounded-lg">
+        <div className="flex items-center gap-2 p-3 text-sm text-destructive bg-destructive/10 rounded-lg">
           <AlertCircle className="w-4 h-4" />
           {error}
         </div>
@@ -111,8 +111,8 @@ export function SignupForm({ onSubmit, isLoading }: SignupFormProps) {
               key={index}
               className={`flex items-center gap-1 text-xs ${
                 password.length > 0 && req.test(password)
-                  ? 'text-green-600'
-                  : 'text-gray-500'
+                  ? 'text-verdict-supported'
+                  : 'text-muted-foreground'
               }`}
             >
               <CheckCircle className="w-3 h-3" />
@@ -135,20 +135,20 @@ export function SignupForm({ onSubmit, isLoading }: SignupFormProps) {
         required
       />
 
-      <label className="flex items-start gap-2 text-sm">
+      <label className="flex items-start gap-2 text-sm text-muted-foreground">
         <input
           type="checkbox"
           checked={agreedToTerms}
           onChange={(e) => setAgreedToTerms(e.target.checked)}
-          className="w-4 h-4 mt-0.5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+          className="w-4 h-4 mt-0.5 rounded border-gray-300 text-primary focus:ring-primary"
         />
-        <span className="text-gray-600">
+        <span className="text-muted-foreground">
           I agree to the{' '}
-          <Link to="/terms" className="text-blue-600 hover:text-blue-700">
+          <Link to="/terms" className="text-primary hover:text-primary/80">
             Terms of Service
           </Link>{' '}
           and{' '}
-          <Link to="/privacy" className="text-blue-600 hover:text-blue-700">
+          <Link to="/privacy" className="text-primary hover:text-primary/80">
             Privacy Policy
           </Link>
         </span>
@@ -158,9 +158,9 @@ export function SignupForm({ onSubmit, isLoading }: SignupFormProps) {
         Create Account
       </Button>
 
-      <p className="text-center text-sm text-gray-600">
+      <p className="text-center text-sm text-muted-foreground">
         Already have an account?{' '}
-        <Link to="/login" className="text-blue-600 hover:text-blue-700 font-medium">
+        <Link to="/login" className="text-primary hover:text-primary/80 font-medium">
           Sign in
         </Link>
       </p>

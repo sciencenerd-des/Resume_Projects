@@ -1,22 +1,46 @@
 /**
  * WorkspaceContext
- * @version 1.0.0
- * Manages workspace state and multi-tenancy
+ * @version 2.0.0
+ * Manages workspace state with Convex real-time subscriptions
  */
 
-import { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
-import { api } from '../services/api';
-import { useAuth } from '../hooks/useAuth';
+import { createContext, useContext, useState, useEffect, ReactNode, useCallback, useMemo } from 'react';
+import { useQuery, useMutation } from 'convex/react';
+import { api } from '../../convex/_generated/api';
+import type { Id } from '../../convex/_generated/dataModel';
+import { useConvexAuthState } from '../hooks/useConvexAuth';
 import type { Workspace } from '../types';
+
+// Internal Convex workspace type
+interface ConvexWorkspace {
+  _id: Id<"workspaces">;
+  name: string;
+  ownerId: string;
+  _creationTime: number;
+}
+
+// Normalize Convex workspace to include both formats for compatibility
+function normalizeWorkspace(w: ConvexWorkspace): Workspace {
+  return {
+    _id: w._id,
+    id: w._id, // Alias for legacy code
+    name: w.name,
+    ownerId: w.ownerId,
+    owner_id: w.ownerId, // Alias for legacy code
+    _creationTime: w._creationTime,
+    created_at: new Date(w._creationTime).toISOString(),
+    updated_at: new Date(w._creationTime).toISOString(),
+  };
+}
 
 interface WorkspaceContextValue {
   workspaces: Workspace[];
   currentWorkspace: Workspace | null;
+  currentWorkspaceId: string | null;
   isLoading: boolean;
   error: string | null;
   switchWorkspace: (workspaceId: string) => void;
-  createWorkspace: (name: string) => Promise<Workspace>;
-  refreshWorkspaces: () => Promise<void>;
+  createWorkspace: (name: string) => Promise<string>;
 }
 
 const WorkspaceContext = createContext<WorkspaceContextValue | null>(null);
@@ -24,74 +48,103 @@ const WorkspaceContext = createContext<WorkspaceContextValue | null>(null);
 const CURRENT_WORKSPACE_KEY = 'verity_current_workspace';
 
 export function WorkspaceProvider({ children }: { children: ReactNode }) {
-  const { user } = useAuth();
-  const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
-  const [currentWorkspace, setCurrentWorkspace] = useState<Workspace | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const { isAuthenticated } = useConvexAuthState();
+  const [currentWorkspaceId, setCurrentWorkspaceId] = useState<string | null>(() => {
+    return localStorage.getItem(CURRENT_WORKSPACE_KEY);
+  });
   const [error, setError] = useState<string | null>(null);
 
-  const refreshWorkspaces = useCallback(async () => {
-    if (!user) {
-      setWorkspaces([]);
-      setCurrentWorkspace(null);
-      setIsLoading(false);
-      return;
-    }
+  // Real-time workspace list from Convex
+  const rawWorkspaces = useQuery(
+    api.workspaces.list,
+    isAuthenticated ? {} : "skip"
+  );
 
-    try {
-      setIsLoading(true);
-      setError(null);
-      const data = await api.getWorkspaces();
-      setWorkspaces(data);
+  // Current workspace details (guarded by auth state)
+  const rawCurrentWorkspace = useQuery(
+    api.workspaces.get,
+    isAuthenticated && currentWorkspaceId ? { workspaceId: currentWorkspaceId as Id<"workspaces"> } : "skip"
+  );
 
-      // Restore last selected workspace or select first one
-      const savedWorkspaceId = localStorage.getItem(CURRENT_WORKSPACE_KEY);
-      const savedWorkspace = data.find((w: Workspace) => w.id === savedWorkspaceId);
+  // Create workspace mutation
+  const createWorkspaceMutation = useMutation(api.workspaces.create);
 
-      if (savedWorkspace) {
-        setCurrentWorkspace(savedWorkspace);
-      } else if (data.length > 0) {
-        setCurrentWorkspace(data[0]);
-        localStorage.setItem(CURRENT_WORKSPACE_KEY, data[0].id);
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load workspaces');
-    } finally {
-      setIsLoading(false);
-    }
-  }, [user]);
+  // Normalize workspaces for compatibility with legacy code
+  const workspaces = useMemo(() => {
+    if (!rawWorkspaces) return [];
+    // Filter out any null values and normalize
+    return rawWorkspaces
+      .filter((w): w is NonNullable<typeof w> => w !== null)
+      .map((w) => normalizeWorkspace(w as ConvexWorkspace));
+  }, [rawWorkspaces]);
 
-  // Fetch workspaces when user changes
+  const currentWorkspace = useMemo(() => {
+    if (!rawCurrentWorkspace) return null;
+    return normalizeWorkspace(rawCurrentWorkspace as ConvexWorkspace);
+  }, [rawCurrentWorkspace]);
+
+  // Auto-select first workspace if none selected
   useEffect(() => {
-    refreshWorkspaces();
-  }, [refreshWorkspaces]);
+    if (rawWorkspaces && rawWorkspaces.length > 0 && !currentWorkspaceId) {
+      const firstWorkspace = rawWorkspaces.find((w) => w !== null);
+      if (firstWorkspace) {
+        setCurrentWorkspaceId(firstWorkspace._id);
+        localStorage.setItem(CURRENT_WORKSPACE_KEY, firstWorkspace._id);
+      }
+    }
+  }, [rawWorkspaces, currentWorkspaceId]);
+
+  // Clear workspace when user logs out
+  useEffect(() => {
+    if (!isAuthenticated) {
+      setCurrentWorkspaceId(null);
+    }
+  }, [isAuthenticated]);
+
+  // Listen for storage events (workspace switch from other tabs)
+  useEffect(() => {
+    const handleStorage = () => {
+      const saved = localStorage.getItem(CURRENT_WORKSPACE_KEY);
+      if (saved !== currentWorkspaceId) {
+        setCurrentWorkspaceId(saved);
+      }
+    };
+    window.addEventListener('storage', handleStorage);
+    return () => window.removeEventListener('storage', handleStorage);
+  }, [currentWorkspaceId]);
 
   const switchWorkspace = useCallback((workspaceId: string) => {
-    const workspace = workspaces.find((w) => w.id === workspaceId);
-    if (workspace) {
-      setCurrentWorkspace(workspace);
-      localStorage.setItem(CURRENT_WORKSPACE_KEY, workspaceId);
-    }
-  }, [workspaces]);
-
-  const createWorkspace = useCallback(async (name: string): Promise<Workspace> => {
-    const newWorkspace = await api.createWorkspace(name);
-    setWorkspaces((prev) => [...prev, newWorkspace]);
-    setCurrentWorkspace(newWorkspace);
-    localStorage.setItem(CURRENT_WORKSPACE_KEY, newWorkspace.id);
-    return newWorkspace;
+    setCurrentWorkspaceId(workspaceId);
+    localStorage.setItem(CURRENT_WORKSPACE_KEY, workspaceId);
+    window.dispatchEvent(new Event('storage'));
   }, []);
+
+  const createWorkspace = useCallback(async (name: string): Promise<string> => {
+    try {
+      setError(null);
+      const workspaceId = await createWorkspaceMutation({ name });
+      setCurrentWorkspaceId(workspaceId);
+      localStorage.setItem(CURRENT_WORKSPACE_KEY, workspaceId);
+      return workspaceId;
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to create workspace';
+      setError(message);
+      throw err;
+    }
+  }, [createWorkspaceMutation]);
+
+  const isLoading = rawWorkspaces === undefined || (currentWorkspaceId && rawCurrentWorkspace === undefined);
 
   return (
     <WorkspaceContext.Provider
       value={{
         workspaces,
         currentWorkspace,
-        isLoading,
+        currentWorkspaceId,
+        isLoading: !!isLoading,
         error,
         switchWorkspace,
         createWorkspace,
-        refreshWorkspaces,
       }}
     >
       {children}

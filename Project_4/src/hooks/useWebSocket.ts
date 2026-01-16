@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
-import { useAuth } from './useAuth';
+import { useAuth } from '@clerk/clerk-react';
 
 interface WebSocketMessage {
   type: string;
@@ -14,53 +14,65 @@ interface UseWebSocketReturn {
   disconnect: () => void;
 }
 
-const WS_URL = import.meta.env?.VITE_WS_URL || 'ws://localhost:8000/ws';
+// Get WebSocket URL from window config or default
+const getWsUrl = () => {
+  const config = typeof window !== "undefined" ? window.__APP_CONFIG__ : undefined;
+  return config?.wsUrl || 'ws://localhost:8000/ws';
+};
 
 export function useWebSocket(): UseWebSocketReturn {
-  const { session } = useAuth();
+  const { getToken, isSignedIn } = useAuth();
   const [isConnected, setIsConnected] = useState(false);
   const wsRef = useRef<WebSocket | null>(null);
   const listenersRef = useRef<Map<string, Set<(data: unknown) => void>>>(new Map());
   const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const connect = useCallback(() => {
-    if (!session?.access_token) return;
+  const connect = useCallback(async () => {
+    if (!isSignedIn) return;
 
     if (wsRef.current?.readyState === WebSocket.OPEN) {
       return;
     }
 
-    const ws = new WebSocket(`${WS_URL}?token=${session.access_token}`);
-    wsRef.current = ws;
+    try {
+      const token = await getToken();
+      if (!token) return;
 
-    ws.onopen = () => {
-      setIsConnected(true);
-    };
+      const wsUrl = getWsUrl();
+      const ws = new WebSocket(`${wsUrl}?token=${token}`);
+      wsRef.current = ws;
 
-    ws.onmessage = (event) => {
-      try {
-        const message = JSON.parse(event.data);
-        const listeners = listenersRef.current.get(message.type);
-        // Pass the entire message (including type) or the payload if it exists
-        // Server sends events like { type, delta, ... } not { type, payload: { ... } }
-        const eventData = message.payload ?? message;
-        listeners?.forEach((callback) => callback(eventData));
-      } catch (e) {
-        console.error('Failed to parse WebSocket message:', e);
-      }
-    };
+      ws.onopen = () => {
+        setIsConnected(true);
+      };
 
-    ws.onclose = () => {
-      setIsConnected(false);
-      reconnectTimeoutRef.current = setTimeout(() => {
-        connect();
-      }, 3000);
-    };
+      ws.onmessage = (event) => {
+        try {
+          const message = JSON.parse(event.data);
+          const listeners = listenersRef.current.get(message.type);
+          // Pass the entire message (including type) or the payload if it exists
+          // Server sends events like { type, delta, ... } not { type, payload: { ... } }
+          const eventData = message.payload ?? message;
+          listeners?.forEach((callback) => callback(eventData));
+        } catch (e) {
+          console.error('Failed to parse WebSocket message:', e);
+        }
+      };
 
-    ws.onerror = (error) => {
-      console.error('WebSocket error:', error);
-    };
-  }, [session?.access_token]);
+      ws.onclose = () => {
+        setIsConnected(false);
+        reconnectTimeoutRef.current = setTimeout(() => {
+          connect();
+        }, 3000);
+      };
+
+      ws.onerror = (error) => {
+        console.error('WebSocket error:', error);
+      };
+    } catch (error) {
+      console.error('Failed to connect WebSocket:', error);
+    }
+  }, [isSignedIn, getToken]);
 
   useEffect(() => {
     connect();

@@ -26,26 +26,26 @@ interface ConfirmModalProps {
 const variantConfig = {
   danger: {
     icon: XCircle,
-    iconBg: 'bg-red-100',
-    iconColor: 'text-red-600',
+    iconBg: 'bg-destructive/10',
+    iconColor: 'text-destructive',
     buttonVariant: 'danger' as const,
   },
   warning: {
     icon: AlertTriangle,
-    iconBg: 'bg-amber-100',
-    iconColor: 'text-amber-600',
+    iconBg: 'bg-status-warning/10',
+    iconColor: 'text-status-warning',
     buttonVariant: 'primary' as const,
   },
   info: {
     icon: Info,
-    iconBg: 'bg-blue-100',
-    iconColor: 'text-blue-600',
+    iconBg: 'bg-primary/10',
+    iconColor: 'text-primary',
     buttonVariant: 'primary' as const,
   },
   success: {
     icon: CheckCircle,
-    iconBg: 'bg-green-100',
-    iconColor: 'text-green-600',
+    iconBg: 'bg-verdict-supported/10',
+    iconColor: 'text-verdict-supported',
     buttonVariant: 'primary' as const,
   },
 };

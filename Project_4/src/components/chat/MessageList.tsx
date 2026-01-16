@@ -1,5 +1,5 @@
 import React, { useRef, useEffect } from 'react';
-import { User, Bot } from 'lucide-react';
+import { User, Bot, AlertTriangle, ShieldCheck } from 'lucide-react';
 import { ResponseContent } from './ResponseContent';
 import { Spinner } from '../ui/Spinner';
 import type { Message, Citation } from '../../types';
@@ -27,7 +27,7 @@ export function MessageList({
 
   return (
     <div
-      className={`flex-1 overflow-y-auto p-4 space-y-4 ${className}`}
+      className={`p-4 space-y-4 ${className}`}
       role="log"
       aria-label="Chat messages"
       aria-live={isStreaming ? 'polite' : 'off'}
@@ -66,6 +66,8 @@ interface MessageBubbleProps {
 
 function MessageBubble({ message, isStreaming, onCitationClick }: MessageBubbleProps) {
   const isUser = message.role === 'user';
+  const isPartial = message.isPartial;
+  const isVerified = message.isVerified;
 
   return (
     <div className={`flex ${isUser ? 'justify-end' : 'justify-start'}`}>
@@ -73,9 +75,10 @@ function MessageBubble({ message, isStreaming, onCitationClick }: MessageBubbleP
         className={`
           max-w-[80%] rounded-2xl px-4 py-3
           ${isUser
-            ? 'bg-blue-600 text-white'
-            : 'bg-gray-100 text-gray-900'
+            ? 'bg-primary text-primary-foreground'
+            : 'bg-card text-foreground border border-border'
           }
+          ${isPartial ? 'border-amber-500/50' : ''}
         `}
       >
         <div className="flex items-start gap-3">
@@ -83,19 +86,19 @@ function MessageBubble({ message, isStreaming, onCitationClick }: MessageBubbleP
             <div
               className={`
                 flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center
-                ${isUser ? 'bg-blue-700' : 'bg-white border border-gray-200'}
+                ${isUser ? 'bg-primary/80' : 'bg-muted border border-border'}
               `}
             >
               {isUser ? (
-                <User className="w-4 h-4 text-white" />
+                <User className="w-4 h-4 text-primary-foreground" />
               ) : (
-                <Bot className="w-4 h-4 text-gray-600" />
+                <Bot className="w-4 h-4 text-muted-foreground" />
               )}
             </div>
           )}
 
           <div className="flex-1 min-w-0">
-            <div className="prose prose-sm max-w-none">
+            <div className="prose prose-sm prose-invert max-w-none">
               <ResponseContent
                 content={message.content}
                 citations={message.citations}
@@ -106,11 +109,25 @@ function MessageBubble({ message, isStreaming, onCitationClick }: MessageBubbleP
             {isStreaming && (
               <span className="inline-block w-2 h-4 bg-current animate-pulse ml-1" />
             )}
+
+            {isPartial && (
+              <div className="flex items-center gap-1.5 mt-2 pt-2 border-t border-status-warning/30 text-xs text-status-warning">
+                <AlertTriangle className="w-3 h-3" />
+                <span>Response interrupted - verification incomplete</span>
+              </div>
+            )}
+
+            {isVerified && !isPartial && (
+              <div className="flex items-center gap-1.5 mt-2 pt-2 border-t border-verdict-supported/30 text-xs text-verdict-supported">
+                <ShieldCheck className="w-3 h-3" />
+                <span>Verified by Evidence Ledger</span>
+              </div>
+            )}
           </div>
 
           {isUser && (
-            <div className="flex-shrink-0 w-8 h-8 rounded-full bg-blue-700 flex items-center justify-center">
-              <User className="w-4 h-4 text-white" />
+            <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary/80 flex items-center justify-center">
+              <User className="w-4 h-4 text-primary-foreground" />
             </div>
           )}
         </div>
@@ -119,7 +136,7 @@ function MessageBubble({ message, isStreaming, onCitationClick }: MessageBubbleP
           <div
             className={`
               text-xs mt-2
-              ${isUser ? 'text-blue-200' : 'text-gray-400'}
+              ${isUser ? 'text-primary-foreground/70' : 'text-muted-foreground'}
             `}
           >
             {formatTime(message.timestamp)}

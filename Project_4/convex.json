@@ -1,0 +1,4 @@
+{
+  "functions": "convex/",
+  "authConfig": ["convex/auth.config.ts"]
+}

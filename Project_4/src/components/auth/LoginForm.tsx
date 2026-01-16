@@ -34,7 +34,7 @@ export function LoginForm({ onSubmit, isLoading }: LoginFormProps) {
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       {error && (
-        <div className="flex items-center gap-2 p-3 text-sm text-red-600 bg-red-50 rounded-lg">
+        <div className="flex items-center gap-2 p-3 text-sm text-destructive bg-destructive/10 rounded-lg">
           <AlertCircle className="w-4 h-4" />
           {error}
         </div>
@@ -65,16 +65,16 @@ export function LoginForm({ onSubmit, isLoading }: LoginFormProps) {
       />
 
       <div className="flex items-center justify-between">
-        <label className="flex items-center gap-2 text-sm">
+        <label className="flex items-center gap-2 text-sm text-muted-foreground">
           <input
             type="checkbox"
-            className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+            className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary"
           />
           Remember me
         </label>
         <Link
           to="/forgot-password"
-          className="text-sm text-blue-600 hover:text-blue-700"
+          className="text-sm text-primary hover:text-primary/80"
         >
           Forgot password?
         </Link>
@@ -84,9 +84,9 @@ export function LoginForm({ onSubmit, isLoading }: LoginFormProps) {
         Sign In
       </Button>
 
-      <p className="text-center text-sm text-gray-600">
+      <p className="text-center text-sm text-muted-foreground">
         Don't have an account?{' '}
-        <Link to="/signup" className="text-blue-600 hover:text-blue-700 font-medium">
+        <Link to="/signup" className="text-primary hover:text-primary/80 font-medium">
           Sign up
         </Link>
       </p>

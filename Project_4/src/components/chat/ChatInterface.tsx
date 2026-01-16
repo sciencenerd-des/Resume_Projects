@@ -86,7 +86,7 @@ export function ChatInterface({
       {/* Main Chat Area */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Header */}
-        <div className="flex items-center justify-between px-4 py-3 bg-white border-b border-gray-200">
+        <div className="flex items-center justify-between px-4 py-3 bg-card border-b border-border">
           <div className="flex items-center gap-3">
             <ModeToggle mode={mode} onChange={setMode} />
           </div>
@@ -105,7 +105,7 @@ export function ChatInterface({
               >
                 {isLedgerOpen ? 'Hide' : 'Show'} Ledger
                 {ledger && ledger.entries.length > 0 && (
-                  <span className="ml-1 px-1.5 py-0.5 text-xs bg-blue-100 text-blue-600 rounded-full">
+                  <span className="ml-1 px-1.5 py-0.5 text-xs bg-primary/20 text-primary rounded-full">
                     {ledger.entries.length}
                   </span>
                 )}
@@ -116,7 +116,7 @@ export function ChatInterface({
 
         {/* Error Banner */}
         {error && (
-          <div className="mx-4 mt-3 flex items-center justify-between gap-2 p-3 text-sm text-red-600 bg-red-50 rounded-lg border border-red-200">
+          <div className="mx-4 mt-3 flex items-center justify-between gap-2 p-3 text-sm text-destructive bg-destructive/10 rounded-lg border border-destructive/20">
             <div className="flex items-center gap-2">
               <AlertCircle className="w-4 h-4 flex-shrink-0" />
               {error}
@@ -124,7 +124,7 @@ export function ChatInterface({
             {onClearError && (
               <button
                 onClick={onClearError}
-                className="text-red-500 hover:text-red-700 text-xs font-medium"
+                className="text-destructive/70 hover:text-destructive text-xs font-medium px-2 py-1 rounded hover:bg-destructive/10"
               >
                 Dismiss
               </button>
@@ -172,19 +172,19 @@ function WelcomeState({ mode }: { mode: QueryMode }) {
   return (
     <div className="flex-1 flex items-center justify-center p-6">
       <div className="text-center max-w-md">
-        <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center mx-auto mb-5 shadow-lg shadow-blue-500/20">
-          <Shield className="w-7 h-7 text-white" />
+        <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-5">
+          <Shield className="w-7 h-7 text-primary" />
         </div>
-        <h2 className="text-lg font-semibold text-gray-900 mb-2">
+        <h2 className="text-lg font-semibold text-foreground mb-2">
           {mode === 'answer' ? 'Ask Questions with Confidence' : 'Draft with Evidence'}
         </h2>
-        <p className="text-sm text-gray-500 leading-relaxed">
+        <p className="text-sm text-muted-foreground leading-relaxed">
           {mode === 'answer'
             ? 'Every answer is backed by evidence from your documents. Citations link directly to source material.'
             : 'Generate comprehensive content with automatic fact-checking. Each claim is verified against your knowledge base.'}
         </p>
 
-        <div className="mt-6 flex items-center justify-center gap-4 text-xs text-gray-400">
+        <div className="mt-6 flex items-center justify-center gap-4 text-xs text-muted-foreground/70">
           <FeatureIndicator label="Evidence verified" />
           <FeatureIndicator label="Source linked" />
           <FeatureIndicator label="Risk flagged" />
@@ -197,7 +197,7 @@ function WelcomeState({ mode }: { mode: QueryMode }) {
 function FeatureIndicator({ label }: { label: string }) {
   return (
     <div className="flex items-center gap-1.5">
-      <div className="w-1.5 h-1.5 rounded-full bg-green-400" />
+      <div className="w-1.5 h-1.5 rounded-full bg-verdict-supported" />
       {label}
     </div>
   );

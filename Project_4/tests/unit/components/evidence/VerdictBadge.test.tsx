@@ -6,28 +6,28 @@ import { VerdictBadge } from '@/components/evidence/VerdictBadge';
 
 describe('VerdictBadge', () => {
   describe('rendering', () => {
-    test('renders supported verdict with green styling', () => {
+    test('renders supported verdict with correct styling', () => {
       render(<VerdictBadge verdict="supported" />);
       const badge = screen.getByText('Supported');
-      expect(badge).toHaveClass('bg-green-100', 'text-green-800');
+      expect(badge).toHaveClass('bg-verdict-supported/10', 'text-verdict-supported');
     });
 
-    test('renders weak verdict with amber styling', () => {
+    test('renders weak verdict with correct styling', () => {
       render(<VerdictBadge verdict="weak" />);
       const badge = screen.getByText('Weak');
-      expect(badge).toHaveClass('bg-amber-100', 'text-amber-800');
+      expect(badge).toHaveClass('bg-verdict-weak/10', 'text-verdict-weak');
     });
 
-    test('renders contradicted verdict with red styling', () => {
+    test('renders contradicted verdict with correct styling', () => {
       render(<VerdictBadge verdict="contradicted" />);
       const badge = screen.getByText('Contradicted');
-      expect(badge).toHaveClass('bg-red-100', 'text-red-800');
+      expect(badge).toHaveClass('bg-verdict-contradicted/10', 'text-verdict-contradicted');
     });
 
-    test('renders not_found verdict with gray styling', () => {
+    test('renders not_found verdict with correct styling', () => {
       render(<VerdictBadge verdict="not_found" />);
       const badge = screen.getByText('Not Found');
-      expect(badge).toHaveClass('bg-gray-100', 'text-gray-800');
+      expect(badge).toHaveClass('bg-verdict-missing/10', 'text-verdict-missing');
     });
   });
 
@@ -41,7 +41,14 @@ describe('VerdictBadge', () => {
     test('renders medium size by default', () => {
       render(<VerdictBadge verdict="supported" />);
       const badge = screen.getByText('Supported');
-      expect(badge).toHaveClass('text-sm', 'px-3', 'py-1');
+      // md size: px-2.5 py-1 text-xs
+      expect(badge).toHaveClass('text-xs', 'px-2.5', 'py-1');
+    });
+
+    test('renders large size', () => {
+      render(<VerdictBadge verdict="supported" size="lg" />);
+      const badge = screen.getByText('Supported');
+      expect(badge).toHaveClass('text-sm', 'px-3', 'py-1.5');
     });
   });
 
@@ -66,6 +73,26 @@ describe('VerdictBadge', () => {
       // Both should have SVG icons
       expect(c1.querySelector('svg')).toBeInTheDocument();
       expect(c2.querySelector('svg')).toBeInTheDocument();
+    });
+  });
+
+  describe('common styling', () => {
+    test('has rounded-full class', () => {
+      render(<VerdictBadge verdict="supported" />);
+      const badge = screen.getByText('Supported');
+      expect(badge).toHaveClass('rounded-full');
+    });
+
+    test('has border class', () => {
+      render(<VerdictBadge verdict="supported" />);
+      const badge = screen.getByText('Supported');
+      expect(badge).toHaveClass('border');
+    });
+
+    test('has font-medium class', () => {
+      render(<VerdictBadge verdict="supported" />);
+      const badge = screen.getByText('Supported');
+      expect(badge).toHaveClass('font-medium');
     });
   });
 });

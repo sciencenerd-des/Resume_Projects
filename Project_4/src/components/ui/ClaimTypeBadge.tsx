@@ -16,18 +16,18 @@ interface ClaimTypeBadgeProps {
 const typeConfig: Record<ClaimType, { label: string; bgClass: string; textClass: string }> = {
   fact: {
     label: "Fact",
-    bgClass: "bg-blue-500/10",
-    textClass: "text-blue-400",
+    bgClass: "bg-claim-factual/10",
+    textClass: "text-claim-factual",
   },
   policy: {
     label: "Policy",
-    bgClass: "bg-purple-500/10",
-    textClass: "text-purple-400",
+    bgClass: "bg-claim-opinion/10",
+    textClass: "text-claim-opinion",
   },
   numeric: {
     label: "Numeric",
-    bgClass: "bg-emerald-500/10",
-    textClass: "text-emerald-400",
+    bgClass: "bg-claim-statistical/10",
+    textClass: "text-claim-statistical",
   },
   definition: {
     label: "Definition",

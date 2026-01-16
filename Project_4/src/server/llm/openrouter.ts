@@ -20,17 +20,17 @@ export interface ModelConfig {
 // Model configurations for each role in the pipeline
 export const models: Record<string, ModelConfig> = {
   writer: {
-    model: "openai/gpt-4o-mini", // Fast, capable for initial generation
+    model: "openai/gpt-5-nano", // Fast, capable for initial generation
     maxTokens: 4096,
     temperature: 0.7,
   },
   skeptic: {
-    model: "anthropic/claude-3-haiku", // Good at critical analysis
+    model: "z-ai/glm-4.7", // Good at critical analysis
     maxTokens: 8192,
     temperature: 0.3,
   },
   judge: {
-    model: "openai/gpt-4o-mini", // Balanced for verification
+    model: "deepseek/deepseek-v3.2-speciale", // Balanced for verification
     maxTokens: 4096,
     temperature: 0.2,
   },
