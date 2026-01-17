@@ -2,7 +2,7 @@ import React from 'react';
 import { ChevronDown, Plus, Building2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Modal } from '../ui/Modal';
-import { api } from '../../services/api';
+import { useWorkspace } from '../../contexts/WorkspaceContext';
 
 interface Workspace {
   id: string;
@@ -108,6 +108,7 @@ function WorkspaceCreateForm({
 }) {
   const [name, setName] = React.useState('');
   const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const { createWorkspace } = useWorkspace();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -115,7 +116,7 @@ function WorkspaceCreateForm({
 
     setIsSubmitting(true);
     try {
-      await api.createWorkspace(name);
+      await createWorkspace(name);
       onClose();
       onCreated?.();
     } catch (error) {

@@ -37,7 +37,7 @@ describe('ModeToggle', () => {
 
   describe('interactions', () => {
     test('calls onChange with "draft" when draft is clicked', () => {
-      let selectedMode: QueryMode = 'answer';
+      let selectedMode: string = 'answer';
       render(
         <ModeToggle
           mode="answer"
@@ -50,7 +50,7 @@ describe('ModeToggle', () => {
     });
 
     test('calls onChange with "answer" when answer is clicked', () => {
-      let selectedMode: QueryMode = 'draft';
+      let selectedMode: string = 'draft';
       render(
         <ModeToggle
           mode="draft"
@@ -173,9 +173,9 @@ describe('ModeToggle', () => {
     });
 
     test('mode state is purely controlled', () => {
-      let mode: QueryMode = 'answer';
+      let mode: string = 'answer';
       const { rerender } = render(
-        <ModeToggle mode={mode} onChange={(m) => { mode = m; }} />
+        <ModeToggle mode={mode as QueryMode} onChange={(m) => { mode = m; }} />
       );
 
       fireEvent.click(screen.getByRole('button', { name: /draft/i }));
@@ -185,7 +185,7 @@ describe('ModeToggle', () => {
       expect(screen.getByRole('button', { name: /answer/i })).toHaveAttribute('aria-pressed', 'true');
 
       // After re-render with new state, visual updates
-      rerender(<ModeToggle mode={mode} onChange={() => {}} />);
+      rerender(<ModeToggle mode={mode as QueryMode} onChange={() => {}} />);
       expect(screen.getByRole('button', { name: /draft/i })).toHaveAttribute('aria-pressed', 'true');
     });
   });

@@ -146,7 +146,7 @@ describe('EvidenceLedgerPanel', () => {
 
   describe('interactions', () => {
     test('calls onEntryClick when entry is clicked', () => {
-      let clickedEntry: LedgerEntry | null = null;
+      let clickedEntry: LedgerEntry | undefined;
       render(
         <EvidenceLedgerPanel
           ledger={mockLedger}
@@ -155,7 +155,8 @@ describe('EvidenceLedgerPanel', () => {
       );
 
       fireEvent.click(screen.getByText('The sky is blue'));
-      expect(clickedEntry?.claim_text).toBe('The sky is blue');
+      expect(clickedEntry).toBeDefined();
+      expect(clickedEntry!.claim_text).toBe('The sky is blue');
     });
 
     test('shows evidence detail when entry is selected', () => {

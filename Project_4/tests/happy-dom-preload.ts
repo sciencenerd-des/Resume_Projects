@@ -41,8 +41,8 @@ class PointerEventPolyfill extends happyWindow.MouseEvent {
   isPrimary: boolean;
 
   constructor(type: string, params: PointerEventInit = {}) {
-    // Cast params to MouseEventInit to satisfy TypeScript
-    super(type, params as MouseEventInit);
+    // Cast params to any to satisfy TypeScript with happy-dom's MouseEvent
+    super(type, params as any);
     this.pointerId = params.pointerId ?? 0;
     this.width = params.width ?? 1;
     this.height = params.height ?? 1;
@@ -121,8 +121,8 @@ Object.assign(globalThis, {
 
 // Add scrollIntoView polyfill for cmdk and Radix UI components
 // Use type assertion to add the method to the prototype
-(happyWindow.HTMLElement.prototype as HTMLElement).scrollIntoView = function() {};
-(happyWindow.Element.prototype as Element).scrollIntoView = function() {};
+(happyWindow.HTMLElement.prototype as unknown as HTMLElement).scrollIntoView = function() {};
+(happyWindow.Element.prototype as unknown as Element).scrollIntoView = function() {};
 
 // Create a root div for React to render into
 const rootDiv = happyWindow.document.createElement('div');

@@ -23,17 +23,24 @@ interface LedgerEntry {
   notes?: string;
 }
 
+// Conversation history message type
+const conversationMessage = v.object({
+  role: v.union(v.literal("user"), v.literal("assistant")),
+  content: v.string(),
+});
+
 export const startQuery = mutation({
   args: {
     workspaceId: v.id("workspaces"),
     query: v.string(),
     mode: v.union(v.literal("answer"), v.literal("draft")),
+    conversationHistory: v.optional(v.array(conversationMessage)),
   },
   handler: async (ctx, args) => {
     const userId = await getUserId(ctx);
     await requireWorkspaceMember(ctx, args.workspaceId);
 
-    // Create session
+    // Create session with conversation history
     const sessionId = await ctx.db.insert("sessions", {
       workspaceId: args.workspaceId,
       userId,
@@ -43,6 +50,7 @@ export const startQuery = mutation({
       status: "processing",
       unsupportedClaimCount: 0,
       revisionCycles: 0,
+      conversationHistory: args.conversationHistory || [],
     });
 
     // Initialize pipeline progress
@@ -126,6 +134,7 @@ export const executePipeline = internalAction({
           context,
           query: session.query,
           mode: session.mode,
+          conversationHistory: session.conversationHistory || [],
         }
       );
 
@@ -333,7 +342,9 @@ export const insertClaim = internalMutation({
       | "supported"
       | "weak"
       | "contradicted"
-      | "not_found";
+      | "not_found"
+      | "expert_verified"
+      | "conflict_flagged";
 
     const claimId = await ctx.db.insert("claims", {
       sessionId: args.sessionId,

@@ -174,8 +174,8 @@ describe('cn (className utility)', () => {
 
   describe('real-world usage patterns', () => {
     test('button component pattern', () => {
-      const variant = 'primary';
-      const size = 'md';
+      const variant: string = 'primary';
+      const size: string = 'md';
       const isDisabled = false;
 
       const result = cn(

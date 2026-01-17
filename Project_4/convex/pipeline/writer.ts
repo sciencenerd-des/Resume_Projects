@@ -3,7 +3,13 @@ import { v } from "convex/values";
 import { internal } from "../_generated/api";
 
 const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
-const WRITER_MODEL = "openai/gpt-4o-mini";
+const WRITER_MODEL = "openai/gpt-5-nano";
+
+// Conversation message type
+interface ConversationMessage {
+  role: "user" | "assistant";
+  content: string;
+}
 
 export const generate = internalAction({
   args: {
@@ -11,9 +17,32 @@ export const generate = internalAction({
     context: v.string(),
     query: v.string(),
     mode: v.union(v.literal("answer"), v.literal("draft")),
+    conversationHistory: v.optional(
+      v.array(
+        v.object({
+          role: v.union(v.literal("user"), v.literal("assistant")),
+          content: v.string(),
+        })
+      )
+    ),
   },
   handler: async (ctx, args) => {
-    const systemPrompt = getWriterPrompt(args.context, args.mode);
+    const systemPrompt = getWriterPrompt(args.context, args.mode, args.conversationHistory || []);
+
+    // Build messages array with conversation history
+    const messages: Array<{ role: "system" | "user" | "assistant"; content: string }> = [
+      { role: "system", content: systemPrompt },
+    ];
+
+    // Add previous conversation turns (limit to last 6 exchanges to manage context)
+    const history = args.conversationHistory || [];
+    const recentHistory = history.slice(-12); // Last 6 exchanges (12 messages)
+    for (const msg of recentHistory) {
+      messages.push({ role: msg.role, content: msg.content });
+    }
+
+    // Add current query
+    messages.push({ role: "user", content: args.query });
 
     // Stream response and update progress
     let fullResponse = "";
@@ -30,10 +59,7 @@ export const generate = internalAction({
         },
         body: JSON.stringify({
           model: WRITER_MODEL,
-          messages: [
-            { role: "system", content: systemPrompt },
-            { role: "user", content: args.query },
-          ],
+          messages,
           temperature: 0.7,
           stream: true,
         }),
@@ -143,32 +169,77 @@ export const revise = internalAction({
   },
 });
 
-function getWriterPrompt(context: string, mode: "answer" | "draft"): string {
+function getWriterPrompt(
+  context: string,
+  mode: "answer" | "draft",
+  conversationHistory: ConversationMessage[]
+): string {
   const taskDescription =
     mode === "answer"
       ? "answer questions accurately and comprehensively"
       : "draft professional content";
 
-  return `You are an expert research assistant. Your task is to ${taskDescription} based ONLY on the provided context documents.
+  const hasHistory = conversationHistory.length > 0;
+  const conversationNote = hasHistory
+    ? `
+
+CONVERSATION CONTEXT:
+This is a follow-up question in an ongoing conversation. You have access to the previous exchanges.
+- Reference previous answers when the user asks follow-up questions
+- Maintain consistency with information you've already provided
+- If the user refers to "it", "that", "the above", etc., use conversation history to understand the reference
+- Build upon previous responses rather than repeating the same information`
+    : "";
+
+  return `You are an expert research assistant and domain specialist. Your task is to ${taskDescription} using the provided context documents as your PRIMARY source, supplemented by your broad expert knowledge when necessary.
 
 CONTEXT (Source Documents):
 ${context}
+${conversationNote}
+
+YOUR EXPERTISE DOMAINS:
+You are an expert in: Physics, Mathematics, Chemistry, Biology, Statistics, Medicine, Engineering, Computer Science, Economics, Law, History, Geography, and Astronomy. Use this expertise to provide accurate, comprehensive answers.
+
+KNOWLEDGE HIERARCHY:
+1. **Document-grounded claims** - Use information from the context documents, cite with [cite:N]
+2. **Expert knowledge** - When documents don't cover something, use your expertise, cite with [llm:writer]
+3. **Conflict resolution** - When documents contradict established facts, present BOTH views inline
 
 CRITICAL INSTRUCTIONS:
-1. Use ONLY information from the context above - never make up facts
-2. Cite every factual claim using [cite:N] format where N is the source number (e.g., [cite:1], [cite:3])
-3. If information is not available in the context, explicitly state: "The available documents do not contain information about..."
-4. Be accurate, factual, and specific
+1. Use document information where available, cite with [cite:N] format
+2. Use your expert knowledge for missing information, cite with [llm:writer] tag
+3. **CONFLICT HANDLING**: If a document contains factually incorrect information that contradicts established science/facts:
+   - Present BOTH views using inline comparison format
+   - Example: "The document states X [cite:1], however established [field] indicates Y [llm:writer]"
+4. Be accurate, factual, and leverage your domain expertise
 5. Structure your response clearly with appropriate headings if the response is long
-6. For numeric claims, quote the exact figures from the source
-7. For policies or definitions, quote directly when possible
+6. For numeric claims from documents, quote the exact figures from the source
+7. For established scientific facts, constants, or formulas, use your expertise with [llm:writer]
+8. For follow-up questions, consider the conversation history
 
-OUTPUT FORMAT:
-- Write naturally but include citations for all factual claims
-- Place citations immediately after the relevant claim
-- You can cite multiple sources for a single claim if applicable [cite:1][cite:3]
+CITATION FORMAT:
+- Document-based claims: "The revenue was $5M [cite:1]"
+- Expert knowledge claims: "The speed of light is approximately 299,792 km/s [llm:writer]"
+- Multiple document sources: "This is supported by evidence [cite:1][cite:3]"
+- **Conflict inline comparison**: "The document claims water boils at 50°C [cite:2], however established physics indicates water boils at 100°C at standard atmospheric pressure [llm:writer]"
 
-Provide a comprehensive, well-cited response.`;
+WHEN TO USE [llm:writer]:
+- Scientific laws, formulas, constants (e.g., E=mc², π≈3.14159, gravitational constant)
+- Established medical/biological facts
+- Mathematical theorems and proofs
+- Historical dates and verified events
+- Legal principles and established precedents
+- Engineering standards and best practices
+- Economic theories and established models
+- Correcting factual errors in documents
+
+IMPORTANT:
+- When documents contain correct information, ALWAYS cite them with [cite:N]
+- Use [llm:writer] for expert knowledge not in documents
+- ALWAYS flag conflicts between documents and established facts using inline comparison
+- Never silently ignore document errors - present both views
+
+Provide a comprehensive, expert-level response that combines document evidence with your broad domain expertise.`;
 }
 
 function getRevisionPrompt(

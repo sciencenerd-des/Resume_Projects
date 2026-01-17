@@ -47,10 +47,36 @@ const WorkspaceContext = createContext<WorkspaceContextValue | null>(null);
 
 const CURRENT_WORKSPACE_KEY = 'verity_current_workspace';
 
+/**
+ * Validates if a string is a valid Convex ID format.
+ * Convex IDs are alphanumeric without dashes (e.g., "j571d2s3abc").
+ * UUIDs from old Supabase system have dashes (e.g., "b7c9339e-6d8d-...").
+ */
+function isValidConvexId(id: string | null): boolean {
+  if (!id) return false;
+  // Convex IDs don't contain dashes; UUIDs do
+  // Also check it's not empty and has reasonable length
+  return !id.includes('-') && id.length > 0 && id.length < 50;
+}
+
+/**
+ * Get valid workspace ID from localStorage, clearing invalid legacy IDs.
+ */
+function getStoredWorkspaceId(): string | null {
+  const stored = localStorage.getItem(CURRENT_WORKSPACE_KEY);
+  if (stored && !isValidConvexId(stored)) {
+    // Clear invalid legacy UUID from old Supabase system
+    console.warn('[WorkspaceContext] Clearing invalid legacy workspace ID:', stored);
+    localStorage.removeItem(CURRENT_WORKSPACE_KEY);
+    return null;
+  }
+  return stored;
+}
+
 export function WorkspaceProvider({ children }: { children: ReactNode }) {
   const { isAuthenticated } = useConvexAuthState();
   const [currentWorkspaceId, setCurrentWorkspaceId] = useState<string | null>(() => {
-    return localStorage.getItem(CURRENT_WORKSPACE_KEY);
+    return getStoredWorkspaceId();
   });
   const [error, setError] = useState<string | null>(null);
 
@@ -60,10 +86,12 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     isAuthenticated ? {} : "skip"
   );
 
-  // Current workspace details (guarded by auth state)
+  // Current workspace details (guarded by auth state and valid ID format)
   const rawCurrentWorkspace = useQuery(
     api.workspaces.get,
-    isAuthenticated && currentWorkspaceId ? { workspaceId: currentWorkspaceId as Id<"workspaces"> } : "skip"
+    isAuthenticated && currentWorkspaceId && isValidConvexId(currentWorkspaceId)
+      ? { workspaceId: currentWorkspaceId as Id<"workspaces"> }
+      : "skip"
   );
 
   // Create workspace mutation
@@ -101,10 +129,19 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     }
   }, [isAuthenticated]);
 
+  // Clear invalid workspace ID (e.g., legacy UUID from Supabase)
+  useEffect(() => {
+    if (currentWorkspaceId && !isValidConvexId(currentWorkspaceId)) {
+      console.warn('[WorkspaceContext] Clearing invalid workspace ID from state:', currentWorkspaceId);
+      setCurrentWorkspaceId(null);
+      localStorage.removeItem(CURRENT_WORKSPACE_KEY);
+    }
+  }, [currentWorkspaceId]);
+
   // Listen for storage events (workspace switch from other tabs)
   useEffect(() => {
     const handleStorage = () => {
-      const saved = localStorage.getItem(CURRENT_WORKSPACE_KEY);
+      const saved = getStoredWorkspaceId(); // Use validated getter
       if (saved !== currentWorkspaceId) {
         setCurrentWorkspaceId(saved);
       }
@@ -133,7 +170,9 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     }
   }, [createWorkspaceMutation]);
 
-  const isLoading = rawWorkspaces === undefined || (currentWorkspaceId && rawCurrentWorkspace === undefined);
+  // Only show loading if we have a valid workspace ID that's still being fetched
+  const isLoading = rawWorkspaces === undefined ||
+    (currentWorkspaceId && isValidConvexId(currentWorkspaceId) && rawCurrentWorkspace === undefined);
 
   return (
     <WorkspaceContext.Provider

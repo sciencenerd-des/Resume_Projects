@@ -95,6 +95,15 @@ export default defineSchema({
     unsupportedClaimCount: v.number(),
     revisionCycles: v.number(),
     completedAt: v.optional(v.number()), // Unix timestamp
+    // Conversation history for multi-turn context
+    conversationHistory: v.optional(
+      v.array(
+        v.object({
+          role: v.union(v.literal("user"), v.literal("assistant")),
+          content: v.string(),
+        })
+      )
+    ),
   })
     .index("by_workspace", ["workspaceId"])
     .index("by_user", ["userId"])
@@ -132,11 +141,15 @@ export default defineSchema({
       v.literal("supported"),
       v.literal("weak"),
       v.literal("contradicted"),
-      v.literal("not_found")
+      v.literal("not_found"),
+      v.literal("expert_verified"),
+      v.literal("conflict_flagged")
     ),
+    sourceTag: v.optional(v.string()), // cite:N, llm:writer, llm:skeptic, llm:judge
     confidenceScore: v.float64(),
     chunkIds: v.array(v.id("documentChunks")),
     evidenceSnippet: v.optional(v.string()),
+    expertAssessment: v.optional(v.string()),
     notes: v.optional(v.string()),
   })
     .index("by_session", ["sessionId"])

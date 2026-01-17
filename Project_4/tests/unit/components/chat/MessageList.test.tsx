@@ -135,7 +135,7 @@ describe('MessageList', () => {
     });
 
     test('calls onCitationClick when citation is clicked', () => {
-      let clickedId: string | null = null;
+      let clickedId: string | undefined;
       const messagesWithCitation: Message[] = [
         {
           id: '1',

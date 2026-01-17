@@ -84,8 +84,9 @@ test.describe('Evidence Ledger', () => {
     // Clear filter
     await page.click('[data-testid="clear-filter"]');
 
-    // Verify all claims shown
-    await expect(page.locator('[data-testid="claim-row"]')).toHaveCount(/.+/);
+    // Verify claims are shown (at least 1)
+    const claimCount = await page.locator('[data-testid="claim-row"]').count();
+    expect(claimCount).toBeGreaterThan(0);
   });
 
   test('links to source document', async ({ page }) => {

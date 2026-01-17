@@ -107,7 +107,7 @@ describe('ResponseContent', () => {
     });
 
     test('calls onCitationClick with chunk ID when citation clicked', () => {
-      let clickedChunkId: string | null = null;
+      let clickedChunkId: string | undefined;
       render(
         <ResponseContent
           content="Fact [cite:abc12345]"

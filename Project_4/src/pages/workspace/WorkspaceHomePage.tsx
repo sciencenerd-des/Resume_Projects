@@ -1,6 +1,8 @@
 import React from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery } from 'convex/react';
+import { api } from '../../../convex/_generated/api';
+import type { Id } from '../../../convex/_generated/dataModel';
 import {
   FileText,
   MessageSquare,
@@ -10,34 +12,51 @@ import {
   CheckCircle,
   AlertTriangle,
   XCircle,
-  HelpCircle,
   TrendingUp,
   Shield,
 } from 'lucide-react';
 import { useWorkspace } from '../../contexts/WorkspaceContext';
-import { api } from '../../services/api';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '../../components/ui/Spinner';
-import type { ChatSession, Document } from '../../types';
+
+// Validate Convex ID format (no dashes = valid Convex ID)
+function isValidConvexId(id: string | undefined): boolean {
+  return !!id && !id.includes('-') && id.length > 0;
+}
 
 export default function WorkspaceHomePage() {
   const { workspaceId } = useParams<{ workspaceId: string }>();
   const navigate = useNavigate();
   const { currentWorkspace } = useWorkspace();
 
-  const { data: documents = [], isLoading: docsLoading } = useQuery({
-    queryKey: ['documents', workspaceId],
-    queryFn: () => api.getDocuments(workspaceId!),
-    enabled: !!workspaceId,
-  });
+  // Only query if we have a valid Convex ID (not a legacy UUID)
+  const validWorkspaceId = isValidConvexId(workspaceId);
 
-  const { data: sessions = [], isLoading: sessionsLoading } = useQuery({
-    queryKey: ['sessions', workspaceId],
-    queryFn: () => api.getSessions(workspaceId!),
-    enabled: !!workspaceId,
-  });
+  const documents = useQuery(
+    api.documents.list,
+    validWorkspaceId ? { workspaceId: workspaceId as Id<"workspaces"> } : "skip"
+  );
 
-  const isLoading = docsLoading || sessionsLoading;
+  const sessions = useQuery(
+    api.sessions.list,
+    validWorkspaceId ? { workspaceId: workspaceId as Id<"workspaces"> } : "skip"
+  );
+
+  const isLoading = documents === undefined || sessions === undefined;
+
+  // Handle invalid workspace ID (legacy UUID from Supabase)
+  if (!validWorkspaceId) {
+    return (
+      <div className="flex flex-col items-center justify-center h-64 text-center">
+        <AlertTriangle className="w-12 h-12 text-amber-500 mb-4" />
+        <h2 className="text-lg font-semibold text-foreground mb-2">Invalid Workspace</h2>
+        <p className="text-sm text-muted-foreground mb-4">
+          This workspace ID is not valid. Please select a workspace from the list.
+        </p>
+        <Button onClick={() => navigate('/workspaces')}>Go to Workspaces</Button>
+      </div>
+    );
+  }
 
   if (isLoading) {
     return (
@@ -47,9 +66,12 @@ export default function WorkspaceHomePage() {
     );
   }
 
-  const readyDocs = documents.filter((d: Document) => d.status === 'ready').length;
-  const processingDocs = documents.filter((d: Document) => d.status === 'processing').length;
-  const recentSessions = sessions.slice(0, 5);
+  const docsList = documents ?? [];
+  const sessionsList = sessions ?? [];
+
+  const readyDocs = docsList.filter((d) => d.status === 'ready').length;
+  const processingDocs = docsList.filter((d) => d.status === 'processing').length;
+  const recentSessions = sessionsList.slice(0, 5);
 
   return (
     <div className="p-6 space-y-8">
@@ -76,7 +98,7 @@ export default function WorkspaceHomePage() {
         <StatCard
           icon={<FileText className="w-5 h-5" />}
           label="Documents"
-          value={documents.length}
+          value={docsList.length}
           detail={`${readyDocs} ready${processingDocs > 0 ? `, ${processingDocs} processing` : ''}`}
           iconBg="bg-blue-50"
           iconColor="text-blue-600"
@@ -84,7 +106,7 @@ export default function WorkspaceHomePage() {
         <StatCard
           icon={<MessageSquare className="w-5 h-5" />}
           label="Chat Sessions"
-          value={sessions.length}
+          value={sessionsList.length}
           detail="Total conversations"
           iconBg="bg-purple-50"
           iconColor="text-purple-600"
@@ -121,7 +143,7 @@ export default function WorkspaceHomePage() {
       <div className="bg-card rounded-xl border border-border">
         <div className="flex items-center justify-between px-6 py-4 border-b border-border">
           <h2 className="text-lg font-semibold text-foreground">Recent Sessions</h2>
-          {sessions.length > 0 && (
+          {sessionsList.length > 0 && (
             <Link
               to={`/workspaces/${workspaceId}/sessions`}
               className="text-sm text-primary hover:text-primary/80 flex items-center gap-1"
@@ -142,15 +164,15 @@ export default function WorkspaceHomePage() {
           </div>
         ) : (
           <div className="divide-y divide-border">
-            {recentSessions.map((session: ChatSession) => (
-              <SessionRow key={session.id} session={session} />
+            {recentSessions.map((session) => (
+              <SessionRow key={session._id} session={session} />
             ))}
           </div>
         )}
       </div>
 
       {/* Document Overview */}
-      {documents.length > 0 && (
+      {docsList.length > 0 && (
         <div className="bg-card rounded-xl border border-border">
           <div className="flex items-center justify-between px-6 py-4 border-b border-border">
             <h2 className="text-lg font-semibold text-foreground">Documents</h2>
@@ -179,7 +201,7 @@ export default function WorkspaceHomePage() {
               <DocumentStatusBadge
                 icon={<XCircle className="w-4 h-4" />}
                 label="Error"
-                count={documents.filter((d: Document) => d.status === 'error').length}
+                count={docsList.filter((d) => d.status === 'error').length}
                 color="text-red-600 bg-red-50"
               />
             </div>
@@ -250,18 +272,28 @@ function QuickActionCard({
   );
 }
 
-function SessionRow({ session }: { session: ChatSession }) {
+// Type for Convex session from the API
+type ConvexSession = {
+  _id: Id<"sessions">;
+  _creationTime: number;
+  query: string;
+  mode: "answer" | "draft";
+  status: "pending" | "processing" | "completed" | "error";
+};
+
+function SessionRow({ session }: { session: ConvexSession }) {
   const navigate = useNavigate();
 
   const statusIcon = {
     completed: <CheckCircle className="w-4 h-4 text-green-500" />,
-    in_progress: <TrendingUp className="w-4 h-4 text-blue-500" />,
+    processing: <TrendingUp className="w-4 h-4 text-blue-500" />,
+    pending: <Clock className="w-4 h-4 text-amber-500" />,
     error: <AlertTriangle className="w-4 h-4 text-red-500" />,
   };
 
   return (
     <button
-      onClick={() => navigate(`/sessions/${session.id}`)}
+      onClick={() => navigate(`/sessions/${session._id}`)}
       className="w-full flex items-center gap-4 px-6 py-4 hover:bg-muted/50 transition-colors text-left"
     >
       <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center">
@@ -271,7 +303,7 @@ function SessionRow({ session }: { session: ChatSession }) {
         <p className="text-sm font-medium text-foreground truncate">{session.query}</p>
         <p className="text-xs text-muted-foreground mt-0.5">
           {session.mode === 'answer' ? 'Answer Mode' : 'Draft Mode'} &bull;{' '}
-          {new Date(session.created_at).toLocaleDateString()}
+          {new Date(session._creationTime).toLocaleDateString()}
         </p>
       </div>
       <ArrowRight className="w-4 h-4 text-muted-foreground" />

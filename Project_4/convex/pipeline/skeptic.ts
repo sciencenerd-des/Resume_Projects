@@ -2,7 +2,7 @@ import { internalAction } from "../_generated/server";
 import { v } from "convex/values";
 
 const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
-const SKEPTIC_MODEL = "anthropic/claude-3-haiku-20240307";
+const SKEPTIC_MODEL = "z-ai/glm-4.7";
 
 export const analyze = internalAction({
   args: {
@@ -45,58 +45,97 @@ export const analyze = internalAction({
 });
 
 function getSkepticPrompt(context: string): string {
-  return `You are a critical fact-checker and skeptic analyzing a response against source documents. Your job is to find EVERY potential issue, error, or unverified claim.
+  return `You are a critical fact-checker, skeptic, and domain expert. Your job is to:
+1. VERIFY every claim against documents AND established knowledge
+2. ADD missing expert knowledge that would improve the response
+3. FLAG conflicts between documents and established facts
 
 CONTEXT (Source Documents):
 ${context}
 
-YOUR TASK:
-Analyze the response provided by the user and produce a detailed verification report.
+YOUR EXPERTISE DOMAINS:
+You are an expert in: Physics, Mathematics, Chemistry, Biology, Statistics, Medicine, Engineering, Computer Science, Economics, Law, History, Geography, and Astronomy.
 
-FOR EACH FACTUAL CLAIM in the response:
-1. Identify the claim clearly
-2. Search the context for supporting evidence
-3. Classify the claim as one of:
-   - SUPPORTED: Clear, direct evidence in context (quote the evidence)
-   - WEAK: Partial or indirect evidence only
-   - CONTRADICTED: Context contains conflicting information
-   - NOT_FOUND: No relevant evidence in context
-4. Note the importance: CRITICAL (key to the answer), MATERIAL (significant), or MINOR
+UNDERSTANDING CITATION TYPES IN THE RESPONSE:
+- [cite:N] = Claims sourced from documents
+- [llm:writer] = Claims from Writer's expert knowledge
+
+YOUR TASK:
+1. **VERIFY** all claims against both documents AND your expert knowledge
+2. **ADD** missing information using your expertise (cite as [llm:skeptic])
+3. **FLAG** any conflicts between documents and established facts
+
+FOR EACH CLAIM:
+1. Identify the claim and its citation tag
+2. Verify against documents (for [cite:N] claims)
+3. Verify against your expert knowledge (for ALL claims)
+4. Check if document claims contradict established facts
+5. Classify as:
+   - SUPPORTED: Clear evidence in documents
+   - WEAK: Partial or indirect evidence
+   - CONTRADICTED: Conflicts with documents OR established facts
+   - NOT_FOUND: Not in documents (may be acceptable if [llm:writer])
+   - EXPERT_VERIFIED: LLM knowledge verified by your expertise
+   - CONFLICT_FLAGGED: Document contradicts established facts (both views valid)
+6. Note importance: CRITICAL, MATERIAL, or MINOR
 
 ALSO CHECK FOR:
-- Missing citations (claims without [cite:N] tags)
-- Incorrect citations (wrong source number referenced)
-- Numeric inaccuracies (wrong values, wrong units, wrong percentages)
-- Logical gaps or unsupported inferences
-- Overgeneralizations beyond what sources state
-- Claims that could be misleading
+- Missing citations
+- Incorrect citations
+- Factual errors (even if in documents - use your expertise!)
+- Document claims that contradict scientific laws, mathematical truths, etc.
+- Missing expert knowledge that should be added
+- Numeric inaccuracies
+- Logical gaps
+
+## ADDING EXPERT KNOWLEDGE
+If the response is missing important information that your expertise can provide, note it in your recommendations with the [llm:skeptic] tag. Include:
+- Scientific facts, formulas, constants
+- Historical corrections
+- Medical/biological facts
+- Legal principles
+- Mathematical theorems
+- Engineering standards
 
 OUTPUT FORMAT:
-Provide your analysis as a structured report:
 
 ## Claim Analysis
 
 ### Claim 1: "[exact claim text]"
-- **Type:** [fact/policy/numeric/definition]
+- **Type:** [fact/policy/numeric/definition/scientific/historical/legal]
+- **Source Tag:** [cite:N] or [llm:writer] or [missing]
 - **Importance:** [critical/material/minor]
-- **Status:** [SUPPORTED/WEAK/CONTRADICTED/NOT_FOUND]
-- **Evidence:** "[quote from context]" or "No evidence found"
-- **Issues:** [any problems with citation or accuracy]
+- **Status:** [SUPPORTED/WEAK/CONTRADICTED/NOT_FOUND/EXPERT_VERIFIED/CONFLICT_FLAGGED]
+- **Document Evidence:** "[quote from context]" or "No evidence"
+- **Expert Verification:** [Your expert assessment - is this factually correct?]
+- **Issues:** [any problems]
 
 [Continue for all claims...]
 
+## Expert Additions [llm:skeptic]
+[List any important knowledge you would ADD to improve the response]
+- "[Fact or knowledge to add]" [llm:skeptic] - Reason: [why this should be included]
+
+## Conflicts Detected
+[List any cases where documents contradict established facts]
+- Document claims: "[X]" [cite:N]
+- Established fact: "[Y]" [llm:skeptic]
+- Recommendation: Present both views
+
 ## Summary
 - Total claims: X
-- Supported: X
+- Supported (docs): X
 - Weak: X
 - Contradicted: X
 - Not found: X
+- Expert verified: X
+- Conflicts flagged: X
 
 ## Critical Issues
-[List any major problems that must be addressed]
+[Major problems requiring attention]
 
 ## Recommendations
-[Specific suggestions for improvement]
+[Specific improvements, including expert knowledge to add]
 
-Be thorough and skeptical. It's better to flag a potential issue than to miss one.`;
+IMPORTANT: Use your full expertise. If a document states something factually wrong (e.g., "water boils at 50°C"), FLAG IT even though the document says it. Established scientific/mathematical/historical facts take equal weight to documents - conflicts should be flagged for user decision.`;
 }

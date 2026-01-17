@@ -65,11 +65,11 @@ describe('formatRelativeTime', () => {
     // Mock current time to 2024-01-15T12:00:00Z
     const mockNow = new Date('2024-01-15T12:00:00Z').getTime();
     global.Date = class extends originalDate {
-      constructor(...args: any[]) {
-        if (args.length === 0) {
+      constructor(arg?: any) {
+        if (arg === undefined) {
           super(mockNow);
         } else {
-          super(...args);
+          super(arg);
         }
       }
       static now() {

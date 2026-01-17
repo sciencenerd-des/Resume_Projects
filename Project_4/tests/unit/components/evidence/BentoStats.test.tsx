@@ -15,6 +15,7 @@ const mockLedger = {
     not_found: 3,
   },
   entries: [],
+  risk_flags: [],
   created_at: new Date().toISOString(),
 };
 
@@ -143,7 +144,8 @@ describe('BentoStats', () => {
   describe('target badge', () => {
     test('shows Target Met badge when coverage >= 85%', () => {
       const highCoverageLedger = {
-        ...mockLedger,
+        id: '2',
+        session_id: 'session-2',
         summary: {
           total_claims: 20,
           supported: 15,
@@ -151,6 +153,9 @@ describe('BentoStats', () => {
           contradicted: 1,
           not_found: 1,
         },
+        entries: [],
+        risk_flags: [],
+        created_at: new Date().toISOString(),
       };
       render(<BentoStats ledger={highCoverageLedger} />);
       expect(screen.getByText('Target Met')).toBeInTheDocument();

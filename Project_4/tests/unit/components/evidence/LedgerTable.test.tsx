@@ -88,7 +88,7 @@ describe('LedgerTable', () => {
 
   describe('interactions', () => {
     test('calls onRowClick when row is clicked', () => {
-      let clickedEntry: LedgerEntry | null = null;
+      let clickedEntry: LedgerEntry | undefined;
       render(
         <LedgerTable
           entries={mockEntries}
@@ -96,7 +96,8 @@ describe('LedgerTable', () => {
         />
       );
       fireEvent.click(screen.getByText('Revenue increased by 15%'));
-      expect(clickedEntry?.id).toBe('1');
+      expect(clickedEntry).toBeDefined();
+      expect(clickedEntry!.id).toBe('1');
     });
 
     test('highlights row when highlightedId matches', () => {

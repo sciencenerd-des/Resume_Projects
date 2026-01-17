@@ -10,7 +10,6 @@ const mockDocument: Document = {
   workspace_id: 'ws1',
   filename: 'research-paper.pdf',
   file_type: 'pdf',
-  file_size: 2048576, // 2MB
   status: 'ready',
   chunk_count: 45,
   created_at: '2024-01-15T10:30:00Z',

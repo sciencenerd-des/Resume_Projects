@@ -1,15 +1,15 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery } from 'convex/react';
+import { api } from '../../../convex/_generated/api';
+import type { Id } from '../../../convex/_generated/dataModel';
 import { MessageSquare, Shield, FileText, AlertCircle, Search, Sparkles, Scale, RefreshCw } from 'lucide-react';
 import { useWorkspace } from '../../contexts/WorkspaceContext';
-import { useWebSocket } from '../../hooks/useWebSocket';
-import { api } from '../../services/api';
+import { useConvexChat } from '../../hooks/useConvexChat';
 import { MessageList } from '../../components/chat/MessageList';
 import { QueryInput } from '../../components/chat/QueryInput';
 import { ModeToggle, QueryMode } from '../../components/chat/ModeToggle';
 import { Spinner } from '../../components/ui/Spinner';
-import type { Message, Citation, LedgerEntry, EvidenceLedger } from '../../types';
 
 // Pipeline phases for progress tracking
 type PipelinePhase = 'idle' | 'retrieval' | 'writer' | 'skeptic' | 'judge' | 'revision' | 'complete';
@@ -17,210 +17,52 @@ type PipelinePhase = 'idle' | 'retrieval' | 'writer' | 'skeptic' | 'judge' | 're
 export default function ChatPage() {
   const { workspaceId } = useParams<{ workspaceId: string }>();
   const { currentWorkspace } = useWorkspace();
-  const { isConnected, on, off, send } = useWebSocket();
 
-  const [messages, setMessages] = useState<Message[]>([]);
+  // Validate workspaceId is a valid Convex ID (no dashes = valid)
+  const isValidConvexId = workspaceId && !workspaceId.includes('-') && workspaceId.length > 0;
+  const convexWorkspaceId = isValidConvexId ? workspaceId as Id<"workspaces"> : undefined;
+
+  // Use Convex-based chat hook (replaces WebSocket)
+  const {
+    messages,
+    isProcessing,
+    currentPhase,
+    ledger,
+    error,
+    progress,
+    streamingContent,
+    chunksRetrieved,
+    submitQuery,
+    clearError,
+  } = useConvexChat(convexWorkspaceId);
+
   const [query, setQuery] = useState('');
   const [mode, setMode] = useState<QueryMode>('answer');
-  const [isStreaming, setIsStreaming] = useState(false);
-  const [streamingContent, setStreamingContent] = useState('');
-  const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
-  const [ledger, setLedger] = useState<EvidenceLedger | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [pipelinePhase, setPipelinePhase] = useState<PipelinePhase>('idle');
-  const [chunksRetrieved, setChunksRetrieved] = useState<number>(0);
 
-  // Check if workspace has documents
-  const { data: documents = [] } = useQuery({
-    queryKey: ['documents', workspaceId],
-    queryFn: () => api.getDocuments(workspaceId!),
-    enabled: !!workspaceId,
-  });
+  // Check if workspace has documents (using Convex real-time query)
+  const documents = useQuery(
+    api.documents.list,
+    isValidConvexId ? { workspaceId: workspaceId as Id<"workspaces"> } : "skip"
+  );
 
-  const hasDocuments = documents.length > 0;
-  const readyDocuments = documents.filter((d: any) => d.status === 'ready').length;
-
-  // WebSocket event handlers
-  useEffect(() => {
-    const handleSessionCreated = (payload: any) => {
-      setCurrentSessionId(payload.session_id);
-      setIsStreaming(true);
-      setStreamingContent('');
-      setPipelinePhase('retrieval');
-      setChunksRetrieved(0);
-    };
-
-    const handleRetrievalStarted = () => {
-      setPipelinePhase('retrieval');
-    };
-
-    const handleRetrievalComplete = (payload: any) => {
-      setChunksRetrieved(payload.chunksRetrieved || 0);
-    };
-
-    const handleGenerationStarted = (payload: any) => {
-      setPipelinePhase(payload.phase || 'writer');
-    };
-
-    const handleRevisionStarted = (payload: any) => {
-      setPipelinePhase('revision');
-      // Clear streaming content when revision starts - we want to show the revised response
-      setStreamingContent('');
-    };
-
-    const handleContentChunk = (payload: any) => {
-      setStreamingContent((prev) => prev + payload.delta);
-    };
-
-    const handleClaimVerified = (payload: any) => {
-      // Server sends { type: "claim_verified", claim: {...} }
-      const claim = payload.claim;
-      if (!claim) return;
-
-      // Update ledger with new claim
-      setLedger((prev) => {
-        // Check if prev exists and has a valid entries array
-        if (!prev || !Array.isArray(prev.entries)) {
-          // Initialize ledger if it doesn't exist or entries is not an array
-          return {
-            session_id: '',
-            summary: { total_claims: 1, supported: 0, weak: 0, contradicted: 0, not_found: 0 },
-            entries: [claim],
-            risk_flags: [],
-          };
-        }
-        return {
-          ...prev,
-          entries: [...prev.entries, claim],
-        };
-      });
-    };
-
-    const handleLedgerUpdated = (payload: any) => {
-      // Server sends { type: "ledger_updated", ledger: {...} }
-      // Extract the ledger from the payload
-      const ledgerData = payload.ledger || payload;
-      // Only set if ledgerData has a valid entries array
-      if (ledgerData && Array.isArray(ledgerData.entries)) {
-        setLedger(ledgerData as EvidenceLedger);
-      }
-    };
-
-    const handleGenerationComplete = (payload: any) => {
-      setPipelinePhase('complete');
-
-      // ALWAYS prefer the verified response from Judge over the streamed Writer content
-      // The Judge may have revised the response based on Skeptic's analysis
-      const responseContent = payload.response || streamingContent || 'No response generated.';
-      const wasVerified = !!payload.response && payload.response !== streamingContent;
-
-      // Add the complete message to the list
-      const assistantMessage: Message = {
-        id: payload.sessionId || payload.session_id,
-        role: 'assistant',
-        content: responseContent,
-        timestamp: new Date(),
-        isVerified: wasVerified, // Mark as verified if Judge provided a response
-      };
-      setMessages((prev) => [...prev, assistantMessage]);
-      setStreamingContent('');
-      setIsStreaming(false);
-
-      // Update ledger if provided
-      if (payload.ledger) {
-        setLedger(payload.ledger);
-      }
-
-      // Reset phase after a short delay
-      setTimeout(() => setPipelinePhase('idle'), 500);
-    };
-
-    const handleError = (payload: any) => {
-      // If we have partial content from the Writer phase, save it as a partial response
-      if (streamingContent) {
-        const partialMessage: Message = {
-          id: `partial-${Date.now()}`,
-          role: 'assistant',
-          content: streamingContent,
-          timestamp: new Date(),
-          isPartial: true, // Mark as partial response
-        };
-        setMessages((prev) => [...prev, partialMessage]);
-        setStreamingContent('');
-      }
-
-      // Format user-friendly error message
-      let errorMessage = payload.message || 'An error occurred';
-      if (errorMessage.includes('429') || errorMessage.includes('rate-limit')) {
-        errorMessage = 'Server is temporarily busy. Your partial response has been saved. Please try again in a moment.';
-      }
-
-      setError(errorMessage);
-      setIsStreaming(false);
-      setPipelinePhase('idle');
-    };
-
-    on('session_created', handleSessionCreated);
-    on('retrieval_started', handleRetrievalStarted);
-    on('retrieval_complete', handleRetrievalComplete);
-    on('generation_started', handleGenerationStarted);
-    on('revision_started', handleRevisionStarted);
-    on('content_chunk', handleContentChunk);
-    on('claim_verified', handleClaimVerified);
-    on('ledger_updated', handleLedgerUpdated);
-    on('generation_complete', handleGenerationComplete);
-    on('error', handleError);
-
-    return () => {
-      off('session_created', handleSessionCreated);
-      off('retrieval_started', handleRetrievalStarted);
-      off('retrieval_complete', handleRetrievalComplete);
-      off('generation_started', handleGenerationStarted);
-      off('revision_started', handleRevisionStarted);
-      off('content_chunk', handleContentChunk);
-      off('claim_verified', handleClaimVerified);
-      off('ledger_updated', handleLedgerUpdated);
-      off('generation_complete', handleGenerationComplete);
-      off('error', handleError);
-    };
-  }, [on, off, streamingContent]);
+  const hasDocuments = (documents ?? []).length > 0;
+  const readyDocuments = (documents ?? []).filter((d) => d.status === 'ready').length;
 
   const handleSubmit = useCallback(() => {
-    if (!query.trim() || !workspaceId || isStreaming) return;
-
-    if (!isConnected) {
-      setError('Not connected to server. Please wait and try again.');
-      return;
-    }
-
-    setError(null);
-
-    // Add user message
-    const userMessage: Message = {
-      id: `user-${Date.now()}`,
-      role: 'user',
-      content: query,
-      timestamp: new Date(),
-    };
-    setMessages((prev) => [...prev, userMessage]);
-
-    // Send query via WebSocket
-    send({
-      type: 'query',
-      payload: {
-        workspace_id: workspaceId,
-        query: query.trim(),
-        mode,
-      },
-    });
-
+    if (!query.trim() || isProcessing) return;
+    submitQuery(query.trim(), mode);
     setQuery('');
-  }, [query, workspaceId, mode, isStreaming, isConnected, send]);
+  }, [query, mode, isProcessing, submitQuery]);
 
   const handleCitationClick = (chunkId: string) => {
     // TODO: Open chunk viewer modal
     console.log('Citation clicked:', chunkId);
   };
+
+  // Map progress phase to pipeline phase for UI
+  const pipelinePhase: PipelinePhase = isProcessing
+    ? (currentPhase as PipelinePhase) || 'retrieval'
+    : 'idle';
 
   if (!hasDocuments) {
     return <EmptyDocumentsState workspaceId={workspaceId!} />;
@@ -244,13 +86,6 @@ export default function ChatPage() {
 
         <div className="flex items-center gap-4">
           <ModeToggle mode={mode} onChange={setMode} />
-
-          {!isConnected && (
-            <div className="flex items-center gap-1 text-sm text-amber-600">
-              <div className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
-              Reconnecting...
-            </div>
-          )}
         </div>
       </div>
 
@@ -262,7 +97,7 @@ export default function ChatPage() {
             {error}
           </div>
           <button
-            onClick={() => setError(null)}
+            onClick={clearError}
             className="text-destructive/70 hover:text-destructive text-xs font-medium px-2 py-1 rounded hover:bg-destructive/10"
           >
             Dismiss
@@ -271,12 +106,12 @@ export default function ChatPage() {
       )}
 
       {/* Messages Area with Sticky Progress */}
-      {messages.length === 0 && !isStreaming ? (
+      {messages.length === 0 && !isProcessing ? (
         <WelcomeState mode={mode} />
       ) : (
         <div className="flex-1 overflow-y-auto relative">
           {/* Pipeline Progress Indicator - Sticky at top of scroll area */}
-          {isStreaming && pipelinePhase !== 'idle' && (
+          {isProcessing && pipelinePhase !== 'idle' && (
             <PipelineProgress
               phase={pipelinePhase}
               chunksRetrieved={chunksRetrieved}
@@ -285,7 +120,7 @@ export default function ChatPage() {
           )}
           <MessageList
             messages={messages}
-            isStreaming={isStreaming}
+            isStreaming={isProcessing}
             streamingContent={streamingContent}
             onCitationClick={handleCitationClick}
             className=""
@@ -298,7 +133,7 @@ export default function ChatPage() {
         value={query}
         onChange={setQuery}
         onSubmit={handleSubmit}
-        disabled={isStreaming || !isConnected}
+        disabled={isProcessing}
         placeholder={
           mode === 'answer'
             ? 'Ask a question about your documents...'

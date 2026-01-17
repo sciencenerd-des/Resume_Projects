@@ -2,17 +2,32 @@ import { internalAction } from "../_generated/server";
 import { v } from "convex/values";
 
 const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
-const JUDGE_MODEL = "openai/gpt-4o-mini";
+const JUDGE_MODEL = "deepseek/deepseek-v3.2-speciale";
 
 interface LedgerEntry {
   claimText: string;
-  claimType: "fact" | "policy" | "numeric" | "definition";
+  claimType: "fact" | "policy" | "numeric" | "definition" | "scientific" | "historical" | "legal";
+  sourceTag?: string;
   importance: "critical" | "material" | "minor";
-  verdict: "supported" | "weak" | "contradicted" | "not_found";
+  verdict: "supported" | "weak" | "contradicted" | "not_found" | "expert_verified" | "conflict_flagged";
   confidenceScore: number;
   chunkIds: string[];
   evidenceSnippet?: string;
+  expertAssessment?: string;
   notes?: string;
+}
+
+interface Conflict {
+  documentClaim: string;
+  establishedFact: string;
+  domain: string;
+  resolution: string;
+}
+
+interface ExpertAddition {
+  knowledge: string;
+  tag: string;
+  reason: string;
 }
 
 interface JudgeResult {
@@ -25,7 +40,11 @@ interface JudgeResult {
     weak: number;
     contradicted: number;
     notFound: number;
+    expertVerified: number;
+    conflictFlagged: number;
   };
+  conflicts?: Conflict[];
+  expertAdditions?: ExpertAddition[];
   riskFlags: Array<{ type: string; description: string; severity: string }>;
   revisionNeeded: boolean;
   revisionInstructions?: string;
@@ -84,39 +103,53 @@ export const verify = internalAction({
 });
 
 function getJudgePrompt(context: string): string {
-  return `You are the final Judge in a verification pipeline. Your role is to produce the definitive Evidence Ledger that maps every claim to its verification status.
+  return `You are the final Judge and domain expert in a verification pipeline. Your role is to:
+1. Produce the definitive Evidence Ledger
+2. Verify ALL claims against documents AND your expert knowledge
+3. Add any critical missing knowledge using [llm:judge]
+4. Flag conflicts between documents and established facts
 
 CONTEXT (Source Documents):
 ${context}
 
-YOUR TASK:
-Analyze the writer's response and the skeptic's report to produce a final Evidence Ledger in JSON format.
+YOUR EXPERTISE DOMAINS:
+You are an expert in: Physics, Mathematics, Chemistry, Biology, Statistics, Medicine, Engineering, Computer Science, Economics, Law, History, Geography, and Astronomy.
 
-PROCESS:
-1. Review each claim identified by the skeptic
-2. Make your own independent verification against the context
-3. Produce a final verdict for each claim
-4. Calculate overall evidence coverage
-5. Determine if revision is needed based on quality gates
+UNDERSTANDING CITATION TYPES:
+- [cite:N] = Claims sourced from documents
+- [llm:writer] = Claims from Writer's expert knowledge
+- [llm:skeptic] = Claims/additions from Skeptic's expert knowledge
+- [llm:judge] = Your own expert knowledge (you can add this)
+
+YOUR TASK:
+1. Review claims from Writer and Skeptic's analysis
+2. Verify ALL claims against documents AND your expert knowledge
+3. Produce final verdicts for each claim
+4. ADD any critical missing knowledge as [llm:judge] in verified_response
+5. Flag conflicts between documents and established facts
+6. Determine if revision is needed
 
 QUALITY GATES (revision required if any fail):
-- Evidence coverage must be >= 85% of critical and material claims
-- No contradicted claims with importance = "critical"
-- Unsupported claim rate must be <= 5%
-- If this is revision cycle 2, be more lenient - accept if coverage >= 70%
+- Evidence coverage >= 85% of critical/material claims (excluding expert_knowledge)
+- No "contradicted" claims with importance = "critical"
+- Unsupported claim rate <= 5%
+- All conflict_flagged items must present both views
+- If revision cycle 2, accept if coverage >= 70%
 
 OUTPUT FORMAT (strict JSON):
 {
-  "verified_response": "Optional: if you need to make minor corrections, provide the corrected response here. Otherwise omit.",
+  "verified_response": "The corrected/enhanced response with proper citations. Include [llm:judge] for any knowledge you add. MUST include inline comparisons for all conflicts.",
   "ledger": [
     {
       "claimText": "The exact claim being verified",
-      "claimType": "fact|policy|numeric|definition",
+      "claimType": "fact|policy|numeric|definition|scientific|historical|legal",
+      "sourceTag": "cite:N|llm:writer|llm:skeptic|llm:judge|missing",
       "importance": "critical|material|minor",
-      "verdict": "supported|weak|contradicted|not_found",
+      "verdict": "supported|weak|contradicted|not_found|expert_verified|conflict_flagged",
       "confidenceScore": 0.0-1.0,
       "chunkIds": ["1", "3"],
-      "evidenceSnippet": "Brief quote from source supporting/contradicting claim",
+      "evidenceSnippet": "Quote from documents or 'Expert knowledge'",
+      "expertAssessment": "Your expert verification of factual accuracy",
       "notes": "Explanation of the verdict"
     }
   ],
@@ -126,25 +159,57 @@ OUTPUT FORMAT (strict JSON):
     "supported": 3,
     "weak": 1,
     "contradicted": 0,
-    "notFound": 1
+    "notFound": 1,
+    "expertVerified": 0,
+    "conflictFlagged": 0
   },
+  "conflicts": [
+    {
+      "documentClaim": "What the document states [cite:N]",
+      "establishedFact": "The correct/established fact [llm:judge]",
+      "domain": "physics|math|chemistry|biology|medicine|law|history|etc",
+      "resolution": "Both views presented inline"
+    }
+  ],
+  "expertAdditions": [
+    {
+      "knowledge": "Expert knowledge added by Judge",
+      "tag": "[llm:judge]",
+      "reason": "Why this was necessary"
+    }
+  ],
   "riskFlags": [
     {
-      "type": "missing_critical_evidence|factual_error|citation_mismatch|logical_gap",
+      "type": "factual_error|citation_mismatch|logical_gap|document_contradiction|missing_expert_context",
       "description": "Specific issue description",
       "severity": "low|medium|high"
     }
   ],
   "revisionNeeded": true|false,
-  "revisionInstructions": "Specific instructions for what needs to be fixed (only if revisionNeeded is true)"
+  "revisionInstructions": "Specific instructions for revision (only if revisionNeeded is true)"
 }
 
-IMPORTANT:
-- Be precise with verdicts - "supported" means clear, direct evidence exists
-- "weak" means partial or indirect evidence
-- "contradicted" means evidence explicitly conflicts
-- "not_found" means no relevant evidence in context
-- Calculate evidenceCoverage as: (supported + weak) / totalClaims for claims with importance critical or material
+VERDICT DEFINITIONS:
+- "supported" = Clear evidence in documents, verified by your expertise
+- "weak" = Partial document evidence
+- "contradicted" = Conflicts with documents OR your expert knowledge (factually wrong)
+- "not_found" = Not in documents (problematic for [cite:N] claims)
+- "expert_verified" = LLM knowledge ([llm:writer/skeptic/judge]) verified correct by your expertise
+- "conflict_flagged" = Document contradicts established facts - BOTH views must be presented
+
+EXPERT VERIFICATION RULES:
+1. ALL claims must be checked against your expert knowledge
+2. If [cite:N] claim is factually wrong, verdict = "conflict_flagged" (not just contradicted)
+3. If [llm:*] claim is correct per your expertise, verdict = "expert_verified"
+4. You can ADD knowledge with [llm:judge] in verified_response
+5. Conflicts require inline comparison format: "Document states X [cite:N], however established [field] indicates Y [llm:judge]"
+
+TRUTH HIERARCHY:
+- Documents and established facts have EQUAL weight
+- Conflicts are flagged for user decision (not auto-resolved)
+- Your expert assessment determines if something is factually correct
+
+Calculate evidenceCoverage as: (supported + weak + expert_verified) / (totalClaims - conflictFlagged) for critical/material claims
 
 Respond ONLY with valid JSON.`;
 }
@@ -167,6 +232,7 @@ function parseJudgeOutput(output: string): JudgeResult {
       (entry: Record<string, unknown>) => ({
         claimText: String(entry.claimText || ""),
         claimType: validateClaimType(entry.claimType),
+        sourceTag: entry.sourceTag ? String(entry.sourceTag) : undefined,
         importance: validateImportance(entry.importance),
         verdict: validateVerdict(entry.verdict),
         confidenceScore: Number(entry.confidenceScore) || 0,
@@ -176,7 +242,29 @@ function parseJudgeOutput(output: string): JudgeResult {
         evidenceSnippet: entry.evidenceSnippet
           ? String(entry.evidenceSnippet)
           : undefined,
+        expertAssessment: entry.expertAssessment
+          ? String(entry.expertAssessment)
+          : undefined,
         notes: entry.notes ? String(entry.notes) : undefined,
+      })
+    );
+
+    // Parse conflicts
+    const conflicts: Conflict[] = (parsed.conflicts || []).map(
+      (conflict: Record<string, unknown>) => ({
+        documentClaim: String(conflict.documentClaim || conflict.document_claim || ""),
+        establishedFact: String(conflict.establishedFact || conflict.established_fact || ""),
+        domain: String(conflict.domain || "unknown"),
+        resolution: String(conflict.resolution || ""),
+      })
+    );
+
+    // Parse expert additions
+    const expertAdditions: ExpertAddition[] = (parsed.expertAdditions || parsed.expert_additions || []).map(
+      (addition: Record<string, unknown>) => ({
+        knowledge: String(addition.knowledge || ""),
+        tag: String(addition.tag || "[llm:judge]"),
+        reason: String(addition.reason || ""),
       })
     );
 
@@ -197,7 +285,13 @@ function parseJudgeOutput(output: string): JudgeResult {
         contradicted: Number(parsed.summary?.contradicted) || 0,
         notFound:
           Number(parsed.summary?.notFound || parsed.summary?.not_found) || 0,
+        expertVerified:
+          Number(parsed.summary?.expertVerified || parsed.summary?.expert_verified) || 0,
+        conflictFlagged:
+          Number(parsed.summary?.conflictFlagged || parsed.summary?.conflict_flagged) || 0,
       },
+      conflicts: conflicts.length > 0 ? conflicts : undefined,
+      expertAdditions: expertAdditions.length > 0 ? expertAdditions : undefined,
       riskFlags: (parsed.riskFlags || parsed.risk_flags || []).map(
         (flag: Record<string, unknown>) => ({
           type: String(flag.type || "unknown"),
@@ -224,6 +318,8 @@ function parseJudgeOutput(output: string): JudgeResult {
         weak: 0,
         contradicted: 0,
         notFound: 0,
+        expertVerified: 0,
+        conflictFlagged: 0,
       },
       riskFlags: [
         {
@@ -239,11 +335,11 @@ function parseJudgeOutput(output: string): JudgeResult {
 
 function validateClaimType(
   type: unknown
-): "fact" | "policy" | "numeric" | "definition" {
-  const valid = ["fact", "policy", "numeric", "definition"];
+): "fact" | "policy" | "numeric" | "definition" | "scientific" | "historical" | "legal" {
+  const valid = ["fact", "policy", "numeric", "definition", "scientific", "historical", "legal"];
   const value = String(type || "fact").toLowerCase();
   return valid.includes(value)
-    ? (value as "fact" | "policy" | "numeric" | "definition")
+    ? (value as "fact" | "policy" | "numeric" | "definition" | "scientific" | "historical" | "legal")
     : "fact";
 }
 
@@ -257,10 +353,10 @@ function validateImportance(imp: unknown): "critical" | "material" | "minor" {
 
 function validateVerdict(
   verdict: unknown
-): "supported" | "weak" | "contradicted" | "not_found" {
-  const valid = ["supported", "weak", "contradicted", "not_found"];
-  const value = String(verdict || "not_found").toLowerCase();
+): "supported" | "weak" | "contradicted" | "not_found" | "expert_verified" | "conflict_flagged" {
+  const valid = ["supported", "weak", "contradicted", "not_found", "expert_verified", "conflict_flagged"];
+  const value = String(verdict || "not_found").toLowerCase().replace(/ /g, "_");
   return valid.includes(value)
-    ? (value as "supported" | "weak" | "contradicted" | "not_found")
+    ? (value as "supported" | "weak" | "contradicted" | "not_found" | "expert_verified" | "conflict_flagged")
     : "not_found";
 }
