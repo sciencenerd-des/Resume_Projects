@@ -9,6 +9,8 @@ const mockCitations: Citation[] = [
   { index: 1, chunk_id: 'abc12345', document_id: 'doc1', verdict: 'supported' },
   { index: 2, chunk_id: 'def67890', document_id: 'doc2', verdict: 'weak' },
   { index: 3, chunk_id: 'aaaa1111', document_id: 'doc3', verdict: 'contradicted' },
+  { index: 4, chunk_id: 'bbbb2222', document_id: 'doc4', verdict: 'expert_verified' },
+  { index: 5, chunk_id: 'cccc3333', document_id: 'doc5', verdict: 'conflict_flagged' },
 ];
 
 describe('ResponseContent', () => {
@@ -70,7 +72,8 @@ describe('ResponseContent', () => {
           citations={mockCitations}
         />
       );
-      expect(screen.getByRole('button', { name: '1' })).toBeInTheDocument();
+      // Citation button shows the chunk hash
+      expect(screen.getByText('abc12345')).toBeInTheDocument();
     });
 
     test('renders multiple citations', () => {
@@ -80,19 +83,19 @@ describe('ResponseContent', () => {
           citations={mockCitations}
         />
       );
-      expect(screen.getByRole('button', { name: '1' })).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: '2' })).toBeInTheDocument();
+      expect(screen.getByText('abc12345')).toBeInTheDocument();
+      expect(screen.getByText('def67890')).toBeInTheDocument();
     });
 
-    test('citation button is styled as circle', () => {
+    test('citation button is styled with rounded corners', () => {
       render(
         <ResponseContent
           content="Content [cite:abc12345]"
           citations={mockCitations}
         />
       );
-      const citation = screen.getByRole('button', { name: '1' });
-      expect(citation).toHaveClass('rounded-full');
+      const citation = screen.getByRole('button');
+      expect(citation).toHaveClass('rounded');
     });
 
     test('citation button has hover effect', () => {
@@ -102,83 +105,147 @@ describe('ResponseContent', () => {
           citations={mockCitations}
         />
       );
-      const citation = screen.getByRole('button', { name: '1' });
+      const citation = screen.getByRole('button');
       expect(citation).toHaveClass('cursor-pointer');
     });
 
-    test('calls onCitationClick with chunk ID when citation clicked', () => {
-      let clickedChunkId: string | undefined;
+    test('calls onCitationClick with source when citation clicked', () => {
+      let clickedSource: string | undefined;
       render(
         <ResponseContent
           content="Fact [cite:abc12345]"
           citations={mockCitations}
-          onCitationClick={(id) => {
-            clickedChunkId = id;
+          onCitationClick={(source) => {
+            clickedSource = source;
           }}
         />
       );
 
-      fireEvent.click(screen.getByRole('button', { name: '1' }));
-      expect(clickedChunkId).toBe('abc12345');
+      fireEvent.click(screen.getByRole('button'));
+      expect(clickedSource).toBe('abc12345');
     });
 
-    test('citation has title attribute with index info', () => {
+    test('citation has title attribute with source info', () => {
       render(
         <ResponseContent
           content="Content [cite:abc12345]"
           citations={mockCitations}
         />
       );
-      const citation = screen.getByRole('button', { name: '1' });
+      const citation = screen.getByRole('button');
       expect(citation).toHaveAttribute('title');
-      expect(citation.getAttribute('title')).toContain('[1]');
+      expect(citation.getAttribute('title')).toContain('Document source');
     });
   });
 
-  describe('verdict-based styling', () => {
-    test('supported verdict has green background', () => {
+  describe('document citation styling', () => {
+    test('document citation has emerald background', () => {
       render(
         <ResponseContent
           content="Text [cite:abc12345]"
           citations={mockCitations}
         />
       );
-      const citation = screen.getByRole('button', { name: '1' });
-      expect(citation).toHaveClass('bg-green-500');
+      const citation = screen.getByRole('button');
+      expect(citation).toHaveClass('bg-emerald-600');
     });
 
-    test('weak verdict has amber background', () => {
+    test('document citations all use default emerald color', () => {
       render(
         <ResponseContent
-          content="Text [cite:def67890]"
+          content="Text [cite:abc12345] and [cite:def67890]"
           citations={mockCitations}
         />
       );
-      const citation = screen.getByRole('button', { name: '1' });
-      expect(citation).toHaveClass('bg-amber-500');
+      const citations = screen.getAllByRole('button');
+      citations.forEach(citation => {
+        expect(citation).toHaveClass('bg-emerald-600');
+      });
     });
+  });
 
-    test('contradicted verdict has red background', () => {
+  describe('LLM citation styling', () => {
+    test('writer LLM citation has blue background', () => {
       render(
         <ResponseContent
-          content="Text [cite:aaaa1111]"
+          content="Text [llm:writer]"
           citations={mockCitations}
         />
       );
-      const citation = screen.getByRole('button', { name: '1' });
-      expect(citation).toHaveClass('bg-red-500');
+      const citation = screen.getByRole('button');
+      expect(citation).toHaveClass('bg-blue-500');
     });
 
-    test('unknown citation defaults to supported styling', () => {
+    test('skeptic LLM citation has purple background', () => {
       render(
         <ResponseContent
-          content="Text [cite:eeee9999]"
+          content="Text [llm:skeptic]"
           citations={mockCitations}
         />
       );
-      const citation = screen.getByRole('button', { name: '1' });
-      // When citation not found in metadata, defaults to supported
-      expect(citation).toHaveClass('bg-green-500');
+      const citation = screen.getByRole('button');
+      expect(citation).toHaveClass('bg-purple-500');
+    });
+
+    test('judge LLM citation has indigo background', () => {
+      render(
+        <ResponseContent
+          content="Text [llm:judge]"
+          citations={mockCitations}
+        />
+      );
+      const citation = screen.getByRole('button');
+      expect(citation).toHaveClass('bg-indigo-600');
+    });
+  });
+
+  describe('LLM citation labels', () => {
+    test('writer shows W label', () => {
+      render(<ResponseContent content="Text [llm:writer]" />);
+      expect(screen.getByText('W')).toBeInTheDocument();
+    });
+
+    test('skeptic shows S label', () => {
+      render(<ResponseContent content="Text [llm:skeptic]" />);
+      expect(screen.getByText('S')).toBeInTheDocument();
+    });
+
+    test('judge shows J label', () => {
+      render(<ResponseContent content="Text [llm:judge]" />);
+      expect(screen.getByText('J')).toBeInTheDocument();
+    });
+
+    test('LLM citation has descriptive tooltip', () => {
+      render(<ResponseContent content="Text [llm:writer]" />);
+      const citation = screen.getByRole('button');
+      expect(citation.getAttribute('title')).toContain('Writer');
+    });
+  });
+
+  describe('mixed citations', () => {
+    test('renders both document and LLM citations together', () => {
+      render(
+        <ResponseContent
+          content="Fact [cite:abc12345] was verified by [llm:judge]"
+          citations={mockCitations}
+        />
+      );
+      const citations = screen.getAllByRole('button');
+      expect(citations.length).toBe(2);
+      expect(citations[0]).toHaveClass('bg-emerald-600'); // document
+      expect(citations[1]).toHaveClass('bg-indigo-600'); // judge
+    });
+
+    test('renders all three LLM types', () => {
+      render(
+        <ResponseContent
+          content="Written [llm:writer], challenged [llm:skeptic], verified [llm:judge]"
+          citations={mockCitations}
+        />
+      );
+      expect(screen.getByText('W')).toBeInTheDocument();
+      expect(screen.getByText('S')).toBeInTheDocument();
+      expect(screen.getByText('J')).toBeInTheDocument();
     });
   });
 
@@ -192,7 +259,7 @@ describe('ResponseContent', () => {
       );
       expect(screen.getByText(/Before/)).toBeInTheDocument();
       expect(screen.getByText(/after/)).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: '1' })).toBeInTheDocument();
+      expect(screen.getByText('abc12345')).toBeInTheDocument();
     });
 
     test('renders multiple text segments with citations', () => {
@@ -211,8 +278,8 @@ describe('ResponseContent', () => {
   describe('no citations provided', () => {
     test('renders citation button without citations array', () => {
       render(<ResponseContent content="Text [cite:abc12345]" />);
-      // Still renders the button but with default behavior
-      expect(screen.getByRole('button', { name: '1' })).toBeInTheDocument();
+      // Still renders the button with the chunk hash
+      expect(screen.getByText('abc12345')).toBeInTheDocument();
     });
 
     test('clicking citation without onCitationClick does not crash', () => {
@@ -223,7 +290,7 @@ describe('ResponseContent', () => {
         />
       );
       // Should not throw
-      fireEvent.click(screen.getByRole('button', { name: '1' }));
+      fireEvent.click(screen.getByRole('button'));
     });
   });
 
@@ -235,19 +302,19 @@ describe('ResponseContent', () => {
           citations={mockCitations}
         />
       );
-      const citation = screen.getByRole('button', { name: '1' });
+      const citation = screen.getByRole('button');
       expect(citation).toHaveClass('text-white');
     });
 
-    test('citation buttons have fixed dimensions', () => {
+    test('citation buttons have minimum width and height', () => {
       render(
         <ResponseContent
           content="Text [cite:abc12345]"
           citations={mockCitations}
         />
       );
-      const citation = screen.getByRole('button', { name: '1' });
-      expect(citation).toHaveClass('w-5', 'h-5');
+      const citation = screen.getByRole('button');
+      expect(citation).toHaveClass('min-w-5', 'h-5');
     });
 
     test('citation buttons are inline-flex', () => {
@@ -257,8 +324,19 @@ describe('ResponseContent', () => {
           citations={mockCitations}
         />
       );
-      const citation = screen.getByRole('button', { name: '1' });
+      const citation = screen.getByRole('button');
       expect(citation).toHaveClass('inline-flex');
+    });
+
+    test('citation buttons have font-semibold', () => {
+      render(
+        <ResponseContent
+          content="Text [cite:abc12345]"
+          citations={mockCitations}
+        />
+      );
+      const citation = screen.getByRole('button');
+      expect(citation).toHaveClass('font-semibold');
     });
   });
 
@@ -270,8 +348,8 @@ describe('ResponseContent', () => {
           citations={mockCitations}
         />
       );
-      expect(screen.getByRole('button', { name: '1' })).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: '2' })).toBeInTheDocument();
+      expect(screen.getByText('abc12345')).toBeInTheDocument();
+      expect(screen.getByText('def67890')).toBeInTheDocument();
     });
   });
 });

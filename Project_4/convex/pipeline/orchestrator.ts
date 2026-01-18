@@ -15,11 +15,13 @@ const MAX_REVISION_CYCLES = 2;
 interface LedgerEntry {
   claimText: string;
   claimType: string;
+  sourceTag?: string;
   importance: string;
   verdict: string;
   confidenceScore: number;
   chunkIds: string[];
   evidenceSnippet?: string;
+  expertAssessment?: string;
   notes?: string;
 }
 
@@ -320,11 +322,13 @@ export const insertClaim = internalMutation({
     entry: v.object({
       claimText: v.string(),
       claimType: v.string(),
+      sourceTag: v.optional(v.string()),
       importance: v.string(),
       verdict: v.string(),
       confidenceScore: v.number(),
       chunkIds: v.array(v.string()),
       evidenceSnippet: v.optional(v.string()),
+      expertAssessment: v.optional(v.string()),
       notes: v.optional(v.string()),
     }),
   },
@@ -333,7 +337,10 @@ export const insertClaim = internalMutation({
       | "fact"
       | "policy"
       | "numeric"
-      | "definition";
+      | "definition"
+      | "scientific"
+      | "historical"
+      | "legal";
     const importance = args.entry.importance as
       | "critical"
       | "material"
@@ -358,9 +365,11 @@ export const insertClaim = internalMutation({
       sessionId: args.sessionId,
       claimId,
       verdict,
+      sourceTag: args.entry.sourceTag,
       confidenceScore: args.entry.confidenceScore,
       chunkIds: [], // Would need proper chunk ID mapping
       evidenceSnippet: args.entry.evidenceSnippet,
+      expertAssessment: args.entry.expertAssessment,
       notes: args.entry.notes,
     });
   },

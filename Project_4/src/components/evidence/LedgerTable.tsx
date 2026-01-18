@@ -18,6 +18,7 @@ import { Progress } from "@/components/ui/progress"
 import { VerdictBadge } from "./VerdictBadge"
 import { ClaimTypeBadge } from "../ui/ClaimTypeBadge"
 import { ImportanceDot } from "../ui/ImportanceDot"
+import { FileText, Brain, Search, Scale } from "lucide-react"
 import type { LedgerEntry } from "@/types"
 
 interface LedgerTableProps {
@@ -34,8 +35,15 @@ export function LedgerTable({
   className,
 }: LedgerTableProps) {
   const sortedEntries = useMemo(() => {
-    const order = { supported: 0, weak: 1, contradicted: 2, not_found: 3 }
-    return [...entries].sort((a, b) => order[a.verdict] - order[b.verdict])
+    const order: Record<string, number> = {
+      supported: 0,
+      expert_verified: 1,
+      weak: 2,
+      conflict_flagged: 3,
+      contradicted: 4,
+      not_found: 5,
+    }
+    return [...entries].sort((a, b) => (order[a.verdict] ?? 5) - (order[b.verdict] ?? 5))
   }, [entries])
 
   if (entries.length === 0) {
@@ -52,6 +60,7 @@ export function LedgerTable({
         <TableHeader>
           <TableRow className="border-border hover:bg-transparent">
             <TableHead className="text-muted-foreground">Claim</TableHead>
+            <TableHead className="text-muted-foreground">Source</TableHead>
             <TableHead className="text-muted-foreground">Type</TableHead>
             <TableHead className="text-muted-foreground">Verdict</TableHead>
             <TableHead className="text-muted-foreground w-32">Confidence</TableHead>
@@ -76,6 +85,9 @@ export function LedgerTable({
                     {entry.claim_text}
                   </span>
                 </div>
+              </TableCell>
+              <TableCell>
+                <SourceTagBadge sourceTag={entry.source_tag} />
               </TableCell>
               <TableCell>
                 <ClaimTypeBadge type={entry.claim_type} />
@@ -107,6 +119,66 @@ function ConfidenceBar({ value }: { value: number }) {
         {percentage}%
       </span>
     </div>
+  )
+}
+
+function SourceTagBadge({ sourceTag }: { sourceTag?: string }) {
+  if (!sourceTag) {
+    return (
+      <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs rounded-full bg-muted text-muted-foreground">
+        <FileText className="h-3 w-3" />
+        Unknown
+      </span>
+    )
+  }
+
+  // Parse the source tag
+  const isDocument = sourceTag.startsWith("cite:")
+  const isWriter = sourceTag === "llm:writer"
+  const isSkeptic = sourceTag === "llm:skeptic"
+  const isJudge = sourceTag === "llm:judge"
+
+  if (isDocument) {
+    const docNum = sourceTag.replace("cite:", "")
+    return (
+      <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs rounded-full bg-emerald-500/10 text-emerald-600">
+        <FileText className="h-3 w-3" />
+        Doc {docNum}
+      </span>
+    )
+  }
+
+  if (isWriter) {
+    return (
+      <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs rounded-full bg-blue-500/10 text-blue-500">
+        <Brain className="h-3 w-3" />
+        Writer
+      </span>
+    )
+  }
+
+  if (isSkeptic) {
+    return (
+      <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs rounded-full bg-purple-500/10 text-purple-500">
+        <Search className="h-3 w-3" />
+        Skeptic
+      </span>
+    )
+  }
+
+  if (isJudge) {
+    return (
+      <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs rounded-full bg-indigo-500/10 text-indigo-500">
+        <Scale className="h-3 w-3" />
+        Judge
+      </span>
+    )
+  }
+
+  return (
+    <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs rounded-full bg-muted text-muted-foreground">
+      {sourceTag}
+    </span>
   )
 }
 

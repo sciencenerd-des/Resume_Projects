@@ -29,6 +29,18 @@ describe('VerdictBadge', () => {
       const badge = screen.getByText('Not Found');
       expect(badge).toHaveClass('bg-verdict-missing/10', 'text-verdict-missing');
     });
+
+    test('renders expert_verified verdict with correct styling', () => {
+      render(<VerdictBadge verdict="expert_verified" />);
+      const badge = screen.getByText('Expert Verified');
+      expect(badge).toHaveClass('bg-teal-500/10', 'text-teal-500');
+    });
+
+    test('renders conflict_flagged verdict with correct styling', () => {
+      render(<VerdictBadge verdict="conflict_flagged" />);
+      const badge = screen.getByText('Conflict Flagged');
+      expect(badge).toHaveClass('bg-orange-500/10', 'text-orange-500');
+    });
   });
 
   describe('sizes', () => {

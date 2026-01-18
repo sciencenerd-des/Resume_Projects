@@ -132,7 +132,8 @@ describe('SignupForm', () => {
       });
 
       await waitFor(() => {
-        const greenItems = container.querySelectorAll('.text-green-600');
+        // Uses semantic verdict-supported color for met requirements
+        const greenItems = container.querySelectorAll('.text-verdict-supported');
         expect(greenItems.length).toBe(4); // All 4 requirements met
       });
     });
@@ -145,7 +146,8 @@ describe('SignupForm', () => {
       });
 
       await waitFor(() => {
-        const grayItems = container.querySelectorAll('.text-gray-500');
+        // Uses semantic muted-foreground color for unmet requirements
+        const grayItems = container.querySelectorAll('.text-muted-foreground');
         expect(grayItems.length).toBeGreaterThan(0);
       });
     });
@@ -294,7 +296,8 @@ describe('SignupForm', () => {
         fireEvent.submit(form);
       });
 
-      const errorDiv = container.querySelector('.bg-red-50');
+      // Error div uses semantic destructive background
+      const errorDiv = container.querySelector('[class*="bg-destructive"]');
       expect(errorDiv).toBeInTheDocument();
       expect(errorDiv?.querySelector('svg')).toBeInTheDocument();
     });
@@ -334,10 +337,10 @@ describe('SignupForm', () => {
       expect(button).toHaveClass('w-full');
     });
 
-    test('links have blue styling', () => {
+    test('links have primary styling', () => {
       renderWithRouter(<SignupForm {...defaultProps} />);
       const signInLink = screen.getByText(/sign in/i);
-      expect(signInLink).toHaveClass('text-blue-600');
+      expect(signInLink).toHaveClass('text-primary');
     });
   });
 

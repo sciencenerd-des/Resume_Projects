@@ -124,8 +124,8 @@ describe('CitationPopover', () => {
     test('header has background styling', () => {
       const { container } = render(<CitationPopover {...defaultProps}>[1]</CitationPopover>);
       fireEvent.click(screen.getByText('[1]'));
-      // Header is the first child div with bg-gray-50
-      const header = container.querySelector('.bg-gray-50');
+      // Header uses semantic muted background
+      const header = container.querySelector('[class*="bg-muted"]');
       expect(header).toBeInTheDocument();
     });
   });

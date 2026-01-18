@@ -34,6 +34,21 @@ const typeConfig: Record<ClaimType, { label: string; bgClass: string; textClass:
     bgClass: "bg-muted",
     textClass: "text-muted-foreground",
   },
+  scientific: {
+    label: "Scientific",
+    bgClass: "bg-blue-500/10",
+    textClass: "text-blue-500",
+  },
+  historical: {
+    label: "Historical",
+    bgClass: "bg-amber-500/10",
+    textClass: "text-amber-500",
+  },
+  legal: {
+    label: "Legal",
+    bgClass: "bg-purple-500/10",
+    textClass: "text-purple-500",
+  },
 }
 
 export function ClaimTypeBadge({ type, size = "md", className }: ClaimTypeBadgeProps) {

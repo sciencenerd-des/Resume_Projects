@@ -136,31 +136,31 @@ describe('DocumentCard', () => {
       expect(card).toHaveClass('flex', 'items-center');
     });
 
-    test('ready status has green color', () => {
+    test('ready status uses semantic supported color', () => {
       render(<DocumentCard document={mockDocument} />);
       const status = screen.getByText('Ready');
-      expect(status).toHaveClass('text-green-600');
+      expect(status).toHaveClass('text-verdict-supported');
     });
 
-    test('error status has red color', () => {
+    test('error status uses semantic destructive color', () => {
       const errorDoc = { ...mockDocument, status: 'error' as const };
       render(<DocumentCard document={errorDoc} />);
       const status = screen.getByText('Error');
-      expect(status).toHaveClass('text-red-600');
+      expect(status).toHaveClass('text-destructive');
     });
 
-    test('processing status has amber color', () => {
+    test('processing status uses semantic warning color', () => {
       const processingDoc = { ...mockDocument, status: 'processing' as const };
       render(<DocumentCard document={processingDoc} />);
       const status = screen.getByText('Processing');
-      expect(status).toHaveClass('text-amber-600');
+      expect(status).toHaveClass('text-status-warning');
     });
 
-    test('uploading status has blue color', () => {
+    test('uploading status uses semantic primary color', () => {
       const uploadingDoc = { ...mockDocument, status: 'uploading' as const };
       render(<DocumentCard document={uploadingDoc} />);
       const status = screen.getByText('Uploading');
-      expect(status).toHaveClass('text-blue-600');
+      expect(status).toHaveClass('text-primary');
     });
   });
 

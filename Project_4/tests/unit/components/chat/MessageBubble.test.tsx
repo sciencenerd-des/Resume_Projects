@@ -24,11 +24,11 @@ const mockAssistantMessage = {
 
 describe('MessageBubble', () => {
   describe('user messages', () => {
-    test('renders user message with blue background', () => {
+    test('renders user message with primary background', () => {
       const { container } = render(<MessageBubble message={mockUserMessage} />);
-      const bubble = container.querySelector('.bg-blue-600');
+      const bubble = container.querySelector('.bg-primary');
       expect(bubble).toBeInTheDocument();
-      expect(bubble).toHaveClass('text-white');
+      expect(bubble).toHaveClass('text-primary-foreground');
     });
 
     test('aligns user message to right', () => {
@@ -45,11 +45,11 @@ describe('MessageBubble', () => {
   });
 
   describe('assistant messages', () => {
-    test('renders assistant message with white background', () => {
+    test('renders assistant message with card background', () => {
       const { container } = render(<MessageBubble message={mockAssistantMessage} />);
-      const bubble = container.querySelector('.bg-white');
+      const bubble = container.querySelector('.bg-card');
       expect(bubble).toBeInTheDocument();
-      expect(bubble).toHaveClass('border', 'border-gray-200');
+      expect(bubble).toHaveClass('border', 'border-border');
     });
 
     test('aligns assistant message to left', () => {
@@ -69,8 +69,8 @@ describe('MessageBubble', () => {
   describe('citations', () => {
     test('renders citations in assistant messages', () => {
       render(<MessageBubble message={mockAssistantMessage} />);
-      // ResponseContent renders citations as buttons with the index number
-      const citationButton = screen.getByRole('button', { name: '1' });
+      // ResponseContent renders citations as buttons with the chunk hash as text
+      const citationButton = screen.getByText('abc12345');
       expect(citationButton).toBeInTheDocument();
     });
 
@@ -83,7 +83,7 @@ describe('MessageBubble', () => {
           onCitationClick={handleCitationClick}
         />
       );
-      fireEvent.click(screen.getByRole('button', { name: '1' }));
+      fireEvent.click(screen.getByText('abc12345'));
       expect(clickedChunkId).toBe('abc12345');
     });
   });

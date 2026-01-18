@@ -149,7 +149,7 @@ describe('EmptyState', () => {
           icon={FileText}
         />
       );
-      const iconWrapper = container.querySelector('.bg-gray-100');
+      const iconWrapper = container.querySelector('.bg-muted');
       expect(iconWrapper).toBeInTheDocument();
     });
   });

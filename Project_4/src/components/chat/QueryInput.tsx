@@ -1,10 +1,9 @@
 import React, { useRef, useEffect } from 'react';
-import { Send } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Send, Loader2 } from 'lucide-react';
 
 /**
- * QueryInput - A textarea input component for chat queries
- * with auto-resize and keyboard shortcuts
+ * QueryInput - ChatGPT-style input component
+ * Centered, auto-resizing textarea with clean design
  */
 interface QueryInputProps {
   value: string;
@@ -12,6 +11,7 @@ interface QueryInputProps {
   onSubmit: () => void;
   disabled?: boolean;
   placeholder?: string;
+  isLoading?: boolean;
 }
 
 export function QueryInput({
@@ -19,7 +19,8 @@ export function QueryInput({
   onChange,
   onSubmit,
   disabled = false,
-  placeholder = 'Ask a question about your documents...',
+  placeholder = 'Message VerityDraft...',
+  isLoading = false,
 }: QueryInputProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -36,7 +37,9 @@ export function QueryInput({
     // Enter without shift submits the query
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      onSubmit();
+      if (!disabled && value.trim()) {
+        onSubmit();
+      }
     }
   };
 
@@ -46,34 +49,59 @@ export function QueryInput({
     }
   };
 
-  return (
-    <div className="relative flex items-end gap-2 p-4 border-t border-border bg-card">
-      <textarea
-        ref={textareaRef}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        onKeyDown={handleKeyDown}
-        placeholder={placeholder}
-        disabled={disabled}
-        rows={1}
-        className="
-          flex-1 resize-none rounded-xl border border-border bg-background text-foreground
-          px-4 py-3 text-sm
-          focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent
-          disabled:bg-muted disabled:text-muted-foreground
-          placeholder:text-muted-foreground
-        "
-        aria-label="Query input"
-      />
+  const canSubmit = !disabled && value.trim().length > 0;
 
-      <Button
-        onClick={handleSubmit}
-        disabled={disabled || !value.trim()}
-        className="shrink-0"
-      >
-        <Send className="w-4 h-4 mr-2" />
-        Send
-      </Button>
+  return (
+    <div className="border-t border-border bg-background">
+      <div className="max-w-3xl mx-auto px-4 py-4">
+        <div className="relative flex items-end gap-2 rounded-2xl border border-border bg-muted/30 shadow-sm focus-within:border-primary/50 focus-within:shadow-md transition-all">
+          <textarea
+            ref={textareaRef}
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder={placeholder}
+            disabled={disabled}
+            rows={1}
+            className="
+              flex-1 resize-none bg-transparent text-foreground
+              pl-4 pr-2 py-3.5 text-sm
+              focus:outline-none
+              disabled:text-muted-foreground disabled:cursor-not-allowed
+              placeholder:text-muted-foreground/60
+              min-h-[48px] max-h-[200px]
+            "
+            aria-label="Message input"
+          />
+
+          <button
+            onClick={handleSubmit}
+            disabled={!canSubmit}
+            className={`
+              flex-shrink-0 mr-2 mb-2
+              w-8 h-8 rounded-lg
+              flex items-center justify-center
+              transition-all duration-200
+              ${canSubmit
+                ? 'bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm'
+                : 'bg-muted text-muted-foreground cursor-not-allowed'
+              }
+            `}
+            aria-label="Send message"
+          >
+            {isLoading ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <Send className="w-4 h-4" />
+            )}
+          </button>
+        </div>
+
+        {/* Helper text */}
+        <p className="text-[11px] text-muted-foreground/60 text-center mt-2">
+          VerityDraft verifies claims against your documents. Press Enter to send, Shift+Enter for new line.
+        </p>
+      </div>
     </div>
   );
 }

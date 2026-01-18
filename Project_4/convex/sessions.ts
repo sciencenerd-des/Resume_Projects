@@ -79,7 +79,10 @@ export const createClaimInternal = internalMutation({
       v.literal("fact"),
       v.literal("policy"),
       v.literal("numeric"),
-      v.literal("definition")
+      v.literal("definition"),
+      v.literal("scientific"),
+      v.literal("historical"),
+      v.literal("legal")
     ),
     importance: v.union(
       v.literal("critical"),
@@ -106,11 +109,15 @@ export const createLedgerEntryInternal = internalMutation({
       v.literal("supported"),
       v.literal("weak"),
       v.literal("contradicted"),
-      v.literal("not_found")
+      v.literal("not_found"),
+      v.literal("expert_verified"),
+      v.literal("conflict_flagged")
     ),
+    sourceTag: v.optional(v.string()),
     confidenceScore: v.float64(),
     chunkIds: v.array(v.id("documentChunks")),
     evidenceSnippet: v.optional(v.string()),
+    expertAssessment: v.optional(v.string()),
     notes: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
@@ -118,9 +125,11 @@ export const createLedgerEntryInternal = internalMutation({
       sessionId: args.sessionId,
       claimId: args.claimId,
       verdict: args.verdict,
+      sourceTag: args.sourceTag,
       confidenceScore: args.confidenceScore,
       chunkIds: args.chunkIds,
       evidenceSnippet: args.evidenceSnippet,
+      expertAssessment: args.expertAssessment,
       notes: args.notes,
     });
   },
@@ -239,6 +248,8 @@ export const getLedger = query({
       weak: entries.filter((e) => e.verdict === "weak").length,
       contradicted: entries.filter((e) => e.verdict === "contradicted").length,
       notFound: entries.filter((e) => e.verdict === "not_found").length,
+      expertVerified: entries.filter((e) => e.verdict === "expert_verified").length,
+      conflictFlagged: entries.filter((e) => e.verdict === "conflict_flagged").length,
     };
 
     return {
@@ -282,8 +293,10 @@ export const getWithLedger = query({
               claimType: claim.claimType,
               importance: claim.importance,
               verdict: entry.verdict,
+              sourceTag: entry.sourceTag,
               confidenceScore: entry.confidenceScore,
               evidenceSnippet: entry.evidenceSnippet,
+              expertAssessment: entry.expertAssessment,
               notes: entry.notes,
             }
           : null;

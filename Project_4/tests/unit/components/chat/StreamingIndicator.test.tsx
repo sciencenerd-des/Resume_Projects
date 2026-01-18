@@ -32,28 +32,28 @@ describe('StreamingIndicator', () => {
   });
 
   describe('variants', () => {
-    test('renders thinking variant with blue dot', () => {
+    test('renders thinking variant with primary dot', () => {
       const { container } = render(<StreamingIndicator variant="thinking" />);
       expect(screen.getByText('Thinking...')).toBeInTheDocument();
-      expect(container.querySelector('.bg-blue-500')).toBeInTheDocument();
+      expect(container.querySelector('.bg-primary')).toBeInTheDocument();
     });
 
-    test('renders generating variant with purple dot', () => {
+    test('renders generating variant with opinion dot', () => {
       const { container } = render(<StreamingIndicator variant="generating" />);
       expect(screen.getByText('Generating response...')).toBeInTheDocument();
-      expect(container.querySelector('.bg-purple-500')).toBeInTheDocument();
+      expect(container.querySelector('.bg-claim-opinion')).toBeInTheDocument();
     });
 
-    test('renders verifying variant with green dot', () => {
+    test('renders verifying variant with supported dot', () => {
       const { container } = render(<StreamingIndicator variant="verifying" />);
       expect(screen.getByText('Verifying claims...')).toBeInTheDocument();
-      expect(container.querySelector('.bg-green-500')).toBeInTheDocument();
+      expect(container.querySelector('.bg-verdict-supported')).toBeInTheDocument();
     });
 
     test('defaults to thinking variant', () => {
       const { container } = render(<StreamingIndicator />);
       expect(screen.getByText('Thinking...')).toBeInTheDocument();
-      expect(container.querySelector('.bg-blue-500')).toBeInTheDocument();
+      expect(container.querySelector('.bg-primary')).toBeInTheDocument();
     });
   });
 
@@ -73,9 +73,9 @@ describe('StreamingIndicator', () => {
       expect(container.querySelector('.items-center')).toBeInTheDocument();
     });
 
-    test('label has gray text styling', () => {
+    test('label has muted text styling', () => {
       const { container } = render(<StreamingIndicator />);
-      const label = container.querySelector('.text-gray-500');
+      const label = container.querySelector('.text-muted-foreground');
       expect(label).toBeInTheDocument();
     });
 
@@ -128,9 +128,9 @@ describe('StreamingIndicator', () => {
       expect(svg).toBeInTheDocument();
     });
 
-    test('icon container has background', () => {
+    test('icon container has muted background', () => {
       const { container } = render(<StreamingIndicator />);
-      const iconContainer = container.querySelector('.bg-gray-100');
+      const iconContainer = container.querySelector('.bg-muted');
       expect(iconContainer).toBeInTheDocument();
     });
   });
@@ -153,8 +153,8 @@ describe('StreamingIndicator', () => {
       const { container: thinkingContainer } = render(<StreamingIndicator variant="thinking" />);
       const { container: generatingContainer } = render(<StreamingIndicator variant="generating" />);
 
-      expect(thinkingContainer.querySelector('.bg-blue-500')).toBeInTheDocument();
-      expect(generatingContainer.querySelector('.bg-purple-500')).toBeInTheDocument();
+      expect(thinkingContainer.querySelector('.bg-primary')).toBeInTheDocument();
+      expect(generatingContainer.querySelector('.bg-claim-opinion')).toBeInTheDocument();
     });
   });
 

@@ -32,7 +32,7 @@ describe('Modal', () => {
           Content
         </Modal>
       );
-      const modalContent = container.querySelector('.bg-white');
+      const modalContent = container.querySelector('.bg-card');
       expect(modalContent).toHaveClass('max-w-lg');
     });
   });

@@ -84,16 +84,16 @@ describe('ModeToggle', () => {
       expect(toggle).toBeInTheDocument();
     });
 
-    test('active mode has blue background', () => {
+    test('active mode has background and foreground styling', () => {
       render(<ModeToggle mode="answer" onChange={() => {}} />);
       const answerBtn = screen.getByRole('button', { name: /answer/i });
-      expect(answerBtn).toHaveClass('bg-blue-600');
+      expect(answerBtn).toHaveClass('bg-background', 'text-foreground');
     });
 
-    test('inactive mode has text-gray-700 styling', () => {
+    test('inactive mode has muted foreground styling', () => {
       render(<ModeToggle mode="answer" onChange={() => {}} />);
       const draftBtn = screen.getByRole('button', { name: /draft/i });
-      expect(draftBtn).toHaveClass('text-gray-700');
+      expect(draftBtn).toHaveClass('text-muted-foreground');
     });
 
     test('applies custom className', () => {
@@ -120,7 +120,7 @@ describe('ModeToggle', () => {
       render(<ModeToggle mode="answer" onChange={() => {}} />);
       const answerBtn = screen.getByRole('button', { name: /answer/i });
       const svg = answerBtn.querySelector('svg');
-      expect(svg).toHaveClass('w-4', 'h-4');
+      expect(svg).toHaveClass('w-3.5', 'h-3.5');
     });
   });
 
@@ -152,10 +152,10 @@ describe('ModeToggle', () => {
       });
     });
 
-    test('has focus ring styling', () => {
+    test('buttons have transition styling', () => {
       render(<ModeToggle mode="answer" onChange={() => {}} />);
       const answerBtn = screen.getByRole('button', { name: /answer/i });
-      expect(answerBtn).toHaveClass('focus:ring-2', 'focus:ring-blue-500');
+      expect(answerBtn).toHaveClass('transition-all');
     });
   });
 

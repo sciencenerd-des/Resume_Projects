@@ -47,6 +47,8 @@ const mockLedger: EvidenceLedger = {
     weak: 0,
     contradicted: 0,
     not_found: 1,
+    expert_verified: 0,
+    conflict_flagged: 0,
   },
   risk_flags: [],
 };
@@ -104,6 +106,8 @@ describe('EvidenceLedgerPanel', () => {
           weak: 0,
           contradicted: 0,
           not_found: 0,
+          expert_verified: 0,
+          conflict_flagged: 0,
         },
         risk_flags: [],
       };

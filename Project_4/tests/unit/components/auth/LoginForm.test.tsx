@@ -214,7 +214,8 @@ describe('LoginForm', () => {
       fireEvent.click(screen.getByRole('button', { name: /sign in/i }));
 
       await waitFor(() => {
-        const errorDiv = container.querySelector('.bg-red-50');
+        // Error div uses semantic destructive background
+        const errorDiv = container.querySelector('[class*="bg-destructive"]');
         expect(errorDiv).toBeInTheDocument();
         expect(errorDiv?.querySelector('svg')).toBeInTheDocument();
       });
@@ -233,10 +234,10 @@ describe('LoginForm', () => {
       expect(button).toHaveClass('w-full');
     });
 
-    test('links have blue styling', () => {
+    test('links have primary styling', () => {
       renderWithRouter(<LoginForm {...defaultProps} />);
       const signUpLink = screen.getByText(/sign up/i);
-      expect(signUpLink).toHaveClass('text-blue-600');
+      expect(signUpLink).toHaveClass('text-primary');
     });
   });
 

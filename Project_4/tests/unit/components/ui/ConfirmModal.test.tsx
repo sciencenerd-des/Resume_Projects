@@ -105,26 +105,26 @@ describe('ConfirmModal', () => {
   describe('variants', () => {
     test('renders danger variant with icon', () => {
       const { container } = render(<ConfirmModal {...defaultProps} variant="danger" />);
-      // Danger variant shows red icon background
-      expect(container.querySelector('.bg-red-100')).toBeInTheDocument();
+      // Danger variant shows destructive icon background (uses attribute selector for / char)
+      expect(container.querySelector('[class*="bg-destructive"]')).toBeInTheDocument();
     });
 
     test('renders warning variant with icon', () => {
       const { container } = render(<ConfirmModal {...defaultProps} variant="warning" />);
-      // Warning variant shows amber icon background
-      expect(container.querySelector('.bg-amber-100')).toBeInTheDocument();
+      // Warning variant shows status-warning icon background
+      expect(container.querySelector('[class*="bg-status-warning"]')).toBeInTheDocument();
     });
 
     test('renders info variant with icon', () => {
       const { container } = render(<ConfirmModal {...defaultProps} variant="info" />);
-      // Info variant shows blue icon background
-      expect(container.querySelector('.bg-blue-100')).toBeInTheDocument();
+      // Info variant shows primary icon background
+      expect(container.querySelector('[class*="bg-primary"]')).toBeInTheDocument();
     });
 
     test('renders success variant with icon', () => {
       const { container } = render(<ConfirmModal {...defaultProps} variant="success" />);
-      // Success variant shows green icon background
-      expect(container.querySelector('.bg-green-100')).toBeInTheDocument();
+      // Success variant shows verdict-supported icon background
+      expect(container.querySelector('[class*="bg-verdict-supported"]')).toBeInTheDocument();
     });
   });
 

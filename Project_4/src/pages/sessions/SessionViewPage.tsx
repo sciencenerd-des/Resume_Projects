@@ -90,15 +90,19 @@ export default function SessionViewPage() {
       weak: sessionWithLedger.ledger.filter((e: any) => e?.verdict === 'weak').length,
       contradicted: sessionWithLedger.ledger.filter((e: any) => e?.verdict === 'contradicted').length,
       not_found: sessionWithLedger.ledger.filter((e: any) => e?.verdict === 'not_found').length,
+      expert_verified: sessionWithLedger.ledger.filter((e: any) => e?.verdict === 'expert_verified').length,
+      conflict_flagged: sessionWithLedger.ledger.filter((e: any) => e?.verdict === 'conflict_flagged').length,
     },
     entries: sessionWithLedger.ledger.map((entry: any, index: number) => ({
       id: `claim-${index}`,
       claim_text: entry?.claimText ?? '',
       claim_type: entry?.claimType ?? 'fact',
+      source_tag: entry?.sourceTag,
       importance: entry?.importance ?? 'material',
       verdict: entry?.verdict ?? 'not_found',
       confidence: entry?.confidenceScore ?? 0,
       evidence_snippet: entry?.evidenceSnippet,
+      expert_assessment: entry?.expertAssessment,
       chunk_ids: [],
     })),
     risk_flags: [],
@@ -362,6 +366,18 @@ function EntryDetailPanel({
   entry: LedgerEntry;
   onClose: () => void;
 }) {
+  // Parse source tag for display
+  const getSourceDisplay = (sourceTag?: string) => {
+    if (!sourceTag) return { label: 'Unknown', color: 'text-muted-foreground' };
+    if (sourceTag.startsWith('cite:')) return { label: `Document ${sourceTag.replace('cite:', '')}`, color: 'text-emerald-600' };
+    if (sourceTag === 'llm:writer') return { label: 'Writer LLM', color: 'text-blue-500' };
+    if (sourceTag === 'llm:skeptic') return { label: 'Skeptic LLM', color: 'text-purple-500' };
+    if (sourceTag === 'llm:judge') return { label: 'Judge LLM', color: 'text-indigo-500' };
+    return { label: sourceTag, color: 'text-muted-foreground' };
+  };
+
+  const sourceDisplay = getSourceDisplay(entry.source_tag);
+
   return (
     <div className="p-4 space-y-4">
       <div className="flex items-center justify-between">
@@ -383,6 +399,14 @@ function EntryDetailPanel({
         </div>
 
         <div className="flex gap-4">
+          <div>
+            <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+              Source
+            </label>
+            <p className={`text-sm font-medium mt-1 ${sourceDisplay.color}`}>
+              {sourceDisplay.label}
+            </p>
+          </div>
           <div>
             <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
               Verdict
@@ -408,6 +432,17 @@ function EntryDetailPanel({
             </label>
             <blockquote className="mt-1 p-3 bg-muted rounded-lg text-sm text-foreground border-l-2 border-primary">
               {entry.evidence_snippet}
+            </blockquote>
+          </div>
+        )}
+
+        {entry.expert_assessment && (
+          <div>
+            <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+              Expert Assessment
+            </label>
+            <blockquote className="mt-1 p-3 bg-indigo-500/10 rounded-lg text-sm text-foreground border-l-2 border-indigo-500">
+              {entry.expert_assessment}
             </blockquote>
           </div>
         )}

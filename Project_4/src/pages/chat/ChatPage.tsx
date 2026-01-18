@@ -1,9 +1,20 @@
 import React, { useState, useCallback } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import { useQuery } from 'convex/react';
 import { api } from '../../../convex/_generated/api';
 import type { Id } from '../../../convex/_generated/dataModel';
-import { MessageSquare, Shield, FileText, AlertCircle, Search, Sparkles, Scale, RefreshCw } from 'lucide-react';
+import {
+  Sparkles,
+  FileText,
+  AlertCircle,
+  Search,
+  Scale,
+  RefreshCw,
+  Upload,
+  BookOpen,
+  ShieldCheck,
+  PenLine
+} from 'lucide-react';
 import { useWorkspace } from '../../contexts/WorkspaceContext';
 import { useConvexChat } from '../../hooks/useConvexChat';
 import { MessageList } from '../../components/chat/MessageList';
@@ -16,18 +27,16 @@ type PipelinePhase = 'idle' | 'retrieval' | 'writer' | 'skeptic' | 'judge' | 're
 
 export default function ChatPage() {
   const { workspaceId } = useParams<{ workspaceId: string }>();
-  const { currentWorkspace } = useWorkspace();
 
-  // Validate workspaceId is a valid Convex ID (no dashes = valid)
+  // Validate workspaceId is a valid Convex ID
   const isValidConvexId = workspaceId && !workspaceId.includes('-') && workspaceId.length > 0;
   const convexWorkspaceId = isValidConvexId ? workspaceId as Id<"workspaces"> : undefined;
 
-  // Use Convex-based chat hook (replaces WebSocket)
+  // Use Convex-based chat hook
   const {
     messages,
     isProcessing,
     currentPhase,
-    ledger,
     error,
     progress,
     streamingContent,
@@ -39,7 +48,7 @@ export default function ChatPage() {
   const [query, setQuery] = useState('');
   const [mode, setMode] = useState<QueryMode>('answer');
 
-  // Check if workspace has documents (using Convex real-time query)
+  // Check if workspace has documents
   const documents = useQuery(
     api.documents.list,
     isValidConvexId ? { workspaceId: workspaceId as Id<"workspaces"> } : "skip"
@@ -54,12 +63,20 @@ export default function ChatPage() {
     setQuery('');
   }, [query, mode, isProcessing, submitQuery]);
 
+  const handleRegenerate = useCallback(() => {
+    // Get the last user message and resubmit
+    const lastUserMessage = [...messages].reverse().find(m => m.role === 'user');
+    if (lastUserMessage) {
+      submitQuery(lastUserMessage.content, mode);
+    }
+  }, [messages, mode, submitQuery]);
+
   const handleCitationClick = (chunkId: string) => {
-    // TODO: Open chunk viewer modal
+    // TODO: Open citation viewer modal
     console.log('Citation clicked:', chunkId);
   };
 
-  // Map progress phase to pipeline phase for UI
+  // Map progress phase to pipeline phase
   const pipelinePhase: PipelinePhase = isProcessing
     ? (currentPhase as PipelinePhase) || 'retrieval'
     : 'idle';
@@ -70,63 +87,63 @@ export default function ChatPage() {
 
   return (
     <div className="flex flex-col h-full bg-background">
-      {/* Header */}
-      <div className="flex items-center justify-between px-6 py-4 bg-card border-b border-border">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-            <MessageSquare className="w-5 h-5 text-primary" />
+      {/* Minimal Header */}
+      <header className="flex items-center justify-between px-4 py-3 border-b border-border bg-background/95 backdrop-blur-sm">
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center">
+            <Sparkles className="w-4 h-4 text-white" />
           </div>
-          <div>
-            <h1 className="font-semibold text-foreground">Chat</h1>
-            <p className="text-xs text-muted-foreground">
-              {readyDocuments} document{readyDocuments !== 1 ? 's' : ''} indexed
-            </p>
-          </div>
+          <span className="font-semibold text-foreground">VerityDraft</span>
+          <span className="text-xs text-muted-foreground px-2 py-0.5 bg-muted rounded-full">
+            {readyDocuments} doc{readyDocuments !== 1 ? 's' : ''}
+          </span>
         </div>
 
-        <div className="flex items-center gap-4">
-          <ModeToggle mode={mode} onChange={setMode} />
-        </div>
-      </div>
+        <ModeToggle mode={mode} onChange={setMode} />
+      </header>
 
       {/* Error Banner */}
       {error && (
-        <div className="mx-6 mt-4 flex items-center justify-between gap-2 p-3 text-sm text-destructive bg-destructive/10 rounded-lg border border-destructive/20">
-          <div className="flex items-center gap-2">
-            <AlertCircle className="w-4 h-4 flex-shrink-0" />
-            {error}
+        <div className="max-w-3xl mx-auto w-full px-4 pt-4">
+          <div className="flex items-center justify-between gap-2 p-3 text-sm text-destructive bg-destructive/10 rounded-lg border border-destructive/20">
+            <div className="flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 flex-shrink-0" />
+              {error}
+            </div>
+            <button
+              onClick={clearError}
+              className="text-destructive/70 hover:text-destructive text-xs font-medium px-2 py-1 rounded hover:bg-destructive/10"
+            >
+              Dismiss
+            </button>
           </div>
-          <button
-            onClick={clearError}
-            className="text-destructive/70 hover:text-destructive text-xs font-medium px-2 py-1 rounded hover:bg-destructive/10"
-          >
-            Dismiss
-          </button>
         </div>
       )}
 
-      {/* Messages Area with Sticky Progress */}
-      {messages.length === 0 && !isProcessing ? (
-        <WelcomeState mode={mode} />
-      ) : (
-        <div className="flex-1 overflow-y-auto relative">
-          {/* Pipeline Progress Indicator - Sticky at top of scroll area */}
-          {isProcessing && pipelinePhase !== 'idle' && (
-            <PipelineProgress
-              phase={pipelinePhase}
-              chunksRetrieved={chunksRetrieved}
-              isCompact={!!streamingContent}
+      {/* Main Content */}
+      <div className="flex-1 overflow-y-auto">
+        {messages.length === 0 && !isProcessing ? (
+          <WelcomeState mode={mode} />
+        ) : (
+          <>
+            {/* Pipeline Progress - Minimal sticky bar */}
+            {isProcessing && pipelinePhase !== 'idle' && (
+              <PipelineProgress
+                phase={pipelinePhase}
+                chunksRetrieved={chunksRetrieved}
+              />
+            )}
+
+            <MessageList
+              messages={messages}
+              isStreaming={isProcessing}
+              streamingContent={streamingContent}
+              onCitationClick={handleCitationClick}
+              onRegenerate={handleRegenerate}
             />
-          )}
-          <MessageList
-            messages={messages}
-            isStreaming={isProcessing}
-            streamingContent={streamingContent}
-            onCitationClick={handleCitationClick}
-            className=""
-          />
-        </div>
-      )}
+          </>
+        )}
+      </div>
 
       {/* Input Area */}
       <QueryInput
@@ -134,9 +151,10 @@ export default function ChatPage() {
         onChange={setQuery}
         onSubmit={handleSubmit}
         disabled={isProcessing}
+        isLoading={isProcessing}
         placeholder={
           mode === 'answer'
-            ? 'Ask a question about your documents...'
+            ? 'Ask about your documents...'
             : 'Describe what you want to draft...'
         }
       />
@@ -147,26 +165,40 @@ export default function ChatPage() {
 function WelcomeState({ mode }: { mode: QueryMode }) {
   return (
     <div className="flex-1 flex items-center justify-center p-6">
-      <div className="text-center max-w-lg">
-        <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-6">
-          <Shield className="w-8 h-8 text-primary" />
+      <div className="text-center max-w-lg space-y-8">
+        {/* Logo */}
+        <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center mx-auto shadow-lg shadow-emerald-500/20">
+          <Sparkles className="w-10 h-10 text-white" />
         </div>
-        <h2 className="text-xl font-semibold text-foreground mb-2">
-          {mode === 'answer' ? 'Ask Evidence-Backed Questions' : 'Create Verified Drafts'}
-        </h2>
-        <p className="text-muted-foreground mb-6">
-          {mode === 'answer'
-            ? 'Get accurate answers with citations from your documents. Every claim is verified against your source materials.'
-            : 'Generate comprehensive drafts with automatic fact-checking. Each statement is traced back to evidence.'}
-        </p>
-        <div className="flex items-center justify-center gap-6 text-sm text-muted-foreground/70">
-          <div className="flex items-center gap-2">
-            <FileText className="w-4 h-4" />
-            Sourced from your docs
+
+        {/* Heading */}
+        <div className="space-y-2">
+          <h1 className="text-2xl font-semibold text-foreground">
+            {mode === 'answer' ? 'What would you like to know?' : 'What would you like to draft?'}
+          </h1>
+          <p className="text-muted-foreground">
+            {mode === 'answer'
+              ? 'Ask questions and get verified answers from your documents.'
+              : 'Create evidence-backed drafts with automatic fact-checking.'}
+          </p>
+        </div>
+
+        {/* Feature highlights */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+          <div className="flex flex-col items-center gap-2 p-4 rounded-xl bg-muted/30 border border-border">
+            <BookOpen className="w-5 h-5 text-emerald-500" />
+            <span className="text-foreground font-medium">Document-grounded</span>
+            <span className="text-muted-foreground text-xs">Every claim traced to sources</span>
           </div>
-          <div className="flex items-center gap-2">
-            <Shield className="w-4 h-4" />
-            Evidence verified
+          <div className="flex flex-col items-center gap-2 p-4 rounded-xl bg-muted/30 border border-border">
+            <ShieldCheck className="w-5 h-5 text-teal-500" />
+            <span className="text-foreground font-medium">Triple-verified</span>
+            <span className="text-muted-foreground text-xs">3 LLMs check each response</span>
+          </div>
+          <div className="flex flex-col items-center gap-2 p-4 rounded-xl bg-muted/30 border border-border">
+            <PenLine className="w-5 h-5 text-blue-500" />
+            <span className="text-foreground font-medium">Expert knowledge</span>
+            <span className="text-muted-foreground text-xs">Fills gaps with cited expertise</span>
           </div>
         </div>
       </div>
@@ -176,45 +208,44 @@ function WelcomeState({ mode }: { mode: QueryMode }) {
 
 function EmptyDocumentsState({ workspaceId }: { workspaceId: string }) {
   return (
-    <div className="flex-1 flex items-center justify-center p-6">
-      <div className="text-center max-w-md">
-        <div className="w-16 h-16 rounded-2xl bg-muted flex items-center justify-center mx-auto mb-6">
-          <FileText className="w-8 h-8 text-muted-foreground" />
+    <div className="flex-1 flex items-center justify-center p-6 bg-background">
+      <div className="text-center max-w-md space-y-6">
+        <div className="w-20 h-20 rounded-2xl bg-muted flex items-center justify-center mx-auto">
+          <FileText className="w-10 h-10 text-muted-foreground" />
         </div>
-        <h2 className="text-xl font-semibold text-foreground mb-2">No Documents Yet</h2>
-        <p className="text-muted-foreground mb-6">
-          Upload some documents first to start asking questions. VerityDraft uses your documents as
-          the source of truth for all answers.
-        </p>
-        <a
-          href={`/workspaces/${workspaceId}/documents`}
-          className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
+        <div className="space-y-2">
+          <h2 className="text-xl font-semibold text-foreground">No documents yet</h2>
+          <p className="text-muted-foreground">
+            Upload some documents to start asking questions. VerityDraft uses your documents as the source of truth.
+          </p>
+        </div>
+        <Link
+          to={`/workspaces/${workspaceId}/documents`}
+          className="inline-flex items-center gap-2 px-5 py-2.5 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors font-medium"
         >
-          <FileText className="w-4 h-4" />
+          <Upload className="w-4 h-4" />
           Upload Documents
-        </a>
+        </Link>
       </div>
     </div>
   );
 }
 
-// Pipeline progress indicator
+// Minimal pipeline progress indicator
 const PIPELINE_STEPS = [
-  { phase: 'retrieval', label: 'Searching documents', icon: Search },
-  { phase: 'writer', label: 'Generating response', icon: Sparkles },
-  { phase: 'skeptic', label: 'Analyzing claims', icon: AlertCircle },
-  { phase: 'judge', label: 'Verifying evidence', icon: Scale },
-  { phase: 'revision', label: 'Revising response', icon: RefreshCw },
+  { phase: 'retrieval', label: 'Searching', icon: Search },
+  { phase: 'writer', label: 'Writing', icon: Sparkles },
+  { phase: 'skeptic', label: 'Analyzing', icon: AlertCircle },
+  { phase: 'judge', label: 'Verifying', icon: Scale },
+  { phase: 'revision', label: 'Revising', icon: RefreshCw },
 ] as const;
 
 function PipelineProgress({
   phase,
   chunksRetrieved,
-  isCompact = false,
 }: {
   phase: PipelinePhase;
   chunksRetrieved: number;
-  isCompact?: boolean;
 }) {
   const currentIndex = PIPELINE_STEPS.findIndex((s) => s.phase === phase);
   const currentStep = PIPELINE_STEPS.find((s) => s.phase === phase);
@@ -223,112 +254,44 @@ function PipelineProgress({
 
   const progressPercent = Math.max(10, ((currentIndex + 1) / PIPELINE_STEPS.length) * 100);
 
-  // Compact mode - minimal single-line sticky bar
-  if (isCompact) {
-    return (
-      <div className="sticky top-0 z-20 bg-background/95 backdrop-blur-sm border-b border-border">
-        {/* Thin progress bar */}
-        <div className="h-0.5 bg-muted">
-          <div
-            className="h-full bg-gradient-to-r from-primary to-primary/70 transition-all duration-500 ease-out"
-            style={{ width: `${progressPercent}%` }}
-          />
-        </div>
-        {/* Compact info row */}
-        <div className="px-4 py-1.5 flex items-center gap-2">
-          {currentStep && <currentStep.icon className="w-3.5 h-3.5 text-primary animate-pulse" />}
-          <span className="text-xs font-medium text-foreground">{currentStep?.label}</span>
-          <div className="flex-1 flex items-center gap-0.5 mx-2">
-            {PIPELINE_STEPS.map((step, index) => (
-              <div
-                key={step.phase}
-                className={`h-1 flex-1 rounded-full transition-colors duration-300 ${
-                  index < currentIndex
-                    ? 'bg-primary'
-                    : index === currentIndex
-                      ? 'bg-primary/50 animate-pulse'
-                      : 'bg-muted'
-                }`}
-              />
-            ))}
-          </div>
-          <Spinner className="w-3.5 h-3.5 text-primary" />
-        </div>
-      </div>
-    );
-  }
-
-  // Full mode - detailed progress card
   return (
-    <div className="sticky top-0 z-20 px-6 py-4 bg-background/95 backdrop-blur-sm">
-      <div className="bg-card rounded-xl border border-border shadow-sm overflow-hidden">
-        {/* Progress bar */}
-        <div className="h-1 bg-muted">
-          <div
-            className="h-full bg-gradient-to-r from-primary to-primary/70 transition-all duration-500 ease-out"
-            style={{ width: `${progressPercent}%` }}
-          />
+    <div className="sticky top-0 z-20 bg-background/95 backdrop-blur-sm border-b border-border">
+      {/* Thin progress bar */}
+      <div className="h-0.5 bg-muted">
+        <div
+          className="h-full bg-gradient-to-r from-emerald-500 to-teal-500 transition-all duration-500 ease-out"
+          style={{ width: `${progressPercent}%` }}
+        />
+      </div>
+
+      {/* Status row */}
+      <div className="max-w-3xl mx-auto px-4 py-2 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          {currentStep && <currentStep.icon className="w-4 h-4 text-emerald-500 animate-pulse" />}
+          <span className="text-sm font-medium text-foreground">{currentStep?.label}...</span>
+          {phase === 'retrieval' && chunksRetrieved > 0 && (
+            <span className="text-xs text-muted-foreground">
+              ({chunksRetrieved} chunk{chunksRetrieved !== 1 ? 's' : ''})
+            </span>
+          )}
         </div>
 
-        <div className="px-4 py-3">
-          {/* Current step */}
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
-              {currentStep && <currentStep.icon className="w-4 h-4 text-primary animate-pulse" />}
-            </div>
-            <div className="flex-1">
-              <p className="text-sm font-medium text-foreground">
-                {currentStep?.label || 'Processing...'}
-              </p>
-              {phase === 'retrieval' && chunksRetrieved > 0 && (
-                <p className="text-xs text-muted-foreground">
-                  Found {chunksRetrieved} relevant chunk{chunksRetrieved !== 1 ? 's' : ''}
-                </p>
-              )}
-            </div>
-            <Spinner className="w-5 h-5 text-primary" />
-          </div>
-
-          {/* Step indicators */}
-          <div className="flex items-center gap-1 mt-3 pt-3 border-t border-border">
-            {PIPELINE_STEPS.map((step, index) => {
-              const isActive = index === currentIndex;
-              const isComplete = index < currentIndex;
-
-              return (
-                <div key={step.phase} className="flex items-center flex-1">
-                  <div
-                    className={`h-1.5 flex-1 rounded-full transition-colors duration-300 ${
-                      isComplete
-                        ? 'bg-primary'
-                        : isActive
-                          ? 'bg-primary/50 animate-pulse'
-                          : 'bg-muted'
-                    }`}
-                  />
-                </div>
-              );
-            })}
-          </div>
-
-          {/* Step labels */}
-          <div className="flex justify-between mt-1.5">
-            {PIPELINE_STEPS.map((step, index) => {
-              const isActive = index === currentIndex;
-              const isComplete = index < currentIndex;
-
-              return (
-                <span
-                  key={step.phase}
-                  className={`text-[10px] ${
-                    isActive ? 'text-primary font-medium' : isComplete ? 'text-muted-foreground' : 'text-muted-foreground/50'
-                  }`}
-                >
-                  {step.label.split(' ')[0]}
-                </span>
-              );
-            })}
-          </div>
+        {/* Step dots */}
+        <div className="flex items-center gap-1">
+          {PIPELINE_STEPS.map((step, index) => (
+            <div
+              key={step.phase}
+              className={`
+                w-1.5 h-1.5 rounded-full transition-colors duration-300
+                ${index < currentIndex
+                  ? 'bg-emerald-500'
+                  : index === currentIndex
+                    ? 'bg-emerald-500/50 animate-pulse'
+                    : 'bg-muted-foreground/30'
+                }
+              `}
+            />
+          ))}
         </div>
       </div>
     </div>

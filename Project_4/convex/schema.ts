@@ -119,7 +119,10 @@ export default defineSchema({
       v.literal("fact"),
       v.literal("policy"),
       v.literal("numeric"),
-      v.literal("definition")
+      v.literal("definition"),
+      v.literal("scientific"),
+      v.literal("historical"),
+      v.literal("legal")
     ),
     importance: v.union(
       v.literal("critical"),

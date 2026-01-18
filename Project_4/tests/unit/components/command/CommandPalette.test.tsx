@@ -16,45 +16,25 @@ mock.module('react-router-dom', () => ({
   useNavigate: () => mockNavigate,
 }));
 
-mock.module('@/hooks/useWorkspace', () => ({
-  useWorkspace: () => ({
-    currentWorkspace: { id: 'ws-123', name: 'Test Workspace' },
+mock.module('@/hooks/useConvexWorkspace', () => ({
+  useConvexWorkspace: () => ({
+    currentWorkspace: { _id: 'ws-123', name: 'Test Workspace' },
     workspaces: [
-      { id: 'ws-123', name: 'Test Workspace' },
-      { id: 'ws-456', name: 'Another Workspace' },
+      { _id: 'ws-123', name: 'Test Workspace' },
+      { _id: 'ws-456', name: 'Another Workspace' },
     ],
     isLoading: false,
-    createWorkspace: { mutate: mock(() => {}) },
+    createWorkspace: mock(() => {}),
     switchWorkspace: mock(() => {}),
   }),
 }));
 
-mock.module('@/hooks/useAuth', () => ({
-  useAuth: () => ({
+mock.module('@/hooks/useConvexAuth', () => ({
+  useConvexAuthState: () => ({
     user: { id: 'user-1', email: 'test@example.com' },
-    session: { access_token: 'mock-token' },
+    isAuthenticated: true,
     isLoading: false,
-    signOut: {
-      mutate: mockSignOutMutate,
-      mutateAsync: mock(async () => {}),
-      isPending: false,
-      isError: false,
-      error: null,
-    },
-    signIn: {
-      mutate: mock(() => {}),
-      mutateAsync: mock(async () => ({ user: { id: 'user-1' } })),
-      isPending: false,
-      isError: false,
-      error: null,
-    },
-    signUp: {
-      mutate: mock(() => {}),
-      mutateAsync: mock(async () => ({ user: { id: 'user-1' } })),
-      isPending: false,
-      isError: false,
-      error: null,
-    },
+    signOut: mockSignOutMutate,
   }),
 }));
 

@@ -102,8 +102,8 @@ export interface Citation {
   verdict?: Verdict;
 }
 
-export type Verdict = 'supported' | 'weak' | 'contradicted' | 'not_found';
-export type ClaimType = 'fact' | 'policy' | 'numeric' | 'definition';
+export type Verdict = 'supported' | 'weak' | 'contradicted' | 'not_found' | 'expert_verified' | 'conflict_flagged';
+export type ClaimType = 'fact' | 'policy' | 'numeric' | 'definition' | 'scientific' | 'historical' | 'legal';
 export type ClaimImportance = 'critical' | 'material' | 'minor';
 
 // Evidence Ledger
@@ -111,10 +111,12 @@ export interface LedgerEntry {
   id: string;
   claim_text: string;
   claim_type: ClaimType;
+  source_tag?: string; // cite:N, llm:writer, llm:skeptic, llm:judge
   importance: ClaimImportance;
   verdict: Verdict;
   confidence: number;
   evidence_snippet?: string;
+  expert_assessment?: string;
   chunk_ids: string[];
 }
 
@@ -133,6 +135,8 @@ export interface EvidenceLedger {
     weak: number;
     contradicted: number;
     not_found: number;
+    expert_verified: number;
+    conflict_flagged: number;
   };
   entries: LedgerEntry[];
   risk_flags: RiskFlag[];

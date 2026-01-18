@@ -76,7 +76,7 @@ describe('UploadZone', () => {
       const zone = container.querySelector('.border-dashed')!;
 
       fireEvent.dragOver(zone);
-      expect(zone).toHaveClass('border-blue-500', 'bg-blue-50');
+      expect(zone).toHaveClass('border-primary', 'bg-primary/10');
     });
 
     test('removes highlight on drag leave', () => {
@@ -85,7 +85,7 @@ describe('UploadZone', () => {
 
       fireEvent.dragOver(zone);
       fireEvent.dragLeave(zone);
-      expect(zone).not.toHaveClass('border-blue-500');
+      expect(zone).not.toHaveClass('bg-primary/10');
     });
 
     test('handles file drop', () => {
