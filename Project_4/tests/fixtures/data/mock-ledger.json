@@ -1,0 +1,43 @@
+{
+  "session_id": "session-1",
+  "summary": {
+    "total_claims": 5,
+    "supported": 4,
+    "weak": 1,
+    "contradicted": 0,
+    "not_found": 0
+  },
+  "entries": [
+    {
+      "id": "claim-1",
+      "claim_text": "Maximum LTV is 80%",
+      "claim_type": "numeric",
+      "importance": "critical",
+      "verdict": "supported",
+      "confidence": 0.95,
+      "evidence_snippet": "The maximum loan-to-value ratio is 80% for primary residences.",
+      "chunk_ids": ["chunk-1"]
+    },
+    {
+      "id": "claim-2",
+      "claim_text": "Applications require underwriting review",
+      "claim_type": "policy",
+      "importance": "material",
+      "verdict": "supported",
+      "confidence": 0.88,
+      "evidence_snippet": "All applications must be reviewed by the underwriting team.",
+      "chunk_ids": ["chunk-2"]
+    },
+    {
+      "id": "claim-3",
+      "claim_text": "Process takes approximately 3-5 days",
+      "claim_type": "numeric",
+      "importance": "minor",
+      "verdict": "weak",
+      "confidence": 0.65,
+      "evidence_snippet": "The review process typically takes a few business days.",
+      "chunk_ids": ["chunk-3"]
+    }
+  ],
+  "risk_flags": []
+}
