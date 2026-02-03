@@ -12,7 +12,25 @@
     />
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <div style="display:flex;align-items:center;justify-content:center;height:100vh;background:#0a0a0b;">
+        <div style="color:#888;font-family:Inter,sans-serif;">Loading...</div>
+      </div>
+    </div>
+    <script>
+      // Start config fetch immediately - frontend.tsx will await this promise
+      window.__configPromise = fetch('/api/app-config')
+        .then(function(r) { return r.json(); })
+        .then(function(config) {
+          window.__APP_CONFIG__ = config;
+          return config;
+        })
+        .catch(function(err) {
+          console.error('Failed to load app config:', err);
+          document.getElementById('root').innerHTML = '<p style="color:#ef4444;padding:20px;font-family:Inter,sans-serif;">Failed to load configuration. Please refresh the page.</p>';
+          throw err;
+        });
+    </script>
     <script type="module" src="./frontend.tsx"></script>
   </body>
 </html>

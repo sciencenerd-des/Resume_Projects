@@ -16,6 +16,8 @@ function getVerdictColor(verdict: string): string {
     weak: 'bg-amber-500',
     contradicted: 'bg-red-500',
     not_found: 'bg-gray-400',
+    expert_verified: 'bg-teal-500',
+    conflict_flagged: 'bg-orange-500',
   };
   return colors[verdict] || 'bg-gray-400';
 }
@@ -26,6 +28,8 @@ function getVerdictLabel(verdict: string): string {
     weak: 'Weak',
     contradicted: 'Contradicted',
     not_found: 'Not Found',
+    expert_verified: 'Expert Verified',
+    conflict_flagged: 'Conflict Flagged',
   };
   return labels[verdict] || 'Unknown';
 }
@@ -38,7 +42,7 @@ function highlightText(text: string, query: string): string {
 }
 
 function sortCitationsByVerdict(citations: any[]): any[] {
-  const verdictOrder = ['supported', 'weak', 'contradicted', 'not_found'];
+  const verdictOrder = ['supported', 'expert_verified', 'weak', 'conflict_flagged', 'contradicted', 'not_found'];
   return [...citations].sort((a, b) => {
     const aIndex = verdictOrder.indexOf(a.verdict || 'not_found');
     const bIndex = verdictOrder.indexOf(b.verdict || 'not_found');
@@ -54,6 +58,16 @@ function groupCitationsByDocument(citations: any[]): Map<string, any[]> {
     grouped.set(citation.document_id, existing);
   });
   return grouped;
+}
+
+function parseSourceTag(sourceTag: string): { type: 'document' | 'llm'; source: string } | null {
+  if (sourceTag.startsWith('cite:')) {
+    return { type: 'document', source: sourceTag.replace('cite:', '') };
+  }
+  if (sourceTag.startsWith('llm:')) {
+    return { type: 'llm', source: sourceTag.replace('llm:', '') };
+  }
+  return null;
 }
 
 describe('citations utilities', () => {
@@ -95,6 +109,12 @@ describe('citations utilities', () => {
       expect(getVerdictColor('weak')).toBe('bg-amber-500');
       expect(getVerdictColor('contradicted')).toBe('bg-red-500');
       expect(getVerdictColor('not_found')).toBe('bg-gray-400');
+      expect(getVerdictColor('expert_verified')).toBe('bg-teal-500');
+      expect(getVerdictColor('conflict_flagged')).toBe('bg-orange-500');
+    });
+
+    test('returns default color for unknown verdict', () => {
+      expect(getVerdictColor('unknown')).toBe('bg-gray-400');
     });
   });
 
@@ -104,6 +124,12 @@ describe('citations utilities', () => {
       expect(getVerdictLabel('weak')).toBe('Weak');
       expect(getVerdictLabel('contradicted')).toBe('Contradicted');
       expect(getVerdictLabel('not_found')).toBe('Not Found');
+      expect(getVerdictLabel('expert_verified')).toBe('Expert Verified');
+      expect(getVerdictLabel('conflict_flagged')).toBe('Conflict Flagged');
+    });
+
+    test('returns Unknown for invalid verdict', () => {
+      expect(getVerdictLabel('invalid')).toBe('Unknown');
     });
   });
 
@@ -141,12 +167,16 @@ describe('citations utilities', () => {
         { index: 2, chunk_id: 'b', document_id: 'doc1', verdict: 'supported' },
         { index: 3, chunk_id: 'c', document_id: 'doc1', verdict: 'weak' },
         { index: 4, chunk_id: 'd', document_id: 'doc1', verdict: 'contradicted' },
+        { index: 5, chunk_id: 'e', document_id: 'doc1', verdict: 'expert_verified' },
+        { index: 6, chunk_id: 'f', document_id: 'doc1', verdict: 'conflict_flagged' },
       ];
       const sorted = sortCitationsByVerdict(citations);
       expect(sorted[0].verdict).toBe('supported');
-      expect(sorted[1].verdict).toBe('weak');
-      expect(sorted[2].verdict).toBe('contradicted');
-      expect(sorted[3].verdict).toBe('not_found');
+      expect(sorted[1].verdict).toBe('expert_verified');
+      expect(sorted[2].verdict).toBe('weak');
+      expect(sorted[3].verdict).toBe('conflict_flagged');
+      expect(sorted[4].verdict).toBe('contradicted');
+      expect(sorted[5].verdict).toBe('not_found');
     });
 
     test('handles citations without verdict', () => {
@@ -158,6 +188,25 @@ describe('citations utilities', () => {
       expect(sorted[0].verdict).toBe('supported');
       // Citation without verdict stays undefined but is sorted as if it were 'not_found'
       expect(sorted[1].verdict).toBeUndefined();
+    });
+  });
+
+  describe('parseSourceTag', () => {
+    test('parses document citation tags', () => {
+      expect(parseSourceTag('cite:1')).toEqual({ type: 'document', source: '1' });
+      expect(parseSourceTag('cite:abc123')).toEqual({ type: 'document', source: 'abc123' });
+    });
+
+    test('parses LLM knowledge tags', () => {
+      expect(parseSourceTag('llm:writer')).toEqual({ type: 'llm', source: 'writer' });
+      expect(parseSourceTag('llm:skeptic')).toEqual({ type: 'llm', source: 'skeptic' });
+      expect(parseSourceTag('llm:judge')).toEqual({ type: 'llm', source: 'judge' });
+    });
+
+    test('returns null for invalid source tags', () => {
+      expect(parseSourceTag('invalid')).toBeNull();
+      expect(parseSourceTag('doc:1')).toBeNull();
+      expect(parseSourceTag('')).toBeNull();
     });
   });
 

@@ -11,16 +11,16 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { useCommand } from "@/contexts/CommandContext"
-import { useAuth } from "@/hooks/useAuth"
+import { useConvexAuthState } from "@/hooks/useConvexAuth"
 import { useTheme } from "@/contexts/ThemeContext"
-import { useWorkspace } from "@/hooks/useWorkspace"
+import { useConvexWorkspace } from "@/hooks/useConvexWorkspace"
 import { ShortcutsFooter } from "@/components/command/ShortcutsFooter"
 
 export function AppLayout() {
   const { setOpen } = useCommand()
-  const { user, signOut } = useAuth()
+  const { user, signOut } = useConvexAuthState()
   const { theme, toggleTheme } = useTheme()
-  const { currentWorkspace } = useWorkspace()
+  const { currentWorkspace } = useConvexWorkspace()
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -76,7 +76,7 @@ export function AppLayout() {
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => signOut.mutate()} className="text-destructive focus:text-destructive">
+                <DropdownMenuItem onClick={() => signOut()} className="text-destructive focus:text-destructive">
                   Sign out
                 </DropdownMenuItem>
               </DropdownMenuContent>

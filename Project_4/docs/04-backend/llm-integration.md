@@ -123,7 +123,7 @@ const models: Record<string, ModelSpec> = {
   },
 
   skeptic: {
-    id: "moonshotai/kimi-k2-instruct",
+    id: "z-ai/glm-4.7",
     maxTokens: 8192,
     temperature: 0.3,
     costPerInputToken: 0.000001,
@@ -131,7 +131,7 @@ const models: Record<string, ModelSpec> = {
   },
 
   judge: {
-    id: "zhipu/glm-4.7",
+    id: "deepseek/deepseek-v3.2-speciale",
     maxTokens: 4096,
     temperature: 0.2,
     costPerInputToken: 0.000002,
@@ -148,11 +148,11 @@ const fallbackChain: Record<string, string[]> = {
     "openai/gpt-4o",
     "anthropic/claude-3-5-sonnet-20241022"
   ],
-  "moonshotai/kimi-k2-instruct": [
+  "z-ai/glm-4.7": [
     "anthropic/claude-3-5-haiku-20241022",
     "openai/gpt-4o-mini"
   ],
-  "zhipu/glm-4.7": [
+  "deepseek/deepseek-v3.2-speciale": [
     "openai/gpt-4o",
     "anthropic/claude-3-5-sonnet-20241022"
   ]

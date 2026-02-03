@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { useParams, useNavigate } from 'react-router-dom';
+import { useQuery } from 'convex/react';
+import { api } from '../../../convex/_generated/api';
+import type { Id } from '../../../convex/_generated/dataModel';
 import {
   ArrowLeft,
   Download,
@@ -14,13 +16,12 @@ import {
   HelpCircle,
   ChevronRight,
 } from 'lucide-react';
-import { api } from '../../services/api';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '../../components/ui/Spinner';
 import { VerdictBadge } from '../../components/evidence/VerdictBadge';
 import { LedgerTable } from '../../components/evidence/LedgerTable';
 import { MessageList } from '../../components/chat/MessageList';
-import type { ChatSession, Message, EvidenceLedger, LedgerEntry } from '../../types';
+import type { Message, EvidenceLedger, LedgerEntry } from '../../types';
 
 export default function SessionViewPage() {
   const { sessionId } = useParams<{ sessionId: string }>();
@@ -28,33 +29,17 @@ export default function SessionViewPage() {
   const [activeTab, setActiveTab] = useState<'chat' | 'ledger'>('chat');
   const [selectedEntry, setSelectedEntry] = useState<LedgerEntry | null>(null);
 
-  const { data: session, isLoading: sessionLoading } = useQuery({
-    queryKey: ['session', sessionId],
-    queryFn: () => api.getSession(sessionId!),
-    enabled: !!sessionId,
-  });
+  // Validate sessionId is a valid Convex ID
+  const isValidConvexId = sessionId && !sessionId.includes('-') && sessionId.length > 0;
+  const convexSessionId = isValidConvexId ? sessionId as Id<"sessions"> : undefined;
 
-  const { data: messages = [], isLoading: messagesLoading } = useQuery({
-    queryKey: ['session-messages', sessionId],
-    queryFn: async () => {
-      // Assuming the API returns messages
-      const response = await api.getSession(sessionId!);
-      return response.messages || [];
-    },
-    enabled: !!sessionId,
-  });
+  // Use Convex real-time query for session with ledger
+  const sessionWithLedger = useQuery(
+    api.sessions.getWithLedger,
+    convexSessionId ? { sessionId: convexSessionId } : "skip"
+  );
 
-  const { data: ledger, isLoading: ledgerLoading } = useQuery({
-    queryKey: ['session-ledger', sessionId],
-    queryFn: async () => {
-      // Assuming the API returns ledger data
-      const response = await api.getSession(sessionId!);
-      return response.ledger;
-    },
-    enabled: !!sessionId,
-  });
-
-  const isLoading = sessionLoading || messagesLoading || ledgerLoading;
+  const isLoading = sessionWithLedger === undefined && isValidConvexId;
 
   if (isLoading) {
     return (
@@ -64,7 +49,7 @@ export default function SessionViewPage() {
     );
   }
 
-  if (!session) {
+  if (!sessionWithLedger) {
     return (
       <div className="p-6 text-center">
         <h2 className="text-lg font-medium text-foreground">Session not found</h2>
@@ -75,6 +60,53 @@ export default function SessionViewPage() {
       </div>
     );
   }
+
+  // Build messages from session data
+  const messages: Message[] = [
+    {
+      id: `user-${sessionWithLedger._id}`,
+      role: 'user',
+      content: sessionWithLedger.query,
+      timestamp: new Date(sessionWithLedger._creationTime),
+    },
+  ];
+
+  if (sessionWithLedger.response) {
+    messages.push({
+      id: sessionWithLedger._id,
+      role: 'assistant',
+      content: sessionWithLedger.response,
+      timestamp: new Date(sessionWithLedger.completedAt ?? sessionWithLedger._creationTime),
+      isVerified: true,
+    });
+  }
+
+  // Build ledger from session data
+  const ledger: EvidenceLedger | null = sessionWithLedger.ledger && sessionWithLedger.ledger.length > 0 ? {
+    session_id: sessionWithLedger._id,
+    summary: {
+      total_claims: sessionWithLedger.ledger.length,
+      supported: sessionWithLedger.ledger.filter((e: any) => e?.verdict === 'supported').length,
+      weak: sessionWithLedger.ledger.filter((e: any) => e?.verdict === 'weak').length,
+      contradicted: sessionWithLedger.ledger.filter((e: any) => e?.verdict === 'contradicted').length,
+      not_found: sessionWithLedger.ledger.filter((e: any) => e?.verdict === 'not_found').length,
+      expert_verified: sessionWithLedger.ledger.filter((e: any) => e?.verdict === 'expert_verified').length,
+      conflict_flagged: sessionWithLedger.ledger.filter((e: any) => e?.verdict === 'conflict_flagged').length,
+    },
+    entries: sessionWithLedger.ledger.map((entry: any, index: number) => ({
+      id: `claim-${index}`,
+      claim_text: entry?.claimText ?? '',
+      claim_type: entry?.claimType ?? 'fact',
+      source_tag: entry?.sourceTag,
+      importance: entry?.importance ?? 'material',
+      verdict: entry?.verdict ?? 'not_found',
+      confidence: entry?.confidenceScore ?? 0,
+      evidence_snippet: entry?.evidenceSnippet,
+      expert_assessment: entry?.expertAssessment,
+      chunk_ids: [],
+    })),
+    risk_flags: [],
+  } : null;
 
   return (
     <div className="flex flex-col h-full bg-background">
@@ -88,21 +120,21 @@ export default function SessionViewPage() {
             <ArrowLeft className="w-5 h-5 text-muted-foreground" />
           </button>
           <div>
-            <h1 className="font-semibold text-foreground line-clamp-1">{session.query}</h1>
+            <h1 className="font-semibold text-foreground line-clamp-1">{sessionWithLedger.query}</h1>
             <div className="flex items-center gap-3 text-sm text-muted-foreground mt-0.5">
               <span className="flex items-center gap-1">
                 <Clock className="w-3.5 h-3.5" />
-                {new Date(session.created_at).toLocaleString()}
+                {new Date(sessionWithLedger._creationTime).toLocaleString()}
               </span>
               <span className="flex items-center gap-1">
-                {session.mode === 'answer' ? (
+                {sessionWithLedger.mode === 'answer' ? (
                   <MessageSquare className="w-3.5 h-3.5" />
                 ) : (
                   <FileText className="w-3.5 h-3.5" />
                 )}
-                {session.mode === 'answer' ? 'Answer' : 'Draft'} Mode
+                {sessionWithLedger.mode === 'answer' ? 'Answer' : 'Draft'} Mode
               </span>
-              <SessionStatusBadge status={session.status} />
+              <SessionStatusBadge status={sessionWithLedger.status} />
             </div>
           </div>
         </div>
@@ -180,7 +212,8 @@ export default function SessionViewPage() {
 function SessionStatusBadge({ status }: { status: string }) {
   const config = {
     completed: { icon: CheckCircle, label: 'Completed', color: 'text-green-600 bg-green-50' },
-    in_progress: { icon: Clock, label: 'In Progress', color: 'text-blue-600 bg-blue-50' },
+    processing: { icon: Clock, label: 'In Progress', color: 'text-blue-600 bg-blue-50' },
+    pending: { icon: Clock, label: 'Pending', color: 'text-amber-600 bg-amber-50' },
     error: { icon: XCircle, label: 'Error', color: 'text-red-600 bg-red-50' },
   };
 
@@ -333,6 +366,18 @@ function EntryDetailPanel({
   entry: LedgerEntry;
   onClose: () => void;
 }) {
+  // Parse source tag for display
+  const getSourceDisplay = (sourceTag?: string) => {
+    if (!sourceTag) return { label: 'Unknown', color: 'text-muted-foreground' };
+    if (sourceTag.startsWith('cite:')) return { label: `Document ${sourceTag.replace('cite:', '')}`, color: 'text-emerald-600' };
+    if (sourceTag === 'llm:writer') return { label: 'Writer LLM', color: 'text-blue-500' };
+    if (sourceTag === 'llm:skeptic') return { label: 'Skeptic LLM', color: 'text-purple-500' };
+    if (sourceTag === 'llm:judge') return { label: 'Judge LLM', color: 'text-indigo-500' };
+    return { label: sourceTag, color: 'text-muted-foreground' };
+  };
+
+  const sourceDisplay = getSourceDisplay(entry.source_tag);
+
   return (
     <div className="p-4 space-y-4">
       <div className="flex items-center justify-between">
@@ -354,6 +399,14 @@ function EntryDetailPanel({
         </div>
 
         <div className="flex gap-4">
+          <div>
+            <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+              Source
+            </label>
+            <p className={`text-sm font-medium mt-1 ${sourceDisplay.color}`}>
+              {sourceDisplay.label}
+            </p>
+          </div>
           <div>
             <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
               Verdict
@@ -379,6 +432,17 @@ function EntryDetailPanel({
             </label>
             <blockquote className="mt-1 p-3 bg-muted rounded-lg text-sm text-foreground border-l-2 border-primary">
               {entry.evidence_snippet}
+            </blockquote>
+          </div>
+        )}
+
+        {entry.expert_assessment && (
+          <div>
+            <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+              Expert Assessment
+            </label>
+            <blockquote className="mt-1 p-3 bg-indigo-500/10 rounded-lg text-sm text-foreground border-l-2 border-indigo-500">
+              {entry.expert_assessment}
             </blockquote>
           </div>
         )}

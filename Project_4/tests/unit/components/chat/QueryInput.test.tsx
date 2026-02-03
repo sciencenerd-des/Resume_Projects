@@ -8,7 +8,7 @@ describe('QueryInput', () => {
   describe('rendering', () => {
     test('renders textarea with placeholder', () => {
       render(<QueryInput value="" onChange={() => {}} onSubmit={() => {}} />);
-      expect(screen.getByPlaceholderText('Ask a question about your documents...')).toBeInTheDocument();
+      expect(screen.getByPlaceholderText('Message VerityDraft...')).toBeInTheDocument();
     });
 
     test('renders send button', () => {
@@ -117,7 +117,7 @@ describe('QueryInput', () => {
   describe('accessibility', () => {
     test('has aria-label on textarea', () => {
       render(<QueryInput value="" onChange={() => {}} onSubmit={() => {}} />);
-      expect(screen.getByRole('textbox')).toHaveAttribute('aria-label', 'Query input');
+      expect(screen.getByRole('textbox')).toHaveAttribute('aria-label', 'Message input');
     });
   });
 });

@@ -15,8 +15,8 @@ import {
   FolderOpen,
   BarChart3,
 } from "lucide-react"
-import { useWorkspace } from "@/hooks/useWorkspace"
-import { useAuth } from "@/hooks/useAuth"
+import { useConvexWorkspace } from "@/hooks/useConvexWorkspace"
+import { useConvexAuthState } from "@/hooks/useConvexAuth"
 import { useTheme } from "@/contexts/ThemeContext"
 import { cn } from "@/lib/utils"
 
@@ -27,8 +27,8 @@ interface CommandPaletteProps {
 
 export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
   const navigate = useNavigate()
-  const { currentWorkspace, workspaces } = useWorkspace()
-  const { signOut } = useAuth()
+  const { currentWorkspace, workspaces } = useConvexWorkspace()
+  const { signOut } = useConvexAuthState()
   const { theme, toggleTheme } = useTheme()
   const [search, setSearch] = React.useState("")
 
@@ -48,14 +48,14 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
         }
         if (e.key === "u") {
           e.preventDefault()
-          if (currentWorkspace?.id) {
-            navigate(`/workspaces/${currentWorkspace.id}/documents`)
+          if (currentWorkspace?._id) {
+            navigate(`/workspaces/${currentWorkspace._id}/documents`)
           }
         }
         if (e.key === "n") {
           e.preventDefault()
-          if (currentWorkspace?.id) {
-            navigate(`/workspaces/${currentWorkspace.id}/chat`)
+          if (currentWorkspace?._id) {
+            navigate(`/workspaces/${currentWorkspace._id}/chat`)
           }
         }
       }
@@ -110,7 +110,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
             {/* Navigation Group */}
             <Command.Group heading="Navigation" className="px-2 py-1.5">
               <Command.Item
-                onSelect={() => runCommand(() => currentWorkspace?.id && navigate(`/workspaces/${currentWorkspace.id}/chat`))}
+                onSelect={() => runCommand(() => currentWorkspace?._id && navigate(`/workspaces/${currentWorkspace._id}/chat`))}
                 className="flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer text-sm text-foreground hover:bg-accent/10 aria-selected:bg-accent/10"
               >
                 <MessageSquare className="h-4 w-4 text-muted-foreground" />
@@ -119,7 +119,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
               </Command.Item>
 
               <Command.Item
-                onSelect={() => runCommand(() => currentWorkspace?.id && navigate(`/workspaces/${currentWorkspace.id}/documents`))}
+                onSelect={() => runCommand(() => currentWorkspace?._id && navigate(`/workspaces/${currentWorkspace._id}/documents`))}
                 className="flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer text-sm text-foreground hover:bg-accent/10 aria-selected:bg-accent/10"
               >
                 <Upload className="h-4 w-4 text-muted-foreground" />
@@ -151,15 +151,15 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
             {workspaces && workspaces.length > 0 && (
               <>
                 <Command.Group heading="Workspaces" className="px-2 py-1.5">
-                  {workspaces.map((workspace: { id: string; name: string }) => (
+                  {workspaces.filter((w): w is NonNullable<typeof w> => w !== null).map((workspace) => (
                     <Command.Item
-                      key={workspace.id}
-                      onSelect={() => runCommand(() => navigate(`/workspaces/${workspace.id}`))}
+                      key={workspace._id}
+                      onSelect={() => runCommand(() => navigate(`/workspaces/${workspace._id}`))}
                       className="flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer text-sm text-foreground hover:bg-accent/10 aria-selected:bg-accent/10"
                     >
                       <FolderOpen className="h-4 w-4 text-muted-foreground" />
                       <span>{workspace.name}</span>
-                      {workspace.id === currentWorkspace?.id && (
+                      {workspace._id === currentWorkspace?._id && (
                         <span className="ml-auto text-xs text-primary">Current</span>
                       )}
                     </Command.Item>
@@ -185,7 +185,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
               </Command.Item>
 
               <Command.Item
-                onSelect={() => runCommand(() => signOut.mutate())}
+                onSelect={() => runCommand(() => signOut())}
                 className="flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer text-sm text-destructive hover:bg-destructive/10 aria-selected:bg-destructive/10"
               >
                 <LogOut className="h-4 w-4" />

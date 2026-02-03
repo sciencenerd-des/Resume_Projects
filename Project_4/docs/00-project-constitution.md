@@ -187,8 +187,8 @@ Multi-model routing through OpenRouter API:
 // Model configuration
 const models = {
   writer: "openai/gpt-5-nano",           // Fast, efficient drafting
-  skeptic: "moonshotai/kimi-k2-instruct", // Deep reasoning for critique
-  judge: "zhipu/glm-4.7",                // Reliable verification
+  skeptic: "z-ai/glm-4.7",               // Deep reasoning for critique
+  judge: "deepseek/deepseek-v3.2-speciale", // Reliable verification
   embeddings: "openai/text-embedding-3-small" // Via OpenAI directly
 };
 ```

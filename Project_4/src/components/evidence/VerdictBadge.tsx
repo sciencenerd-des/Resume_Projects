@@ -5,7 +5,7 @@
  */
 
 import * as React from "react"
-import { CheckCircle, AlertTriangle, XCircle, HelpCircle } from "lucide-react"
+import { CheckCircle, AlertTriangle, XCircle, HelpCircle, ShieldCheck, Flag } from "lucide-react"
 import { cn } from "@/lib/utils"
 import type { Verdict } from "@/types"
 
@@ -51,6 +51,20 @@ const verdictConfig: Record<Verdict, {
     bgClass: "bg-verdict-missing/10",
     textClass: "text-verdict-missing",
     borderClass: "border-verdict-missing/30",
+  },
+  expert_verified: {
+    label: "Expert Verified",
+    icon: ShieldCheck,
+    bgClass: "bg-teal-500/10",
+    textClass: "text-teal-500",
+    borderClass: "border-teal-500/30",
+  },
+  conflict_flagged: {
+    label: "Conflict Flagged",
+    icon: Flag,
+    bgClass: "bg-orange-500/10",
+    textClass: "text-orange-500",
+    borderClass: "border-orange-500/30",
   },
 }
 
@@ -103,6 +117,8 @@ export function VerdictDot({ verdict, className }: { verdict: Verdict; className
     weak: "bg-verdict-weak",
     contradicted: "bg-verdict-contradicted",
     not_found: "bg-verdict-missing",
+    expert_verified: "bg-teal-500",
+    conflict_flagged: "bg-orange-500",
   }
 
   return (

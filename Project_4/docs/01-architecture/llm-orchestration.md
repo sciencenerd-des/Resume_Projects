@@ -95,16 +95,16 @@ const modelConfig = {
   },
 
   skeptic: {
-    provider: "moonshot",
-    model: "moonshotai/kimi-k2-instruct",
+    provider: "z-ai",
+    model: "z-ai/glm-4.7",
     maxTokens: 8192,
     temperature: 0.3,
     costPer1kTokens: { input: 0.001, output: 0.004 }
   },
 
   judge: {
-    provider: "zhipu",
-    model: "zhipu/glm-4.7",
+    provider: "deepseek",
+    model: "deepseek/deepseek-v3.2-speciale",
     maxTokens: 4096,
     temperature: 0.2,  // Low temp for consistent structured output
     costPer1kTokens: { input: 0.002, output: 0.008 }
@@ -117,8 +117,8 @@ const modelConfig = {
 | Role | Model Choice | Reasoning |
 |------|--------------|-----------|
 | Writer | GPT-5 Nano | Fast, efficient drafting with quality output |
-| Skeptic | KimiK2 Thinking | Extended context, deep reasoning for critique |
-| Judge | GLM 4.7 | Reliable structured output, strong verification |
+| Skeptic | GLM 4.7 | Extended context, deep reasoning for critique |
+| Judge | DeepSeek V3.2 Speciale | Reliable structured output, strong verification |
 
 ---
 
@@ -614,11 +614,11 @@ const modelFallbacks = {
     "openai/gpt-4o",
     "anthropic/claude-3-5-sonnet-20241022"
   ],
-  "moonshotai/kimi-k2-instruct": [
+  "z-ai/glm-4.7": [
     "anthropic/claude-3-5-haiku-20241022",
     "openai/gpt-4o-mini"
   ],
-  "zhipu/glm-4.7": [
+  "deepseek/deepseek-v3.2-speciale": [
     "openai/gpt-4o",
     "anthropic/claude-3-5-sonnet-20241022"
   ]

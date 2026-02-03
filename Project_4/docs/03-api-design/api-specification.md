@@ -585,8 +585,8 @@ GET /admin/costs
     },
     "by_model": {
       "gpt-5-nano": { "tokens": 1500000, "cost_usd": 25.00 },
-      "kimi-k2-thinking": { "tokens": 800000, "cost_usd": 8.00 },
-      "glm-4.7": { "tokens": 600000, "cost_usd": 10.00 },
+      "glm-4.7": { "tokens": 800000, "cost_usd": 8.00 },
+      "deepseek-v3.2-speciale": { "tokens": 600000, "cost_usd": 10.00 },
       "text-embedding-3-small": { "tokens": 2000000, "cost_usd": 12.34 }
     }
   }

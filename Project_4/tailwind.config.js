@@ -55,6 +55,19 @@ export default {
           contradicted: "hsl(var(--verdict-contradicted))",
           missing: "hsl(var(--verdict-missing))",
         },
+        // Status colors
+        status: {
+          info: "hsl(var(--status-info))",
+          success: "hsl(var(--status-success))",
+          warning: "hsl(var(--status-warning))",
+          error: "hsl(var(--status-error))",
+        },
+        // Claim type colors
+        claim: {
+          factual: "hsl(var(--claim-factual))",
+          opinion: "hsl(var(--claim-opinion))",
+          statistical: "hsl(var(--claim-statistical))",
+        },
       },
       borderRadius: {
         lg: "var(--radius)",

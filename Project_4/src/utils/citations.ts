@@ -21,6 +21,8 @@ export function getVerdictColor(verdict: Verdict): string {
     weak: 'bg-amber-500',
     contradicted: 'bg-red-500',
     not_found: 'bg-gray-400',
+    expert_verified: 'bg-teal-500',
+    conflict_flagged: 'bg-orange-500',
   };
   return colors[verdict];
 }
@@ -31,6 +33,8 @@ export function getVerdictLabel(verdict: Verdict): string {
     weak: 'Weak',
     contradicted: 'Contradicted',
     not_found: 'Not Found',
+    expert_verified: 'Expert Verified',
+    conflict_flagged: 'Conflict Flagged',
   };
   return labels[verdict];
 }
@@ -45,9 +49,11 @@ export function highlightText(text: string, query: string): string {
 export function sortCitationsByVerdict(citations: Citation[]): Citation[] {
   const order: Record<Verdict, number> = {
     supported: 0,
-    weak: 1,
-    contradicted: 2,
-    not_found: 3,
+    expert_verified: 1,
+    weak: 2,
+    conflict_flagged: 3,
+    contradicted: 4,
+    not_found: 5,
   };
   return [...citations].sort((a, b) => {
     const verdictA = a.verdict || 'not_found';

@@ -8,8 +8,7 @@ hmr = true
 
 [test]
 preload = ["./tests/happy-dom-preload.ts", "./tests/mocks/setup-mocks.ts", "./tests/setup.ts"]
-# Exclude Playwright e2e tests - they use a different test runner
-exclude = ["tests/e2e/**", "**/e2e/**", "**/*.spec.ts"]
+# e2e tests use Playwright (.e2e.ts extension) - they're excluded by bun's default patterns
 coverage = true
 coverageDir = "./coverage"
 coverageReporters = ["text", "html", "lcov"]

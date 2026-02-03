@@ -1,50 +1,57 @@
 import { useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { Shield } from 'lucide-react';
-import { useAuth } from '../../hooks/useAuth';
-import { SignupForm } from '../../components/auth/SignupForm';
+import { SignUp } from '@clerk/clerk-react';
+import { useConvexAuthState } from '../../hooks/useConvexAuth';
 
 export default function SignupPage() {
   const navigate = useNavigate();
-  const { signUp, user } = useAuth();
+  const { isAuthenticated, isLoading } = useConvexAuthState();
 
   // Redirect when user is signed up and logged in
   useEffect(() => {
-    if (user) {
+    if (!isLoading && isAuthenticated) {
       navigate('/workspaces', { replace: true });
     }
-  }, [user, navigate]);
-
-  const handleSignup = async (email: string, password: string, _name: string) => {
-    await signUp.mutateAsync({ email, password });
-    // Navigation will happen via useEffect when user state updates
-  };
+  }, [isAuthenticated, isLoading, navigate]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen flex items-center justify-center bg-zinc-900 py-12 px-4 sm:px-6 lg:px-8">
       <div className="w-full max-w-md space-y-8">
         <div className="text-center">
           <div className="flex justify-center mb-4">
-            <div className="w-12 h-12 rounded-xl bg-blue-600 flex items-center justify-center">
-              <Shield className="w-7 h-7 text-white" />
+            <div className="w-12 h-12 rounded-xl bg-amber-500 flex items-center justify-center">
+              <Shield className="w-7 h-7 text-zinc-900" />
             </div>
           </div>
-          <h1 className="text-3xl font-bold text-gray-900">Create your account</h1>
-          <p className="mt-2 text-gray-600">
+          <h1 className="text-3xl font-bold text-zinc-100">Create your account</h1>
+          <p className="mt-2 text-zinc-400">
             Start verifying your documents with AI-powered evidence tracking
           </p>
         </div>
 
-        <div className="bg-white py-8 px-6 shadow-sm rounded-xl border border-gray-200">
-          <SignupForm onSubmit={handleSignup} isLoading={signUp.isPending} />
+        <div className="flex justify-center">
+          <SignUp
+            routing="path"
+            path="/signup"
+            signInUrl="/login"
+            fallbackRedirectUrl="/workspaces"
+            appearance={{
+              elements: {
+                rootBox: "w-full",
+                card: "bg-zinc-800 border border-zinc-700 shadow-xl",
+                headerTitle: "text-zinc-100",
+                headerSubtitle: "text-zinc-400",
+                socialButtonsBlockButton: "bg-zinc-700 border-zinc-600 text-zinc-100 hover:bg-zinc-600",
+                formFieldLabel: "text-zinc-300",
+                formFieldInput: "bg-zinc-700 border-zinc-600 text-zinc-100",
+                formButtonPrimary: "bg-amber-500 hover:bg-amber-600 text-zinc-900",
+                footerActionLink: "text-amber-500 hover:text-amber-400",
+                identityPreviewEditButton: "text-amber-500",
+              },
+            }}
+          />
         </div>
-
-        <p className="text-center text-sm text-gray-600">
-          Already have an account?{' '}
-          <Link to="/login" className="font-medium text-blue-600 hover:text-blue-500">
-            Sign in
-          </Link>
-        </p>
       </div>
     </div>
   );

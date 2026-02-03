@@ -1,179 +1,85 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { useParams } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
-import { MessageSquare, Shield, FileText, AlertCircle, Search, Sparkles, Scale, RefreshCw } from 'lucide-react';
+import React, { useState, useCallback } from 'react';
+import { useParams, Link } from 'react-router-dom';
+import { useQuery } from 'convex/react';
+import { api } from '../../../convex/_generated/api';
+import type { Id } from '../../../convex/_generated/dataModel';
+import {
+  Sparkles,
+  FileText,
+  AlertCircle,
+  Search,
+  Scale,
+  RefreshCw,
+  Upload,
+  BookOpen,
+  ShieldCheck,
+  PenLine
+} from 'lucide-react';
 import { useWorkspace } from '../../contexts/WorkspaceContext';
-import { useWebSocket } from '../../hooks/useWebSocket';
-import { api } from '../../services/api';
+import { useConvexChat } from '../../hooks/useConvexChat';
 import { MessageList } from '../../components/chat/MessageList';
 import { QueryInput } from '../../components/chat/QueryInput';
 import { ModeToggle, QueryMode } from '../../components/chat/ModeToggle';
 import { Spinner } from '../../components/ui/Spinner';
-import type { Message, Citation, LedgerEntry, EvidenceLedger } from '../../types';
 
 // Pipeline phases for progress tracking
 type PipelinePhase = 'idle' | 'retrieval' | 'writer' | 'skeptic' | 'judge' | 'revision' | 'complete';
 
 export default function ChatPage() {
   const { workspaceId } = useParams<{ workspaceId: string }>();
-  const { currentWorkspace } = useWorkspace();
-  const { isConnected, on, off, send } = useWebSocket();
 
-  const [messages, setMessages] = useState<Message[]>([]);
+  // Validate workspaceId is a valid Convex ID
+  const isValidConvexId = workspaceId && !workspaceId.includes('-') && workspaceId.length > 0;
+  const convexWorkspaceId = isValidConvexId ? workspaceId as Id<"workspaces"> : undefined;
+
+  // Use Convex-based chat hook
+  const {
+    messages,
+    isProcessing,
+    currentPhase,
+    error,
+    progress,
+    streamingContent,
+    chunksRetrieved,
+    submitQuery,
+    clearError,
+  } = useConvexChat(convexWorkspaceId);
+
   const [query, setQuery] = useState('');
   const [mode, setMode] = useState<QueryMode>('answer');
-  const [isStreaming, setIsStreaming] = useState(false);
-  const [streamingContent, setStreamingContent] = useState('');
-  const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
-  const [ledger, setLedger] = useState<EvidenceLedger | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [pipelinePhase, setPipelinePhase] = useState<PipelinePhase>('idle');
-  const [chunksRetrieved, setChunksRetrieved] = useState<number>(0);
 
   // Check if workspace has documents
-  const { data: documents = [] } = useQuery({
-    queryKey: ['documents', workspaceId],
-    queryFn: () => api.getDocuments(workspaceId!),
-    enabled: !!workspaceId,
-  });
+  const documents = useQuery(
+    api.documents.list,
+    isValidConvexId ? { workspaceId: workspaceId as Id<"workspaces"> } : "skip"
+  );
 
-  const hasDocuments = documents.length > 0;
-  const readyDocuments = documents.filter((d: any) => d.status === 'ready').length;
-
-  // WebSocket event handlers
-  useEffect(() => {
-    const handleSessionCreated = (payload: any) => {
-      setCurrentSessionId(payload.session_id);
-      setIsStreaming(true);
-      setStreamingContent('');
-      setPipelinePhase('retrieval');
-      setChunksRetrieved(0);
-    };
-
-    const handleRetrievalStarted = () => {
-      setPipelinePhase('retrieval');
-    };
-
-    const handleRetrievalComplete = (payload: any) => {
-      setChunksRetrieved(payload.chunksRetrieved || 0);
-    };
-
-    const handleGenerationStarted = (payload: any) => {
-      setPipelinePhase(payload.phase || 'writer');
-    };
-
-    const handleRevisionStarted = (payload: any) => {
-      setPipelinePhase('revision');
-    };
-
-    const handleContentChunk = (payload: any) => {
-      setStreamingContent((prev) => prev + payload.delta);
-    };
-
-    const handleClaimVerified = (payload: any) => {
-      // Update ledger with new claim
-      setLedger((prev) => {
-        if (!prev) return prev;
-        return {
-          ...prev,
-          entries: [...prev.entries, payload.claim],
-        };
-      });
-    };
-
-    const handleLedgerUpdated = (payload: unknown) => {
-      setLedger(payload as EvidenceLedger);
-    };
-
-    const handleGenerationComplete = (payload: any) => {
-      setPipelinePhase('complete');
-
-      // Use the response from payload if streamingContent is empty
-      // (this happens when no chunks are found and no LLM is called)
-      const responseContent = streamingContent || payload.response || 'No response generated.';
-
-      // Add the complete message to the list
-      const assistantMessage: Message = {
-        id: payload.sessionId || payload.session_id,
-        role: 'assistant',
-        content: responseContent,
-        timestamp: new Date(),
-      };
-      setMessages((prev) => [...prev, assistantMessage]);
-      setStreamingContent('');
-      setIsStreaming(false);
-
-      // Reset phase after a short delay
-      setTimeout(() => setPipelinePhase('idle'), 500);
-    };
-
-    const handleError = (payload: any) => {
-      setError(payload.message);
-      setIsStreaming(false);
-      setPipelinePhase('idle');
-    };
-
-    on('session_created', handleSessionCreated);
-    on('retrieval_started', handleRetrievalStarted);
-    on('retrieval_complete', handleRetrievalComplete);
-    on('generation_started', handleGenerationStarted);
-    on('revision_started', handleRevisionStarted);
-    on('content_chunk', handleContentChunk);
-    on('claim_verified', handleClaimVerified);
-    on('ledger_updated', handleLedgerUpdated);
-    on('generation_complete', handleGenerationComplete);
-    on('error', handleError);
-
-    return () => {
-      off('session_created', handleSessionCreated);
-      off('retrieval_started', handleRetrievalStarted);
-      off('retrieval_complete', handleRetrievalComplete);
-      off('generation_started', handleGenerationStarted);
-      off('revision_started', handleRevisionStarted);
-      off('content_chunk', handleContentChunk);
-      off('claim_verified', handleClaimVerified);
-      off('ledger_updated', handleLedgerUpdated);
-      off('generation_complete', handleGenerationComplete);
-      off('error', handleError);
-    };
-  }, [on, off, streamingContent]);
+  const hasDocuments = (documents ?? []).length > 0;
+  const readyDocuments = (documents ?? []).filter((d) => d.status === 'ready').length;
 
   const handleSubmit = useCallback(() => {
-    if (!query.trim() || !workspaceId || isStreaming) return;
-
-    if (!isConnected) {
-      setError('Not connected to server. Please wait and try again.');
-      return;
-    }
-
-    setError(null);
-
-    // Add user message
-    const userMessage: Message = {
-      id: `user-${Date.now()}`,
-      role: 'user',
-      content: query,
-      timestamp: new Date(),
-    };
-    setMessages((prev) => [...prev, userMessage]);
-
-    // Send query via WebSocket
-    send({
-      type: 'query',
-      payload: {
-        workspace_id: workspaceId,
-        query: query.trim(),
-        mode,
-      },
-    });
-
+    if (!query.trim() || isProcessing) return;
+    submitQuery(query.trim(), mode);
     setQuery('');
-  }, [query, workspaceId, mode, isStreaming, isConnected, send]);
+  }, [query, mode, isProcessing, submitQuery]);
+
+  const handleRegenerate = useCallback(() => {
+    // Get the last user message and resubmit
+    const lastUserMessage = [...messages].reverse().find(m => m.role === 'user');
+    if (lastUserMessage) {
+      submitQuery(lastUserMessage.content, mode);
+    }
+  }, [messages, mode, submitQuery]);
 
   const handleCitationClick = (chunkId: string) => {
-    // TODO: Open chunk viewer modal
+    // TODO: Open citation viewer modal
     console.log('Citation clicked:', chunkId);
   };
+
+  // Map progress phase to pipeline phase
+  const pipelinePhase: PipelinePhase = isProcessing
+    ? (currentPhase as PipelinePhase) || 'retrieval'
+    : 'idle';
 
   if (!hasDocuments) {
     return <EmptyDocumentsState workspaceId={workspaceId!} />;
@@ -181,67 +87,74 @@ export default function ChatPage() {
 
   return (
     <div className="flex flex-col h-full bg-background">
-      {/* Header */}
-      <div className="flex items-center justify-between px-6 py-4 bg-card border-b border-border">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-            <MessageSquare className="w-5 h-5 text-primary" />
+      {/* Minimal Header */}
+      <header className="flex items-center justify-between px-4 py-3 border-b border-border bg-background/95 backdrop-blur-sm">
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center">
+            <Sparkles className="w-4 h-4 text-white" />
           </div>
-          <div>
-            <h1 className="font-semibold text-foreground">Chat</h1>
-            <p className="text-xs text-muted-foreground">
-              {readyDocuments} document{readyDocuments !== 1 ? 's' : ''} indexed
-            </p>
-          </div>
+          <span className="font-semibold text-foreground">VerityDraft</span>
+          <span className="text-xs text-muted-foreground px-2 py-0.5 bg-muted rounded-full">
+            {readyDocuments} doc{readyDocuments !== 1 ? 's' : ''}
+          </span>
         </div>
 
-        <div className="flex items-center gap-4">
-          <ModeToggle mode={mode} onChange={setMode} />
-
-          {!isConnected && (
-            <div className="flex items-center gap-1 text-sm text-amber-600">
-              <div className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
-              Reconnecting...
-            </div>
-          )}
-        </div>
-      </div>
+        <ModeToggle mode={mode} onChange={setMode} />
+      </header>
 
       {/* Error Banner */}
       {error && (
-        <div className="mx-6 mt-4 flex items-center gap-2 p-3 text-sm text-destructive bg-destructive/10 rounded-lg border border-destructive/20">
-          <AlertCircle className="w-4 h-4 flex-shrink-0" />
-          {error}
+        <div className="max-w-3xl mx-auto w-full px-4 pt-4">
+          <div className="flex items-center justify-between gap-2 p-3 text-sm text-destructive bg-destructive/10 rounded-lg border border-destructive/20">
+            <div className="flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 flex-shrink-0" />
+              {error}
+            </div>
+            <button
+              onClick={clearError}
+              className="text-destructive/70 hover:text-destructive text-xs font-medium px-2 py-1 rounded hover:bg-destructive/10"
+            >
+              Dismiss
+            </button>
+          </div>
         </div>
       )}
 
-      {/* Pipeline Progress Indicator */}
-      {isStreaming && pipelinePhase !== 'idle' && (
-        <PipelineProgress phase={pipelinePhase} chunksRetrieved={chunksRetrieved} />
-      )}
+      {/* Main Content */}
+      <div className="flex-1 overflow-y-auto">
+        {messages.length === 0 && !isProcessing ? (
+          <WelcomeState mode={mode} />
+        ) : (
+          <>
+            {/* Pipeline Progress - Minimal sticky bar */}
+            {isProcessing && pipelinePhase !== 'idle' && (
+              <PipelineProgress
+                phase={pipelinePhase}
+                chunksRetrieved={chunksRetrieved}
+              />
+            )}
 
-      {/* Messages Area */}
-      {messages.length === 0 && !isStreaming ? (
-        <WelcomeState mode={mode} />
-      ) : (
-        <MessageList
-          messages={messages}
-          isStreaming={isStreaming}
-          streamingContent={streamingContent}
-          onCitationClick={handleCitationClick}
-          className="flex-1"
-        />
-      )}
+            <MessageList
+              messages={messages}
+              isStreaming={isProcessing}
+              streamingContent={streamingContent}
+              onCitationClick={handleCitationClick}
+              onRegenerate={handleRegenerate}
+            />
+          </>
+        )}
+      </div>
 
       {/* Input Area */}
       <QueryInput
         value={query}
         onChange={setQuery}
         onSubmit={handleSubmit}
-        disabled={isStreaming || !isConnected}
+        disabled={isProcessing}
+        isLoading={isProcessing}
         placeholder={
           mode === 'answer'
-            ? 'Ask a question about your documents...'
+            ? 'Ask about your documents...'
             : 'Describe what you want to draft...'
         }
       />
@@ -252,26 +165,40 @@ export default function ChatPage() {
 function WelcomeState({ mode }: { mode: QueryMode }) {
   return (
     <div className="flex-1 flex items-center justify-center p-6">
-      <div className="text-center max-w-lg">
-        <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-6">
-          <Shield className="w-8 h-8 text-primary" />
+      <div className="text-center max-w-lg space-y-8">
+        {/* Logo */}
+        <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center mx-auto shadow-lg shadow-emerald-500/20">
+          <Sparkles className="w-10 h-10 text-white" />
         </div>
-        <h2 className="text-xl font-semibold text-foreground mb-2">
-          {mode === 'answer' ? 'Ask Evidence-Backed Questions' : 'Create Verified Drafts'}
-        </h2>
-        <p className="text-muted-foreground mb-6">
-          {mode === 'answer'
-            ? 'Get accurate answers with citations from your documents. Every claim is verified against your source materials.'
-            : 'Generate comprehensive drafts with automatic fact-checking. Each statement is traced back to evidence.'}
-        </p>
-        <div className="flex items-center justify-center gap-6 text-sm text-muted-foreground/70">
-          <div className="flex items-center gap-2">
-            <FileText className="w-4 h-4" />
-            Sourced from your docs
+
+        {/* Heading */}
+        <div className="space-y-2">
+          <h1 className="text-2xl font-semibold text-foreground">
+            {mode === 'answer' ? 'What would you like to know?' : 'What would you like to draft?'}
+          </h1>
+          <p className="text-muted-foreground">
+            {mode === 'answer'
+              ? 'Ask questions and get verified answers from your documents.'
+              : 'Create evidence-backed drafts with automatic fact-checking.'}
+          </p>
+        </div>
+
+        {/* Feature highlights */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+          <div className="flex flex-col items-center gap-2 p-4 rounded-xl bg-muted/30 border border-border">
+            <BookOpen className="w-5 h-5 text-emerald-500" />
+            <span className="text-foreground font-medium">Document-grounded</span>
+            <span className="text-muted-foreground text-xs">Every claim traced to sources</span>
           </div>
-          <div className="flex items-center gap-2">
-            <Shield className="w-4 h-4" />
-            Evidence verified
+          <div className="flex flex-col items-center gap-2 p-4 rounded-xl bg-muted/30 border border-border">
+            <ShieldCheck className="w-5 h-5 text-teal-500" />
+            <span className="text-foreground font-medium">Triple-verified</span>
+            <span className="text-muted-foreground text-xs">3 LLMs check each response</span>
+          </div>
+          <div className="flex flex-col items-center gap-2 p-4 rounded-xl bg-muted/30 border border-border">
+            <PenLine className="w-5 h-5 text-blue-500" />
+            <span className="text-foreground font-medium">Expert knowledge</span>
+            <span className="text-muted-foreground text-xs">Fills gaps with cited expertise</span>
           </div>
         </div>
       </div>
@@ -281,115 +208,90 @@ function WelcomeState({ mode }: { mode: QueryMode }) {
 
 function EmptyDocumentsState({ workspaceId }: { workspaceId: string }) {
   return (
-    <div className="flex-1 flex items-center justify-center p-6">
-      <div className="text-center max-w-md">
-        <div className="w-16 h-16 rounded-2xl bg-muted flex items-center justify-center mx-auto mb-6">
-          <FileText className="w-8 h-8 text-muted-foreground" />
+    <div className="flex-1 flex items-center justify-center p-6 bg-background">
+      <div className="text-center max-w-md space-y-6">
+        <div className="w-20 h-20 rounded-2xl bg-muted flex items-center justify-center mx-auto">
+          <FileText className="w-10 h-10 text-muted-foreground" />
         </div>
-        <h2 className="text-xl font-semibold text-foreground mb-2">No Documents Yet</h2>
-        <p className="text-muted-foreground mb-6">
-          Upload some documents first to start asking questions. VerityDraft uses your documents as
-          the source of truth for all answers.
-        </p>
-        <a
-          href={`/workspaces/${workspaceId}/documents`}
-          className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
+        <div className="space-y-2">
+          <h2 className="text-xl font-semibold text-foreground">No documents yet</h2>
+          <p className="text-muted-foreground">
+            Upload some documents to start asking questions. VerityDraft uses your documents as the source of truth.
+          </p>
+        </div>
+        <Link
+          to={`/workspaces/${workspaceId}/documents`}
+          className="inline-flex items-center gap-2 px-5 py-2.5 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors font-medium"
         >
-          <FileText className="w-4 h-4" />
+          <Upload className="w-4 h-4" />
           Upload Documents
-        </a>
+        </Link>
       </div>
     </div>
   );
 }
 
-// Pipeline progress indicator
+// Minimal pipeline progress indicator
 const PIPELINE_STEPS = [
-  { phase: 'retrieval', label: 'Searching documents', icon: Search },
-  { phase: 'writer', label: 'Generating response', icon: Sparkles },
-  { phase: 'skeptic', label: 'Analyzing claims', icon: AlertCircle },
-  { phase: 'judge', label: 'Verifying evidence', icon: Scale },
-  { phase: 'revision', label: 'Revising response', icon: RefreshCw },
+  { phase: 'retrieval', label: 'Searching', icon: Search },
+  { phase: 'writer', label: 'Writing', icon: Sparkles },
+  { phase: 'skeptic', label: 'Analyzing', icon: AlertCircle },
+  { phase: 'judge', label: 'Verifying', icon: Scale },
+  { phase: 'revision', label: 'Revising', icon: RefreshCw },
 ] as const;
 
-function PipelineProgress({ phase, chunksRetrieved }: { phase: PipelinePhase; chunksRetrieved: number }) {
+function PipelineProgress({
+  phase,
+  chunksRetrieved,
+}: {
+  phase: PipelinePhase;
+  chunksRetrieved: number;
+}) {
   const currentIndex = PIPELINE_STEPS.findIndex((s) => s.phase === phase);
   const currentStep = PIPELINE_STEPS.find((s) => s.phase === phase);
 
   if (phase === 'idle' || phase === 'complete') return null;
 
+  const progressPercent = Math.max(10, ((currentIndex + 1) / PIPELINE_STEPS.length) * 100);
+
   return (
-    <div className="mx-6 my-4">
-      <div className="bg-card rounded-xl border border-border shadow-sm overflow-hidden">
-        {/* Progress bar */}
-        <div className="h-1 bg-muted">
-          <div
-            className="h-full bg-gradient-to-r from-primary to-primary/70 transition-all duration-500 ease-out"
-            style={{
-              width: `${Math.max(10, ((currentIndex + 1) / PIPELINE_STEPS.length) * 100)}%`,
-            }}
-          />
+    <div className="sticky top-0 z-20 bg-background/95 backdrop-blur-sm border-b border-border">
+      {/* Thin progress bar */}
+      <div className="h-0.5 bg-muted">
+        <div
+          className="h-full bg-gradient-to-r from-emerald-500 to-teal-500 transition-all duration-500 ease-out"
+          style={{ width: `${progressPercent}%` }}
+        />
+      </div>
+
+      {/* Status row */}
+      <div className="max-w-3xl mx-auto px-4 py-2 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          {currentStep && <currentStep.icon className="w-4 h-4 text-emerald-500 animate-pulse" />}
+          <span className="text-sm font-medium text-foreground">{currentStep?.label}...</span>
+          {phase === 'retrieval' && chunksRetrieved > 0 && (
+            <span className="text-xs text-muted-foreground">
+              ({chunksRetrieved} chunk{chunksRetrieved !== 1 ? 's' : ''})
+            </span>
+          )}
         </div>
 
-        <div className="px-4 py-3">
-          {/* Current step */}
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
-              {currentStep && <currentStep.icon className="w-4 h-4 text-primary animate-pulse" />}
-            </div>
-            <div className="flex-1">
-              <p className="text-sm font-medium text-foreground">
-                {currentStep?.label || 'Processing...'}
-              </p>
-              {phase === 'retrieval' && chunksRetrieved > 0 && (
-                <p className="text-xs text-muted-foreground">
-                  Found {chunksRetrieved} relevant chunk{chunksRetrieved !== 1 ? 's' : ''}
-                </p>
-              )}
-            </div>
-            <Spinner className="w-5 h-5 text-primary" />
-          </div>
-
-          {/* Step indicators */}
-          <div className="flex items-center gap-1 mt-3 pt-3 border-t border-border">
-            {PIPELINE_STEPS.map((step, index) => {
-              const isActive = index === currentIndex;
-              const isComplete = index < currentIndex;
-
-              return (
-                <div key={step.phase} className="flex items-center flex-1">
-                  <div
-                    className={`h-1.5 flex-1 rounded-full transition-colors duration-300 ${
-                      isComplete
-                        ? 'bg-primary'
-                        : isActive
-                          ? 'bg-primary/50 animate-pulse'
-                          : 'bg-muted'
-                    }`}
-                  />
-                </div>
-              );
-            })}
-          </div>
-
-          {/* Step labels */}
-          <div className="flex justify-between mt-1.5">
-            {PIPELINE_STEPS.map((step, index) => {
-              const isActive = index === currentIndex;
-              const isComplete = index < currentIndex;
-
-              return (
-                <span
-                  key={step.phase}
-                  className={`text-[10px] ${
-                    isActive ? 'text-primary font-medium' : isComplete ? 'text-muted-foreground' : 'text-muted-foreground/50'
-                  }`}
-                >
-                  {step.label.split(' ')[0]}
-                </span>
-              );
-            })}
-          </div>
+        {/* Step dots */}
+        <div className="flex items-center gap-1">
+          {PIPELINE_STEPS.map((step, index) => (
+            <div
+              key={step.phase}
+              className={`
+                w-1.5 h-1.5 rounded-full transition-colors duration-300
+                ${index < currentIndex
+                  ? 'bg-emerald-500'
+                  : index === currentIndex
+                    ? 'bg-emerald-500/50 animate-pulse'
+                    : 'bg-muted-foreground/30'
+                }
+              `}
+            />
+          ))}
         </div>
       </div>
     </div>

@@ -39,6 +39,17 @@
     --verdict-weak: 38 92% 50%;
     --verdict-contradicted: 0 84% 60%;
     --verdict-missing: 240 5% 46%;
+
+    /* Status semantics (use verdict colors for consistency) */
+    --status-info: var(--primary);
+    --status-success: var(--verdict-supported);
+    --status-warning: var(--verdict-weak);
+    --status-error: var(--destructive);
+
+    /* Claim type colors */
+    --claim-factual: 217 91% 60%;
+    --claim-opinion: 270 67% 58%;
+    --claim-statistical: 142 76% 36%;
   }
 
   .light {
@@ -69,6 +80,11 @@
     --border: 240 6% 90%;
     --input: 240 6% 90%;
     --ring: 160 84% 39%;
+
+    /* Claim types (same in light mode for now) */
+    --claim-factual: 217 91% 60%;
+    --claim-opinion: 270 67% 58%;
+    --claim-statistical: 142 76% 36%;
   }
 }
 

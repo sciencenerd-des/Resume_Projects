@@ -85,16 +85,16 @@ export function CitationPopover({
       {isOpen && (
         <div
           ref={popoverRef}
-          className="fixed z-50 w-80 bg-white rounded-lg shadow-xl border border-gray-200 overflow-hidden"
+          className="fixed z-50 w-80 bg-card rounded-lg shadow-xl border border-border overflow-hidden"
           style={{ top: position.top, left: position.left }}
           onMouseEnter={() => setIsOpen(true)}
           onMouseLeave={() => setIsOpen(false)}
         >
           {/* Header */}
-          <div className="px-4 py-3 bg-gray-50 border-b border-gray-100 flex items-center justify-between">
+          <div className="px-4 py-3 bg-muted/50 border-b border-border flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <FileText className="w-4 h-4 text-gray-500" />
-              <span className="text-sm font-medium text-gray-900 truncate max-w-[180px]">
+              <FileText className="w-4 h-4 text-muted-foreground" />
+              <span className="text-sm font-medium text-foreground truncate max-w-[180px]">
                 {documentName || 'Source Document'}
               </span>
             </div>
@@ -106,11 +106,11 @@ export function CitationPopover({
           {/* Content */}
           <div className="p-4">
             {evidenceSnippet ? (
-              <blockquote className="text-sm text-gray-700 leading-relaxed border-l-2 border-blue-400 pl-3 italic">
+              <blockquote className="text-sm text-foreground leading-relaxed border-l-2 border-primary pl-3 italic">
                 "{evidenceSnippet}"
               </blockquote>
             ) : (
-              <p className="text-sm text-gray-400 italic">
+              <p className="text-sm text-muted-foreground italic">
                 No evidence snippet available
               </p>
             )}
@@ -118,10 +118,10 @@ export function CitationPopover({
 
           {/* Footer */}
           {onViewSource && (
-            <div className="px-4 py-2 bg-gray-50 border-t border-gray-100">
+            <div className="px-4 py-2 bg-muted/50 border-t border-border">
               <button
                 onClick={onViewSource}
-                className="flex items-center gap-1.5 text-sm text-blue-600 hover:text-blue-700 font-medium"
+                className="flex items-center gap-1.5 text-sm text-primary hover:text-primary/80 font-medium"
               >
                 View in document
                 <ExternalLink className="w-3.5 h-3.5" />

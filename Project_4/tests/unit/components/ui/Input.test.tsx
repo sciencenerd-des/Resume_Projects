@@ -72,7 +72,7 @@ describe('Input', () => {
     test('applies error styles', () => {
       render(<Input error="Invalid" />);
       const input = screen.getByRole('textbox');
-      expect(input).toHaveClass('border-red-500');
+      expect(input).toHaveClass('border-destructive');
     });
   });
 

@@ -1,36 +1,18 @@
 import React from 'react';
 import { render, RenderOptions } from '@testing-library/react';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { BrowserRouter } from 'react-router-dom';
-import { AuthProvider } from '../../src/contexts/AuthContext';
 import { ThemeProvider } from '../../src/contexts/ThemeContext';
 
-// Create test query client
-export function createTestQueryClient() {
-  return new QueryClient({
-    defaultOptions: {
-      queries: {
-        retry: false,
-        gcTime: 0,
-      },
-      mutations: {
-        retry: false,
-      },
-    },
-  });
-}
-
-// Custom render with providers
+// Custom render with providers for Convex-based app
+// Note: For full Convex testing, use ConvexProvider with a test client
 export function renderWithProviders(
   ui: React.ReactElement,
   options?: {
-    queryClient?: QueryClient;
     route?: string;
     renderOptions?: Omit<RenderOptions, 'wrapper'>;
   }
 ) {
   const {
-    queryClient = createTestQueryClient(),
     route = '/',
     renderOptions = {},
   } = options ?? {};
@@ -38,18 +20,15 @@ export function renderWithProviders(
   window.history.pushState({}, 'Test page', route);
 
   const Wrapper = ({ children }: { children: React.ReactNode }) => (
-    <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
-        <ThemeProvider>
-          <AuthProvider>{children}</AuthProvider>
-        </ThemeProvider>
-      </BrowserRouter>
-    </QueryClientProvider>
+    <BrowserRouter>
+      <ThemeProvider>
+        {children}
+      </ThemeProvider>
+    </BrowserRouter>
   );
 
   return {
     ...render(ui, { wrapper: Wrapper, ...renderOptions }),
-    queryClient,
   };
 }
 
@@ -58,35 +37,31 @@ export async function waitForLoadingToFinish() {
   await new Promise(resolve => setTimeout(resolve, 0));
 }
 
-// Mock user data
+// Mock user data (Clerk format)
 export const mockUser = {
-  id: 'user-1',
-  email: 'test@example.com',
-  created_at: '2026-01-01T00:00:00Z',
+  id: 'user_test123',
+  emailAddresses: [{ emailAddress: 'test@example.com' }],
+  firstName: 'Test',
+  lastName: 'User',
 };
 
-// Mock auth token
-export const mockAuthToken = 'mock-jwt-token';
-
-// Mock workspace data
+// Mock workspace data (Convex format)
 export const mockWorkspace = {
-  id: 'workspace-1',
+  _id: 'workspace_test123' as any,
   name: 'Test Workspace',
-  owner_id: 'user-1',
-  created_at: '2026-01-01T00:00:00Z',
-  updated_at: '2026-01-01T00:00:00Z',
+  ownerId: 'user_test123',
+  _creationTime: Date.now(),
 };
 
-// Mock document data
+// Mock document data (Convex format)
 export const mockDocument = {
-  id: 'doc-1',
-  workspace_id: 'workspace-1',
+  _id: 'doc_test123' as any,
+  workspaceId: 'workspace_test123',
   filename: 'test.pdf',
-  file_type: 'pdf' as const,
+  fileType: 'pdf' as const,
   status: 'ready' as const,
-  chunk_count: 10,
-  created_at: '2026-01-01T00:00:00Z',
-  updated_at: '2026-01-01T00:00:00Z',
+  chunkCount: 10,
+  _creationTime: Date.now(),
 };
 
 // Mock message data

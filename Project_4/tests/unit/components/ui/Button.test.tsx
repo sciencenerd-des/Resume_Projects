@@ -1,5 +1,5 @@
 import React from 'react';
-import { describe, test, expect, beforeEach, afterEach } from 'bun:test';
+import { describe, test, expect } from 'bun:test';
 import { render, screen, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { Button } from '@/components/ui/button';
@@ -10,31 +10,31 @@ describe('Button', () => {
       render(<Button>Click me</Button>);
       const button = screen.getByRole('button');
       expect(button).toBeInTheDocument();
-      expect(button).toHaveClass('bg-blue-600');
+      expect(button).toHaveClass('bg-primary');
     });
 
     test('renders with primary variant', () => {
       render(<Button variant="primary">Primary</Button>);
       const button = screen.getByRole('button');
-      expect(button).toHaveClass('bg-blue-600');
+      expect(button).toHaveClass('bg-primary');
     });
 
     test('renders with secondary variant', () => {
       render(<Button variant="secondary">Secondary</Button>);
       const button = screen.getByRole('button');
-      expect(button).toHaveClass('bg-gray-100');
+      expect(button).toHaveClass('bg-secondary');
     });
 
     test('renders with ghost variant', () => {
       render(<Button variant="ghost">Ghost</Button>);
       const button = screen.getByRole('button');
-      expect(button).toHaveClass('bg-transparent');
+      expect(button).toHaveClass('hover:bg-accent');
     });
 
     test('renders with danger variant', () => {
       render(<Button variant="danger">Delete</Button>);
       const button = screen.getByRole('button');
-      expect(button).toHaveClass('bg-red-600');
+      expect(button).toHaveClass('bg-destructive');
     });
   });
 
@@ -43,54 +43,52 @@ describe('Button', () => {
       render(<Button disabled>Disabled</Button>);
       const button = screen.getByRole('button');
       expect(button).toBeDisabled();
-      expect(button).toHaveClass('disabled:cursor-not-allowed', 'disabled:opacity-50');
+      expect(button).toHaveClass('disabled:pointer-events-none', 'disabled:opacity-50');
     });
 
     test('shows loading state when loading is true', () => {
       render(<Button loading>Loading</Button>);
       const button = screen.getByRole('button');
       expect(button).toBeDisabled();
-      // Check for SVG spinner element (no role="img" on SVGs in happy-dom)
-      expect(button.querySelector('svg')).toBeInTheDocument();
+      // Loading shows dots animation
+      expect(button.querySelector('.animate-bounce')).toBeInTheDocument();
     });
 
     test('applies correct classes for different sizes', () => {
       const { rerender } = render(<Button size="sm">Small</Button>);
-      expect(screen.getByRole('button')).toHaveClass('px-3', 'py-1.5', 'text-sm');
+      expect(screen.getByRole('button')).toHaveClass('h-9', 'px-3');
 
       rerender(<Button size="md">Medium</Button>);
-      expect(screen.getByRole('button')).toHaveClass('px-4', 'py-2', 'text-sm');
+      expect(screen.getByRole('button')).toHaveClass('h-10', 'px-4', 'py-2');
 
       rerender(<Button size="lg">Large</Button>);
-      expect(screen.getByRole('button')).toHaveClass('px-6', 'py-3', 'text-base');
+      expect(screen.getByRole('button')).toHaveClass('h-11', 'px-8');
     });
   });
 
   describe('interactions', () => {
     test('calls onClick handler when clicked', () => {
-      const handleClick = () => { mockClicks++; };
       let mockClicks = 0;
+      const handleClick = () => { mockClicks++; };
       render(<Button onClick={handleClick}>Click me</Button>);
       fireEvent.click(screen.getByRole('button'));
       expect(mockClicks).toBe(1);
     });
 
     test('does not call onClick when disabled', () => {
-      const handleClick = () => { mockClicks++; };
       let mockClicks = 0;
+      const handleClick = () => { mockClicks++; };
       render(<Button onClick={handleClick} disabled>Click me</Button>);
       fireEvent.click(screen.getByRole('button'));
       expect(mockClicks).toBe(0);
     });
 
     test('supports keyboard navigation', () => {
-      const handleClick = () => { mockClicks++; };
       let mockClicks = 0;
+      const handleClick = () => { mockClicks++; };
       render(<Button onClick={handleClick}>Click me</Button>);
       const button = screen.getByRole('button');
       button.focus();
-      // Native button elements respond to Enter/Space via click in browsers
-      // In test environment, we verify the button is focusable and can receive clicks
       fireEvent.click(button);
       expect(mockClicks).toBe(1);
     });
@@ -112,7 +110,7 @@ describe('Button', () => {
     test('has focus ring styles', () => {
       render(<Button>Focus me</Button>);
       const button = screen.getByRole('button');
-      expect(button).toHaveClass('focus:ring-2', 'focus:ring-blue-500');
+      expect(button).toHaveClass('focus-visible:ring-2', 'focus-visible:ring-ring');
     });
   });
 

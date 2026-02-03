@@ -1,44 +1,69 @@
-import React from 'react';
-import { createRoot } from 'react-dom/client';
-import { BrowserRouter } from 'react-router-dom';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-
-import { SupabaseProvider } from './contexts/SupabaseContext';
-import { AuthProvider } from './contexts/AuthContext';
-import { ThemeProvider } from './contexts/ThemeContext';
-import { WorkspaceProvider } from './contexts/WorkspaceContext';
-import { CommandProvider } from './contexts/CommandContext';
-import App from './App';
-
 import './styles/output.css';
 
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 5 * 60 * 1000,
-      retry: 1,
-    },
-  },
-});
+// Extend window type for config promise
+declare global {
+  interface Window {
+    __configPromise?: Promise<{
+      convexUrl?: string;
+      clerkPublishableKey?: string;
+      wsUrl?: string;
+    }>;
+  }
+}
 
-const root = createRoot(document.getElementById('root')!);
+// Wait for config to load before importing React app modules
+// This ensures window.__APP_CONFIG__ is set before module-level code runs
+async function bootstrap() {
+  // Wait for config from index.html's inline script
+  const configPromise = window.__configPromise;
+  if (configPromise) {
+    await configPromise;
+  }
 
-root.render(
-  <React.StrictMode>
-    <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
-        <SupabaseProvider>
-          <ThemeProvider>
-            <AuthProvider>
-              <WorkspaceProvider>
-                <CommandProvider>
-                  <App />
-                </CommandProvider>
-              </WorkspaceProvider>
-            </AuthProvider>
-          </ThemeProvider>
-        </SupabaseProvider>
+  // Now import React and app modules - they can safely read window.__APP_CONFIG__
+  const [
+    { default: React },
+    { createRoot },
+    { BrowserRouter },
+    { ConvexClerkProvider },
+    { ThemeProvider },
+    { WorkspaceProvider },
+    { CommandProvider },
+    { default: App },
+  ] = await Promise.all([
+    import('react'),
+    import('react-dom/client'),
+    import('react-router-dom'),
+    import('./contexts/ConvexClerkProvider'),
+    import('./contexts/ThemeContext'),
+    import('./contexts/WorkspaceContext'),
+    import('./contexts/CommandContext'),
+    import('./App'),
+  ]);
+
+  const root = createRoot(document.getElementById('root')!);
+
+  // Note: React.StrictMode removed due to conflict with Clerk's singleton initialization
+  // Clerk throws "multiple ClerkProvider" error when StrictMode double-mounts components
+  root.render(
+    <ConvexClerkProvider>
+      <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+        <ThemeProvider>
+          <WorkspaceProvider>
+            <CommandProvider>
+              <App />
+            </CommandProvider>
+          </WorkspaceProvider>
+        </ThemeProvider>
       </BrowserRouter>
-    </QueryClientProvider>
-  </React.StrictMode>
-);
+    </ConvexClerkProvider>
+  );
+}
+
+bootstrap().catch((err) => {
+  console.error('Failed to bootstrap app:', err);
+  const root = document.getElementById('root');
+  if (root) {
+    root.innerHTML = `<p style="color:#ef4444;padding:20px;font-family:Inter,sans-serif;">Failed to start application: ${err.message}</p>`;
+  }
+});

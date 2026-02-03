@@ -28,6 +28,8 @@ const verdictColors: Record<Verdict, string> = {
   weak: "bg-verdict-weak",
   contradicted: "bg-verdict-contradicted",
   not_found: "bg-verdict-missing",
+  expert_verified: "bg-teal-500",
+  conflict_flagged: "bg-orange-500",
 }
 
 const verdictRingColors: Record<Verdict, string> = {
@@ -35,6 +37,8 @@ const verdictRingColors: Record<Verdict, string> = {
   weak: "ring-verdict-weak/50",
   contradicted: "ring-verdict-contradicted/50",
   not_found: "ring-verdict-missing/50",
+  expert_verified: "ring-teal-500/50",
+  conflict_flagged: "ring-orange-500/50",
 }
 
 export function CitationAnchor({

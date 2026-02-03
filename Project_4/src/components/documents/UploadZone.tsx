@@ -59,20 +59,20 @@ export function UploadZone({
         p-8 border-2 border-dashed rounded-xl
         cursor-pointer transition-colors
         ${isDragging
-          ? 'border-blue-500 bg-blue-50'
-          : 'border-gray-300 hover:border-gray-400'
+          ? 'border-primary bg-primary/10'
+          : 'border-border hover:border-primary/50'
         }
         ${disabled ? 'opacity-50 cursor-not-allowed' : ''}
       `}
     >
-      <Upload className="w-10 h-10 text-gray-400 mb-4" />
+      <Upload className="w-10 h-10 text-muted-foreground mb-4" />
 
-      <p className="text-sm text-gray-600 text-center">
-        <span className="font-medium text-blue-600">Click to upload</span>
+      <p className="text-sm text-muted-foreground text-center">
+        <span className="font-medium text-primary">Click to upload</span>
         {' '}or drag and drop
       </p>
 
-      <p className="text-xs text-gray-500 mt-1">
+      <p className="text-xs text-muted-foreground mt-1">
         PDF or DOCX up to 50MB
       </p>
 

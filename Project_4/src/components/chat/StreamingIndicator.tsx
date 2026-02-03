@@ -16,17 +16,17 @@ const variantConfig = {
   thinking: {
     label: 'Thinking...',
     icon: Bot,
-    dotColor: 'bg-blue-500',
+    dotColor: 'bg-primary',
   },
   generating: {
     label: 'Generating response...',
     icon: Sparkles,
-    dotColor: 'bg-purple-500',
+    dotColor: 'bg-claim-opinion',
   },
   verifying: {
     label: 'Verifying claims...',
     icon: Sparkles,
-    dotColor: 'bg-green-500',
+    dotColor: 'bg-verdict-supported',
   },
 };
 
@@ -40,14 +40,14 @@ export function StreamingIndicator({
   return (
     <div className={`flex items-center gap-3 ${className}`}>
       <div className="relative">
-        <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
-          <Icon className="w-4 h-4 text-gray-600" />
+        <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center">
+          <Icon className="w-4 h-4 text-muted-foreground" />
         </div>
         <span className={`absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full ${config.dotColor} animate-pulse`} />
       </div>
 
       <div className="flex items-center gap-1">
-        <span className="text-sm text-gray-500">{config.label}</span>
+        <span className="text-sm text-muted-foreground">{config.label}</span>
         <ThinkingDots />
       </div>
     </div>
@@ -60,7 +60,7 @@ function ThinkingDots() {
       {[0, 1, 2].map((i) => (
         <span
           key={i}
-          className="w-1 h-1 rounded-full bg-gray-400 animate-bounce"
+          className="w-1 h-1 rounded-full bg-muted-foreground animate-bounce"
           style={{ animationDelay: `${i * 150}ms` }}
         />
       ))}

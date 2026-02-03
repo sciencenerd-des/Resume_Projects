@@ -974,12 +974,12 @@ export const models: Record<string, ModelConfig> = {
     temperature: 0.7,
   },
   skeptic: {
-    model: 'moonshotai/kimi-k2-instruct',
+    model: 'z-ai/glm-4.7',
     maxTokens: 8192,
     temperature: 0.3,
   },
   judge: {
-    model: 'zhipu/glm-4.7',
+    model: 'deepseek/deepseek-v3.2-speciale',
     maxTokens: 4096,
     temperature: 0.2,
   },

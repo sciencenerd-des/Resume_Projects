@@ -3,7 +3,8 @@
 > **Framework:** React 18 + TypeScript
 > **Styling:** Tailwind CSS
 > **Icons:** Lucide React
-> **Version:** 1.0
+> **Version:** 2.0
+> **Last Updated:** 2026-01-17
 
 ---
 
@@ -260,11 +261,17 @@ export function Spinner({ size = 'md', className }: SpinnerProps) {
 ### 3.1 VerdictBadge
 
 ```tsx
-type Verdict = 'supported' | 'weak' | 'contradicted' | 'not_found';
+type Verdict =
+  | 'supported'
+  | 'weak'
+  | 'contradicted'
+  | 'not_found'
+  | 'expert_verified'
+  | 'conflict_flagged';
 
 interface VerdictBadgeProps {
   verdict: Verdict;
-  size?: 'sm' | 'md';
+  size?: 'sm' | 'md' | 'lg';
   showIcon?: boolean;
 }
 
@@ -272,23 +279,39 @@ const verdictConfig = {
   supported: {
     label: 'Supported',
     icon: CheckCircle,
-    styles: 'bg-green-100 text-green-800 border-green-200',
+    styles: 'bg-verdict-supported/10 text-verdict-supported',
   },
   weak: {
     label: 'Weak',
     icon: AlertCircle,
-    styles: 'bg-amber-100 text-amber-800 border-amber-200',
+    styles: 'bg-verdict-weak/10 text-verdict-weak',
   },
   contradicted: {
     label: 'Contradicted',
     icon: XCircle,
-    styles: 'bg-red-100 text-red-800 border-red-200',
+    styles: 'bg-verdict-contradicted/10 text-verdict-contradicted',
   },
   not_found: {
     label: 'Not Found',
     icon: HelpCircle,
-    styles: 'bg-gray-100 text-gray-800 border-gray-200',
+    styles: 'bg-verdict-missing/10 text-verdict-missing',
   },
+  expert_verified: {
+    label: 'Expert Verified',
+    icon: ShieldCheck,
+    styles: 'bg-teal-500/10 text-teal-500',
+  },
+  conflict_flagged: {
+    label: 'Conflict Flagged',
+    icon: AlertTriangle,
+    styles: 'bg-orange-500/10 text-orange-500',
+  },
+};
+
+const sizeStyles = {
+  sm: 'text-xs px-2 py-0.5',
+  md: 'text-xs px-2.5 py-1',
+  lg: 'text-sm px-3 py-1.5',
 };
 
 export function VerdictBadge({
@@ -301,9 +324,9 @@ export function VerdictBadge({
 
   return (
     <span className={`
-      inline-flex items-center gap-1 rounded-full border
+      inline-flex items-center gap-1 rounded-full border font-medium
       ${config.styles}
-      ${size === 'sm' ? 'px-2 py-0.5 text-xs' : 'px-3 py-1 text-sm'}
+      ${sizeStyles[size]}
     `}>
       {showIcon && <Icon className={size === 'sm' ? 'w-3 h-3' : 'w-4 h-4'} />}
       {config.label}
@@ -315,87 +338,171 @@ export function VerdictBadge({
 ### 3.2 LedgerTable
 
 ```tsx
+type ClaimType =
+  | 'fact'
+  | 'policy'
+  | 'numeric'
+  | 'definition'
+  | 'scientific'
+  | 'historical'
+  | 'legal';
+
 interface LedgerEntry {
   id: string;
-  claimText: string;
-  claimType: 'fact' | 'policy' | 'numeric' | 'definition';
+  claim_text: string;
+  claim_type: ClaimType;
+  source_tag?: string;           // cite:N, llm:writer, llm:skeptic, llm:judge
   importance: 'critical' | 'material' | 'minor';
   verdict: Verdict;
   confidence: number;
-  evidenceSnippet?: string;
-  chunkIds: string[];
+  evidence_snippet?: string;
+  expert_assessment?: string;    // Judge's verification notes
+  chunk_ids: string[];
 }
 
 interface LedgerTableProps {
   entries: LedgerEntry[];
   onRowClick?: (entry: LedgerEntry) => void;
   highlightedId?: string;
+  className?: string;
 }
 
 export function LedgerTable({
   entries,
   onRowClick,
   highlightedId,
+  className,
 }: LedgerTableProps) {
   const sortedEntries = useMemo(() => {
-    const order = { supported: 0, weak: 1, contradicted: 2, not_found: 3 };
-    return [...entries].sort((a, b) => order[a.verdict] - order[b.verdict]);
+    const order = {
+      supported: 0,
+      expert_verified: 1,
+      weak: 2,
+      conflict_flagged: 3,
+      contradicted: 4,
+      not_found: 5
+    };
+    return [...entries].sort((a, b) =>
+      (order[a.verdict] ?? 5) - (order[b.verdict] ?? 5)
+    );
   }, [entries]);
 
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full text-sm">
-        <thead className="bg-gray-50 border-b">
-          <tr>
-            <th className="px-4 py-3 text-left font-medium text-gray-700">
-              Claim
-            </th>
-            <th className="px-4 py-3 text-left font-medium text-gray-700">
-              Type
-            </th>
-            <th className="px-4 py-3 text-left font-medium text-gray-700">
-              Verdict
-            </th>
-            <th className="px-4 py-3 text-left font-medium text-gray-700">
-              Confidence
-            </th>
-          </tr>
-        </thead>
+    <div className={cn("overflow-x-auto", className)}>
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Claim</TableHead>
+            <TableHead>Source</TableHead>
+            <TableHead>Type</TableHead>
+            <TableHead>Verdict</TableHead>
+            <TableHead className="w-32">Confidence</TableHead>
+          </TableRow>
+        </TableHeader>
 
-        <tbody className="divide-y">
+        <TableBody>
           {sortedEntries.map((entry) => (
-            <tr
+            <TableRow
               key={entry.id}
               onClick={() => onRowClick?.(entry)}
-              className={`
-                transition-colors cursor-pointer
-                ${highlightedId === entry.id
-                  ? 'bg-blue-50'
-                  : 'hover:bg-gray-50'
-                }
-              `}
+              className={cn(
+                "cursor-pointer transition-colors border-border",
+                highlightedId === entry.id
+                  ? "bg-primary/5"
+                  : "hover:bg-accent/5"
+              )}
             >
-              <td className="px-4 py-3">
+              <TableCell className="max-w-md">
                 <div className="flex items-start gap-2">
                   <ImportanceDot importance={entry.importance} />
-                  <span className="line-clamp-2">{entry.claimText}</span>
+                  <span className="text-sm text-foreground line-clamp-2">
+                    {entry.claim_text}
+                  </span>
                 </div>
-              </td>
-              <td className="px-4 py-3">
-                <ClaimTypeBadge type={entry.claimType} />
-              </td>
-              <td className="px-4 py-3">
+              </TableCell>
+              <TableCell>
+                <SourceTagBadge sourceTag={entry.source_tag} />
+              </TableCell>
+              <TableCell>
+                <ClaimTypeBadge type={entry.claim_type} />
+              </TableCell>
+              <TableCell>
                 <VerdictBadge verdict={entry.verdict} size="sm" />
-              </td>
-              <td className="px-4 py-3">
+              </TableCell>
+              <TableCell>
                 <ConfidenceBar value={entry.confidence} />
-              </td>
-            </tr>
+              </TableCell>
+            </TableRow>
           ))}
-        </tbody>
-      </table>
+        </TableBody>
+      </Table>
     </div>
   );
+}
+```
+
+### 3.2.1 SourceTagBadge
+
+Displays the source of a claim in the 3-LLM pipeline:
+
+```tsx
+const sourceTagConfig = {
+  document: { icon: FileText, styles: 'bg-emerald-500/10 text-emerald-600' },
+  writer: { icon: Brain, styles: 'bg-blue-500/10 text-blue-500' },
+  skeptic: { icon: Search, styles: 'bg-purple-500/10 text-purple-500' },
+  judge: { icon: Scale, styles: 'bg-indigo-500/10 text-indigo-500' },
+  unknown: { icon: FileText, styles: 'bg-muted text-muted-foreground' },
+};
+
+function SourceTagBadge({ sourceTag }: { sourceTag?: string }) {
+  if (!sourceTag) {
+    return <Badge variant="outline">Unknown</Badge>;
+  }
+
+  // Parse source tag
+  const isDocument = sourceTag.startsWith("cite:");
+  const isWriter = sourceTag === "llm:writer";
+  const isSkeptic = sourceTag === "llm:skeptic";
+  const isJudge = sourceTag === "llm:judge";
+
+  if (isDocument) {
+    const docNum = sourceTag.replace("cite:", "");
+    return (
+      <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs rounded-full bg-emerald-500/10 text-emerald-600">
+        <FileText className="h-3 w-3" />
+        Doc {docNum}
+      </span>
+    );
+  }
+
+  if (isWriter) {
+    return (
+      <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs rounded-full bg-blue-500/10 text-blue-500">
+        <Brain className="h-3 w-3" />
+        Writer
+      </span>
+    );
+  }
+
+  if (isSkeptic) {
+    return (
+      <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs rounded-full bg-purple-500/10 text-purple-500">
+        <Search className="h-3 w-3" />
+        Skeptic
+      </span>
+    );
+  }
+
+  if (isJudge) {
+    return (
+      <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs rounded-full bg-indigo-500/10 text-indigo-500">
+        <Scale className="h-3 w-3" />
+        Judge
+      </span>
+    );
+  }
+
+  return <span className="text-muted-foreground text-xs">{sourceTag}</span>;
 }
 ```
 

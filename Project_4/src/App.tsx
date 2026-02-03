@@ -1,6 +1,5 @@
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
-import { useAuth } from './hooks/useAuth';
 
 // Layout
 import AppLayout from './components/layout/AppLayout';
@@ -22,9 +21,9 @@ import { AuthGuard } from './components/auth/AuthGuard';
 export default function App() {
   return (
     <Routes>
-      {/* Public Routes */}
-      <Route path="/login" element={<LoginPage />} />
-      <Route path="/signup" element={<SignupPage />} />
+      {/* Public Routes - wildcards required for Clerk OAuth callbacks */}
+      <Route path="/login/*" element={<LoginPage />} />
+      <Route path="/signup/*" element={<SignupPage />} />
 
       {/* Protected Routes */}
       <Route element={<AuthGuard />}>

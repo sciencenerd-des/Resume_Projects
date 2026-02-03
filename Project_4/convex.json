@@ -1,0 +1,7 @@
+{
+  "functions": "convex/",
+  "authConfig": ["convex/auth.config.ts"],
+  "node": {
+    "externalPackages": ["unpdf", "mammoth"]
+  }
+}

@@ -2,8 +2,9 @@ import React, { useState, useCallback, useRef } from 'react';
 import { Upload, X, FileText, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { useWorkspace } from '@/hooks/useWorkspace';
-import { api } from '@/services/api';
+import { useWorkspace } from '@/contexts/WorkspaceContext';
+import { useConvexDocuments } from '@/hooks/useConvexDocuments';
+import type { Id } from '../../../convex/_generated/dataModel';
 
 interface DocumentUploadProps {
   onComplete?: () => void;
@@ -19,6 +20,8 @@ interface UploadFile {
 
 export function DocumentUpload({ onComplete }: DocumentUploadProps) {
   const { currentWorkspace } = useWorkspace();
+  const workspaceId = currentWorkspace?._id as Id<"workspaces"> | undefined;
+  const { uploadDocument } = useConvexDocuments(workspaceId);
   const [files, setFiles] = useState<UploadFile[]>([]);
   const [isDragging, setIsDragging] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -74,7 +77,7 @@ export function DocumentUpload({ onComplete }: DocumentUploadProps) {
   }, []);
 
   const uploadFiles = useCallback(async () => {
-    if (!currentWorkspace?.id) {
+    if (!workspaceId) {
       console.error('[Upload] No workspace selected');
       return;
     }
@@ -89,7 +92,7 @@ export function DocumentUpload({ onComplete }: DocumentUploadProps) {
       );
 
       try {
-        // Actually upload the file to the API
+        // Upload the file using Convex
         console.log('[Upload] Uploading file:', uploadFile.file.name);
         setFiles((prev) =>
           prev.map((f) =>
@@ -97,7 +100,7 @@ export function DocumentUpload({ onComplete }: DocumentUploadProps) {
           )
         );
 
-        await api.uploadDocument(currentWorkspace.id, uploadFile.file);
+        await uploadDocument(uploadFile.file);
 
         setFiles((prev) =>
           prev.map((f) =>
@@ -129,7 +132,7 @@ export function DocumentUpload({ onComplete }: DocumentUploadProps) {
     if (onComplete) {
       onComplete();
     }
-  }, [files, onComplete, currentWorkspace?.id]);
+  }, [files, onComplete, workspaceId, uploadDocument]);
 
   const handleUpload = async () => {
     await uploadFiles();
@@ -155,17 +158,17 @@ export function DocumentUpload({ onComplete }: DocumentUploadProps) {
           p-8 border-2 border-dashed rounded-xl
           cursor-pointer transition-colors
           ${isDragging
-            ? 'border-blue-500 bg-blue-50'
-            : 'border-gray-300 hover:border-gray-400'
+            ? 'border-primary bg-primary/10'
+            : 'border-border hover:border-primary/50'
           }
         `}
       >
-        <Upload className="w-10 h-10 text-gray-400 mb-4" />
-        <p className="text-sm text-gray-600 text-center">
-          <span className="font-medium text-blue-600">Click to upload</span>
+        <Upload className="w-10 h-10 text-muted-foreground mb-4" />
+        <p className="text-sm text-muted-foreground text-center">
+          <span className="font-medium text-primary">Click to upload</span>
           {' '}or drag and drop
         </p>
-        <p className="text-xs text-gray-500 mt-1">
+        <p className="text-xs text-muted-foreground mt-1">
           PDF or DOCX up to 50MB
         </p>
         <input
@@ -184,26 +187,26 @@ export function DocumentUpload({ onComplete }: DocumentUploadProps) {
           {files.map((uploadFile) => (
             <div
               key={uploadFile.id}
-              className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg"
+              className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg"
             >
-              <FileText className="w-5 h-5 text-gray-500" />
+              <FileText className="w-5 h-5 text-muted-foreground" />
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-gray-900 truncate">
+                <p className="text-sm font-medium text-foreground truncate">
                   {uploadFile.file.name}
                 </p>
                 <div className="flex items-center gap-2 mt-1">
                   <Progress value={uploadFile.progress} className="flex-1 h-1.5" />
-                  <span className="text-xs text-gray-500">{uploadFile.progress}%</span>
+                  <span className="text-xs text-muted-foreground">{uploadFile.progress}%</span>
                 </div>
                 {uploadFile.status === 'error' && (
-                  <p className="text-xs text-red-600 mt-1">{uploadFile.error}</p>
+                  <p className="text-xs text-destructive mt-1">{uploadFile.error}</p>
                 )}
               </div>
               <button
                 onClick={() => removeFile(uploadFile.id)}
-                className="p-1 hover:bg-gray-200 rounded"
+                className="p-1 hover:bg-muted rounded"
               >
-                <X className="w-4 h-4 text-gray-500" />
+                <X className="w-4 h-4 text-muted-foreground" />
               </button>
             </div>
           ))}
@@ -215,13 +218,13 @@ export function DocumentUpload({ onComplete }: DocumentUploadProps) {
         <div className="flex items-center justify-between pt-4 border-t">
           <div className="flex items-center gap-2 text-sm">
             {hasErrors && (
-              <span className="text-red-600 flex items-center gap-1">
+              <span className="text-destructive flex items-center gap-1">
                 <AlertCircle className="w-4 h-4" />
                 Some files failed
               </span>
             )}
             {allComplete && (
-              <span className="text-green-600">All files uploaded successfully</span>
+              <span className="text-verdict-supported">All files uploaded successfully</span>
             )}
           </div>
           <div className="flex items-center gap-2">

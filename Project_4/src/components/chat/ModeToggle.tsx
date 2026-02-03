@@ -1,8 +1,9 @@
 import React from 'react';
-import { FileText, MessageSquare } from 'lucide-react';
+import { MessageSquare, PenLine } from 'lucide-react';
 
 /**
  * ModeToggle - Toggle between Answer and Draft modes
+ * ChatGPT-style minimal toggle
  */
 export type QueryMode = 'answer' | 'draft';
 
@@ -15,39 +16,39 @@ interface ModeToggleProps {
 export function ModeToggle({ mode, onChange, className = '' }: ModeToggleProps) {
   return (
     <div
-      className={`inline-flex rounded-lg border border-gray-300 p-1 ${className}`}
+      className={`inline-flex rounded-lg bg-muted p-1 ${className}`}
       role="group"
       aria-label="Query mode selection"
     >
       <button
         onClick={() => onChange('answer')}
         className={`
-          flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-md
-          transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500
+          flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-md
+          transition-all duration-200
           ${mode === 'answer'
-            ? 'bg-blue-600 text-white shadow-sm'
-            : 'text-gray-700 hover:bg-gray-100'
+            ? 'bg-background text-foreground shadow-sm'
+            : 'text-muted-foreground hover:text-foreground'
           }
         `}
         aria-pressed={mode === 'answer'}
       >
-        <MessageSquare className="w-4 h-4" />
+        <MessageSquare className="w-3.5 h-3.5" />
         Answer
       </button>
 
       <button
         onClick={() => onChange('draft')}
         className={`
-          flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-md
-          transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500
+          flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-md
+          transition-all duration-200
           ${mode === 'draft'
-            ? 'bg-blue-600 text-white shadow-sm'
-            : 'text-gray-700 hover:bg-gray-100'
+            ? 'bg-background text-foreground shadow-sm'
+            : 'text-muted-foreground hover:text-foreground'
           }
         `}
         aria-pressed={mode === 'draft'}
       >
-        <FileText className="w-4 h-4" />
+        <PenLine className="w-3.5 h-3.5" />
         Draft
       </button>
     </div>
